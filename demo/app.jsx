@@ -1,7 +1,7 @@
 /*global document:false*/
 import React from "react";
 import {VictoryBar} from "../src/index";
-import data from "./data"
+import data from "./data";
 
 class App extends React.Component {
   render() {
