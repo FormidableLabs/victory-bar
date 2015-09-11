@@ -1,6 +1,7 @@
 import React from "react";
 import Radium from "radium";
 import lodash from "lodash";
+import d3 from "d3";
 
 @Radium
 class VictoryBar extends React.Component {
@@ -25,7 +26,7 @@ class VictoryBar extends React.Component {
 
     var color = d3.scale.ordinal().range(
       ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]
-    ).domain(legend);
+    ).domain(d3.keys(localCopyOfData[0]).filter(function(key) { return key !== "label"; }));
 
     localCopyOfData.forEach((bar) => {
       var y0 = 0;
@@ -36,17 +37,17 @@ class VictoryBar extends React.Component {
           y1: y0 += +bar[segmentName]
         };
       });
-      bar.total = bar.ages[bar.ages.length - 1].y1;
+      bar.total = bar.segments[bar.segments.length - 1].y1;
     });
 
     var x = d3.scale.ordinal()
-        .rangeRoundBands([0, width], .1)
+        .rangeRoundBands([0, this.props.width], .1)
         .domain(localCopyOfData.map((bar) => {
           return bar.label;
         }));
 
     var y = d3.scale.linear()
-        .rangeRound([height, 0])
+        .rangeRound([this.props.height, 0])
         .domain([0, d3.max(localCopyOfData, (bar) => {
           return bar.total;
         })]);
@@ -57,19 +58,21 @@ class VictoryBar extends React.Component {
 
     function makeSegments (segments, i) {
       var barSvg = segments.map((segment) => {
+        debugger
         return (
           <rect
+            fill={color(segment.segmentName)}
             width={x.rangeBand()}
             height={y(segment.y0) - y(segment.y1)}
             y={y(segment.y1)} />
         )
       })
       return barSvg;
-    })
+    }
 
-    const stackedBars = dataWithSegmentsAdded.map((bar, i) => {
+    const stackedBars = localCopyOfData.map((bar, i) => {
       return (
-        <g tranform={"translate(" + x(bar.label) + ",0)"}>
+        <g className={"segmentGroup"} transform={"translate(" + x(bar.label) + ",0)"}>
           {makeSegments(bar.segments)}
         </g>
       )
@@ -96,7 +99,7 @@ class VictoryBar extends React.Component {
     return (
       <svg width={this.props.width} height={this.props.height}>
         <g>
-          {_.isArray(this.props.data[0]) ? this.drawStackedBars() : this.drawBars()}
+          {_.isObject(this.props.data[0]) ? this.drawStackedBars() : this.drawBars()}
         </g>
       </svg>
     );
