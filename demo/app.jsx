@@ -6,8 +6,8 @@ import data from "./data"
 class App extends React.Component {
   render() {
     return (
-        <VictoryBar
-          data={data}/>
+      <VictoryBar
+        data={data}/>
     );
   }
 }

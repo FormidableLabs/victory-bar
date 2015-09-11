@@ -5,29 +5,18 @@ import d3 from "d3";
 
 @Radium
 class VictoryBar extends React.Component {
-  // getStyles() {
-  //   return {
-  //     base: {
-  //       color: "#000",
-  //       fontSize: 12,
-  //       textDecoration: "underline"
-  //     },
-  //     red: {
-  //       color: "#d71920",
-  //       fontSize: 30
-  //     }
-  //   };
-  // }
 
   drawStackedBars () {
 
     // make a copy so we don't mutate props
     let localCopyOfData = _.cloneDeep(this.props.data);
 
+    // set up color scales, this will probably be abstracted
     var color = d3.scale.ordinal().range(
       ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]
     ).domain(d3.keys(localCopyOfData[0]).filter(function(key) { return key !== "label"; }));
 
+    // each bar segment needs to know where it goes relative to the others, hence y0 y1
     localCopyOfData.forEach((bar) => {
       var y0 = 0;
       bar.segments = color.domain().map((segmentName) => {
@@ -40,6 +29,7 @@ class VictoryBar extends React.Component {
       bar.total = bar.segments[bar.segments.length - 1].y1;
     });
 
+    // rangeRoundBands say how many categories, how much width, does the division, x.rangeBand called below
     var x = d3.scale.ordinal()
         .rangeRoundBands([0, this.props.width], .1)
         .domain(localCopyOfData.map((bar) => {
