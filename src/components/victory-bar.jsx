@@ -80,21 +80,9 @@ class VictoryBar extends React.Component {
 
   render() {
     // const styles = this.getStyles();
-    return (
-      if (this.props.svg) {
-        return (
-          <svg width={this.props.width} height={this.props.height}>
-            <g>
-              {
-                _.isObject(this.props.data[0]) ?
-                this.drawStackedBars() :
-                this.drawBars()
-              }
-            </g>
-          </svg>
-        )
-      } else {
-        return (
+    if (this.props.svg) {
+      return (
+        <svg width={this.props.width} height={this.props.height}>
           <g>
             {
               _.isObject(this.props.data[0]) ?
@@ -102,9 +90,19 @@ class VictoryBar extends React.Component {
               this.drawBars()
             }
           </g>
-        )
-      }
-    );
+        </svg>
+      );
+    } else {
+      return (
+        <g>
+          {
+            _.isObject(this.props.data[0]) ?
+            this.drawStackedBars() :
+            this.drawBars()
+          }
+        </g>
+      );
+    }
   }
 }
 
