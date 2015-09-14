@@ -104,8 +104,8 @@ VictoryBar.defaultProps = {
   svg: true,
   width: 800,
   height: 600,
-  makeSegments: (segments) => {
-    const barSvg = segments.map((segment, scales) => {
+  makeSegments: (segments, scales) => {
+    const barSvg = segments.map((segment) => {
       return (
         <rect
           fill={scales.color(segment.segmentName)}
