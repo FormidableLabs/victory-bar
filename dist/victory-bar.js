@@ -207,8 +207,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  svg: true,
 	  width: 800,
 	  height: 600,
-	  makeSegments: function makeSegments(segments) {
-	    var barSvg = segments.map(function (segment, scales) {
+	  makeSegments: function makeSegments(segments, scales) {
+	    var barSvg = segments.map(function (segment) {
 	      return _react2["default"].createElement("rect", {
 	        fill: scales.color(segment.segmentName),
 	        width: scales.x.rangeBand(),
