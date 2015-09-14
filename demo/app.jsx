@@ -6,8 +6,19 @@ import data from "./data";
 class App extends React.Component {
   render() {
     return (
+      <svg
+        width={800}
+        height={600}
+        className={"SVG-OUTSIDE-COMPONENT"}
+        style={{border: "1px solid black"}}>
       <VictoryBar
-        data={data}/>
+        data={data}
+        totalReductionInX={600}
+        totalReductionInY={500}
+        translateX={100}
+        translateY={300}
+        svg={false}/>
+      </svg>
     );
   }
 }

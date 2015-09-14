@@ -176,15 +176,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: "render",
 	    value: function render() {
 	      // const styles = this.getStyles();
-	      return _react2["default"].createElement(
-	        "svg",
-	        { width: this.props.width, height: this.props.height },
-	        _react2["default"].createElement(
+	      if (this.props.svg) {
+	        return _react2["default"].createElement(
+	          "svg",
+	          { width: this.props.width, height: this.props.height },
+	          _react2["default"].createElement(
+	            "g",
+	            null,
+	            _lodash2["default"].isObject(this.props.data[0]) ? this.drawStackedBars() : this.drawBars()
+	          )
+	        );
+	      } else {
+	        return _react2["default"].createElement(
 	          "g",
 	          null,
 	          _lodash2["default"].isObject(this.props.data[0]) ? this.drawStackedBars() : this.drawBars()
-	        )
-	      );
+	        );
+	      }
 	    }
 	  }]);
 	

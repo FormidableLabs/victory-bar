@@ -35,13 +35,13 @@ class VictoryBar extends React.Component {
 
     /* width / categories = x.rangeBand */
     const x = d3.scale.ordinal()
-        .rangeRoundBands([0, this.props.width], .1)
+        .rangeRoundBands([0, this.props.width - this.props.totalReductionInX], .1)
         .domain(localCopyOfData.map((bar) => {
           return bar.label;
         }));
 
     const y = d3.scale.linear()
-        .rangeRound([this.props.height, 0])
+        .rangeRound([this.props.height - this.props.totalReductionInY, 0])
         .domain([0, d3.max(localCopyOfData, (bar) => {
           return bar.total;
         })]);
@@ -78,12 +78,15 @@ class VictoryBar extends React.Component {
     return bars;
   }
 
+  // offsets and squishing to fit inside axis
   render() {
     // const styles = this.getStyles();
     if (this.props.svg) {
       return (
         <svg width={this.props.width} height={this.props.height}>
-          <g>
+          <g transform={
+            "translate(" + this.props.translateX + "," + this.props.translateY + ")"
+            }>
             {
               _.isObject(this.props.data[0]) ?
               this.drawStackedBars() :
@@ -94,7 +97,9 @@ class VictoryBar extends React.Component {
       );
     } else {
       return (
-        <g>
+        <g transform={
+          "translate(" + this.props.translateX + "," + this.props.translateY + ")"
+          }>
           {
             _.isObject(this.props.data[0]) ?
             this.drawStackedBars() :
@@ -112,7 +117,11 @@ VictoryBar.propTypes = {
   width: React.PropTypes.number,
   height: React.PropTypes.number,
   makeSegments: React.PropTypes.func,
-  colorCategories: React.PropTypes.array
+  colorCategories: React.PropTypes.array,
+  translateX: React.PropTypes.number,
+  translateY: React.PropTypes.number,
+  totalReductionInY: React.PropTypes.number,
+  totalReductionInX: React.PropTypes.number
 };
 
 VictoryBar.defaultProps = {
