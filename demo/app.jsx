@@ -6,20 +6,26 @@ import data from "./data";
 class App extends React.Component {
   render() {
     return (
-      <svg
-        width={800}
-        height={600}
-        className={"SVG-OUTSIDE-COMPONENT"}
-        style={{border: "1px solid black"}}>
-        <VictoryBar
-          data={data}
-          barPadding={0.5}
-          totalReductionInX={600}
-          totalReductionInY={500}
-          translateX={100}
-          translateY={300}
-          svg={false}/>
-      </svg>
+      <div>
+
+
+        <svg
+          width={800}
+          height={600}
+          className={"SVG-OUTSIDE-COMPONENT"}
+          style={{border: "1px solid black"}}>
+          <VictoryBar
+            data={[
+              {x: 1, y: 3},
+              {x: 2, y: 5},
+              {x: 3, y: 2},
+              {x: 4, y: 4},
+              {x: 5, y: 6}
+            ]}
+            barPadding={0.5}
+            containerElement="g"/>
+        </svg>
+      </div>
     );
   }
 }
