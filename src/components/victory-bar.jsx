@@ -68,6 +68,12 @@ class VBar extends React.Component {
     };
   }
 
+  containsStrings(collection) {
+    return _.some(collection, function (item) {
+      return _.isString(item);
+    });
+  }
+
   _createStringMap(axis) {
     const props = _.cloneDeep(this.props);
     // if categories exist and are strings, create a map using only those strings
@@ -106,12 +112,6 @@ class VBar extends React.Component {
     }
   }
 
-  containsStrings(collection) {
-    return _.some(collection, function (item) {
-      return _.isString(item);
-    });
-  }
-
   getScale(axis) {
     const scale = this.props.scale[axis] ? this.props.scale[axis]().copy() :
       this.props.scale().copy();
@@ -140,13 +140,24 @@ class VBar extends React.Component {
   }
 
   getDomain(axis) {
+    const categoryDomain = this._getDomainFromCategories(axis);
     if (this.props.domain) {
       return this.props.domain[axis] || this.props.domain;
+    } else if (categoryDomain) {
+      return categoryDomain;
     } else if (this.props.data) {
       return this._getDomainFromData(axis);
     } else {
       return this._getDomainFromScale(axis);
     }
+  }
+
+  _getDomainFromCategories(axis) {
+    const categories = this.props.categories;
+    if (axis !== "x" || !categories || this.containsStrings(categories)) {
+      return undefined;
+    }
+    return [_.min(_.flatten(categories)), _.max(_.flatten(categories))];
   }
 
   // helper method for getDomain
@@ -214,8 +225,7 @@ class VBar extends React.Component {
 
   _adjustX(x, index) {
     const stringMap = this.getStringMap();
-    if (stringMap.x === null) {
-      // TODO: Check assumption
+    if (stringMap.x === null && !this.props.categories) {
       // don't adjust x if the x axis is numeric
       return x;
     }
@@ -225,6 +235,17 @@ class VBar extends React.Component {
     const centerOffset = index - center;
     const totalWidth = this._pixelsToValue(this.props.barPadding) +
       this._pixelsToValue(this.props.barWidth);
+    let bandCenter;
+    if (this.props.categories && _.isArray(this.props.categories[0])) {
+      // figure out which band this x value belongs to, and shift it to the
+      // center of that band before calculating the usual offset
+      const xBand = _.filter(this.props.categories, (band) => {
+        return (x >= _.min(band) && x <= _.max(band));
+      });
+      bandCenter = _.isArray(xBand[0]) ?
+        (_.max(xBand[0]) + _.min(xBand[0])) / 2 : undefined;
+      return bandCenter + (centerOffset * totalWidth);
+    }
     return x + (centerOffset * totalWidth);
   }
 
@@ -252,7 +273,7 @@ class VBar extends React.Component {
       const scaledX = this.getScale("x").call(this, x);
       const scaledY0 = this.getScale("y").call(this, y0);
       const scaledY1 = this.getScale("y").call(this, y1);
-      const path = this.getBarPath(scaledX, scaledY0, scaledY1);
+      const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
       const pathElement = (
         <path
           d={path}
@@ -335,13 +356,7 @@ const propTypes = {
     React.PropTypes.object,
     React.PropTypes.arrayOf(React.PropTypes.object)
   ]),
-  categories: React.PropTypes.oneOfType([
-    React.PropTypes.array,
-    React.PropTypes.shape({
-      x: React.PropTypes.array,
-      y: React.PropTypes.array
-    })
-  ]),
+  categories: React.PropTypes.array,
   domain: React.PropTypes.oneOfType([
     React.PropTypes.array,
     React.PropTypes.shape({

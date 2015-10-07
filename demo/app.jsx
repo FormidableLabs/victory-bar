@@ -8,7 +8,8 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      barData: this.getBarData()
+      barData: this.getBarData(),
+      numericBarData: this.getNumericBarData()
     };
   }
 
@@ -32,10 +33,30 @@ class App extends React.Component {
     });
   }
 
+  getNumericBarData() {
+    return _.map(_.range(5), () => {
+      return [
+        {
+          x: _.random(1, 3),
+          y: _.random(1, 5)
+        },
+        {
+          x: _.random(4, 7),
+          y: _.random(1, 10)
+        },
+        {
+          x: _.random(9, 11),
+          y: _.random(1, 15)
+        }
+      ];
+    });
+  }
+
   componentWillMount() {
     window.setInterval(() => {
       this.setState({
-        barData: this.getBarData()
+        barData: this.getBarData(),
+        numericBarData: this.getNumericBarData()
       });
     }, 4000);
   }
@@ -44,8 +65,20 @@ class App extends React.Component {
     return (
       <div className="demo">
         <p>
-
           <VictoryBar
+            data={this.state.numericBarData}
+            dataAttributes={[
+              {color: "cornflowerblue"},
+              {color: "orange"},
+              {color: "greenyellow"},
+              {color: "gold"},
+              {color: "tomato"}
+            ]}
+            categories={[[1, 3], [4, 7], [9, 11]]}
+            containerElement="svg"
+            animate={true}/>
+
+            <VictoryBar
             data={this.state.barData}
             dataAttributes={[
               {color: "cornflowerblue"},
@@ -54,11 +87,10 @@ class App extends React.Component {
               {color: "gold"},
               {color: "tomato"}
             ]}
-            domainOffset={{
-              x: 0.2,
-              y: 0
-            }}
+            stacked={true}
+            containerElement="svg"
             animate={true}/>
+
 
         </p>
       </div>
