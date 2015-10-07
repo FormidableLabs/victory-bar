@@ -1,30 +1,66 @@
 /*global document:false*/
+/*global window:false*/
+import _ from "lodash";
 import React from "react";
 import {VictoryBar} from "../src/index";
-import data from "./data";
 
 class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      barData: this.getBarData()
+    };
+  }
+
+
+  getBarData() {
+    return _.map(_.range(5), () => {
+      return [
+        {
+          x: "red",
+          y: _.random(1, 5)
+        },
+        {
+          x: "green",
+          y: _.random(1, 10)
+        },
+        {
+          x: "blue",
+          y: _.random(1, 15)
+        }
+      ];
+    });
+  }
+
+  componentWillMount() {
+    window.setInterval(() => {
+      this.setState({
+        barData: this.getBarData()
+      });
+    }, 4000);
+  }
+
   render() {
     return (
-      <div>
+      <div className="demo">
+        <p>
 
-
-        <svg
-          width={800}
-          height={600}
-          className={"SVG-OUTSIDE-COMPONENT"}
-          style={{border: "1px solid black"}}>
           <VictoryBar
-            data={[
-              {x: 1, y: 3},
-              {x: 2, y: 5},
-              {x: 3, y: 2},
-              {x: 4, y: 4},
-              {x: 5, y: 6}
+            data={this.state.barData}
+            dataAttributes={[
+              {color: "cornflowerblue"},
+              {color: "orange"},
+              {color: "greenyellow"},
+              {color: "gold"},
+              {color: "tomato"}
             ]}
-            barPadding={0.5}
-            containerElement="g"/>
-        </svg>
+            domainOffset={{
+              x: 0.2,
+              y: 0
+            }}
+            animate={true}/>
+
+        </p>
       </div>
     );
   }

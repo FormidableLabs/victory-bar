@@ -18,7 +18,7 @@ class VBar extends React.Component {
       opacity: 1,
       margin: 20,
       width: 500,
-      height: 500,
+      height: 300,
       fontFamily: "Helvetica",
       fontSize: 10,
       textAnchor: "middle"
