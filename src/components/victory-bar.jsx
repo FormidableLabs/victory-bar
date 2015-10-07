@@ -8,14 +8,14 @@ import {VictoryAnimation} from "victory-animation";
 class VBar extends React.Component {
   constructor(props) {
     super(props);
-    this.getCaluclatedValues(props);
+    this.getCalculatedValues(props);
   }
 
   componentWillReceiveProps(nextProps) {
-    this.getCaluclatedValues(nextProps);
+    this.getCalculatedValues(nextProps);
   }
 
-  getCaluclatedValues(props) {
+  getCalculatedValues(props) {
     this.styles = this.getStyles(props);
     this.stringMap = {
       x: this.createStringMap(props, "x"),
