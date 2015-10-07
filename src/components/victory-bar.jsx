@@ -8,9 +8,35 @@ import {VictoryAnimation} from "victory-animation";
 class VBar extends React.Component {
   constructor(props) {
     super(props);
+    this.getCaluclatedValues(props);
   }
 
-  getStyles() {
+  componentWillReceiveProps(nextProps) {
+    this.getCaluclatedValues(nextProps);
+  }
+
+  getCaluclatedValues(props) {
+    this.styles = this.getStyles(props);
+    this.stringMap = {
+      x: this.createStringMap(props, "x"),
+      y: this.createStringMap(props, "y")
+    };
+    this.datasets = this.consolidateData(props);
+    this.range = {
+      x: this.getRange(props, "x"),
+      y: this.getRange(props, "y")
+    };
+    this.domain = {
+      x: this.getDomain(props, "x"),
+      y: this.getDomain(props, "y")
+    };
+    this.scale = {
+      x: this.getScale(props, "x"),
+      y: this.getScale(props, "y")
+    };
+  }
+
+  getStyles(props) {
     return _.merge({
       borderColor: "transparent",
       borderWidth: 0,
@@ -22,12 +48,10 @@ class VBar extends React.Component {
       fontFamily: "Helvetica",
       fontSize: 10,
       textAnchor: "middle"
-    }, this.props.style);
+    }, props.style);
   }
 
-  consolidateData() {
-    const props = _.cloneDeep(this.props);
-    const stringMap = this.getStringMap();
+  consolidateData(props) {
     if (props.data) {
       const dataFromProps = _.isArray(props.data[0]) ? props.data : [props.data];
       return _.map(dataFromProps, (dataset, index) => {
@@ -36,9 +60,9 @@ class VBar extends React.Component {
           data: _.map(dataset, (data) => {
             return _.merge(data, {
               // map string data to numeric values, and add names
-              x: _.isString(data.x) ? stringMap.x[data.x] : data.x,
+              x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
               xName: _.isString(data.x) ? data.x : undefined,
-              y: _.isString(data.y) ? stringMap.y[data.y] : data.y,
+              y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
               yName: _.isString(data.y) ? data.y : undefined
             });
           })
@@ -61,21 +85,13 @@ class VBar extends React.Component {
     return _.merge(requiredAttributes, attributes);
   }
 
-  getStringMap() {
-    return {
-      x: this._createStringMap("x"),
-      y: this._createStringMap("y")
-    };
-  }
-
   containsStrings(collection) {
     return _.some(collection, function (item) {
       return _.isString(item);
     });
   }
 
-  _createStringMap(axis) {
-    const props = _.cloneDeep(this.props);
+  createStringMap(props, axis) {
     // if categories exist and are strings, create a map using only those strings
     // dont alter the order.
     const categories = props.categories ?
@@ -112,11 +128,11 @@ class VBar extends React.Component {
     }
   }
 
-  getScale(axis) {
-    const scale = this.props.scale[axis] ? this.props.scale[axis]().copy() :
-      this.props.scale().copy();
-    const range = this.getRange(axis);
-    const domain = this.getDomain(axis);
+  getScale(props, axis) {
+    const scale = props.scale[axis] ? props.scale[axis]().copy() :
+      props.scale().copy();
+    const range = this.range[axis];
+    const domain = this.domain[axis];
     scale.range(range);
     scale.domain(domain);
     // hacky check for identity scale
@@ -128,43 +144,41 @@ class VBar extends React.Component {
     return scale;
   }
 
-  getRange(axis) {
-    if (this.props.range) {
-      return this.props.range[axis] ? this.props.range[axis] : this.props.range;
+  getRange(props, axis) {
+    if (props.range) {
+      return props.range[axis] ? props.range[axis] : props.range;
     }
     // if the range is not given in props, calculate it from width, height and margin
-    const style = this.getStyles();
     return axis === "x" ?
-      [style.margin, style.width - style.margin] :
-      [style.height - style.margin, style.margin];
+      [this.styles.margin, this.styles.width - this.styles.margin] :
+      [this.styles.height - this.styles.margin, this.styles.margin];
   }
 
-  getDomain(axis) {
-    const categoryDomain = this._getDomainFromCategories(axis);
-    if (this.props.domain) {
-      return this.props.domain[axis] || this.props.domain;
+  getDomain(props, axis) {
+    const categoryDomain = this._getDomainFromCategories(props, axis);
+    if (props.domain) {
+      return props.domain[axis] || props.domain;
     } else if (categoryDomain) {
       return categoryDomain;
-    } else if (this.props.data) {
-      return this._getDomainFromData(axis);
+    } else if (props.data) {
+      return this._getDomainFromData(props, axis);
     } else {
-      return this._getDomainFromScale(axis);
+      return this._getDomainFromScale(props, axis);
     }
   }
 
-  _getDomainFromCategories(axis) {
-    const categories = this.props.categories;
-    if (axis !== "x" || !categories || this.containsStrings(categories)) {
+  _getDomainFromCategories(props, axis) {
+    if (axis !== "x" || !props.categories || this.containsStrings(props.categories)) {
       return undefined;
     }
-    return [_.min(_.flatten(categories)), _.max(_.flatten(categories))];
+    return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
   }
 
   // helper method for getDomain
-  _getDomainFromScale(axis) {
+  _getDomainFromScale(props, axis) {
     // The scale will never be undefined due to default props
-    const scaleDomain = this.props.scale[axis] ? this.props.scale[axis]().domain() :
-      this.props.scale().domain();
+    const scaleDomain = props.scale[axis] ? props.scale[axis]().domain() :
+      props.scale().domain();
 
     // Warn when particular types of scales need more information to produce meaningful lines
     if (_.isDate(scaleDomain[0])) {
@@ -178,25 +192,23 @@ class VBar extends React.Component {
   }
 
   // helper method for getDomain
-  _getDomainFromData(axis) {
-    const stringMap = this.getStringMap();
+  _getDomainFromData(props, axis) {
     // if a sensible string map exists, return the minimum and maximum values
     // offset by the bar offset value
-    if (stringMap[axis] !== null) {
-      const mapValues = _.values(stringMap[axis]);
-      const offset = this.props.categoryOffset;
+    if (this.stringMap[axis] !== null) {
+      const mapValues = _.values(this.stringMap[axis]);
+      const offset = props.categoryOffset;
       return [_.min(mapValues) - offset, _.max(mapValues) + offset];
     } else {
-      const datasets = this.consolidateData();
       // find the global min and max
-      const allData = _.flatten(_.pluck(datasets, "data"));
+      const allData = _.flatten(_.pluck(this.datasets, "data"));
       const min = _.min(_.pluck(allData, axis));
       const max = _.max(_.pluck(allData, axis));
       // find the cumulative max for stacked chart types
       // this is only sensible for the y domain
       // TODO check assumption
-      const cumulativeMax = (this.props.stacked && axis === "y") ?
-        _.reduce(datasets, (memo, dataset) => {
+      const cumulativeMax = (props.stacked && axis === "y") ?
+        _.reduce(this.datasets, (memo, dataset) => {
           return memo + (_.max(_.pluck(dataset.data, axis)) - _.min(_.pluck(dataset.data, axis)));
         }, 0) : -Infinity;
       return [min, _.max([max, cumulativeMax])];
@@ -218,20 +230,18 @@ class VBar extends React.Component {
   }
 
   _pixelsToValue(pixels) {
-    const xRange = this.getRange("x");
-    const xDomain = this.getDomain("x");
+    const xRange = this.range.x;
+    const xDomain = this.domain.x;
     return (_.max(xDomain) - _.min(xDomain)) / (_.max(xRange) - _.min(xRange)) * pixels;
   }
 
   _adjustX(x, index) {
-    const stringMap = this.getStringMap();
-    if (stringMap.x === null && !this.props.categories) {
+    if (this.stringMap.x === null && !this.props.categories) {
       // don't adjust x if the x axis is numeric
       return x;
     }
-    const datasets = this.consolidateData();
-    const center = datasets.length % 2 === 0 ?
-      datasets.length / 2 : (datasets.length - 1) / 2;
+    const center = this.datasets.length % 2 === 0 ?
+      this.datasets.length / 2 : (this.datasets.length - 1) / 2;
     const centerOffset = index - center;
     const totalWidth = this._pixelsToValue(this.props.barPadding) +
       this._pixelsToValue(this.props.barWidth);
@@ -250,11 +260,10 @@ class VBar extends React.Component {
   }
 
   getYOffset(y, index, barIndex) {
-    const datasets = this.consolidateData();
     if (index === 0) {
       return y;
     }
-    const previousDataSets = _.take(datasets, index);
+    const previousDataSets = _.take(this.datasets, index);
     const previousBars = _.map(previousDataSets, (dataset) => {
       return _.pluck(dataset.data, "y");
     });
@@ -265,14 +274,14 @@ class VBar extends React.Component {
 
   getBarElements(dataset, style, index) {
     return _.map(dataset.data, (data, barIndex) => {
-      const minY = _.min(this.getDomain("y"));
+      const minY = _.min(this.domain.y);
       const yOffset = this.getYOffset(minY, index, barIndex);
       const y0 = this.props.stacked ? yOffset : minY;
       const y1 = this.props.stacked ? yOffset + data.y : data.y;
       const x = this.props.stacked ? data.x : this._adjustX(data.x, index);
-      const scaledX = this.getScale("x").call(this, x);
-      const scaledY0 = this.getScale("y").call(this, y0);
-      const scaledY1 = this.getScale("y").call(this, y1);
+      const scaledX = this.scale.x.call(this, x);
+      const scaledY0 = this.scale.y.call(this, y0);
+      const scaledY1 = this.scale.y.call(this, y1);
       const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
       const pathElement = (
         <path
@@ -290,8 +299,8 @@ class VBar extends React.Component {
   }
 
   plotDataPoints() {
-    return _.map(this.consolidateData(), (dataset, index) => {
-      const style = this.getStyles();
+    return _.map(this.datasets, (dataset, index) => {
+      const style = this.styles;
       return this.getBarElements(dataset, style, index);
     });
   }
@@ -299,11 +308,11 @@ class VBar extends React.Component {
   render() {
     if (this.props.containerElement === "svg") {
       return (
-        <svg style={this.getStyles()}>{this.plotDataPoints()}</svg>
+        <svg style={this.styles}>{this.plotDataPoints()}</svg>
       );
     }
     return (
-      <g style={this.getStyles()}>{this.plotDataPoints()}</g>
+      <g style={this.styles}>{this.plotDataPoints()}</g>
     );
   }
 }
