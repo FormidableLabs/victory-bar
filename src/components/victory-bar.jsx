@@ -34,6 +34,7 @@ class VBar extends React.Component {
       x: this.getScale(props, "x"),
       y: this.getScale(props, "y")
     };
+    this.barWidth = this.getBarWidth(props);
   }
 
   getStyles(props) {
@@ -156,15 +157,19 @@ class VBar extends React.Component {
 
   getDomain(props, axis) {
     const categoryDomain = this._getDomainFromCategories(props, axis);
+    let domain;
     if (props.domain) {
-      return props.domain[axis] || props.domain;
+      domain = props.domain[axis] || props.domain;
     } else if (categoryDomain) {
-      return categoryDomain;
+      domain = categoryDomain;
     } else if (props.data) {
-      return this._getDomainFromData(props, axis);
+      domain = this._getDomainFromData(props, axis);
     } else {
-      return this._getDomainFromScale(props, axis);
+      domain = this._getDomainFromScale(props, axis);
     }
+    const offset = props.categoryOffset;
+    return axis === "x" ? [_.min(domain) - offset, _.max(domain) + offset] : domain;
+
   }
 
   _getDomainFromCategories(props, axis) {
@@ -197,8 +202,7 @@ class VBar extends React.Component {
     // offset by the bar offset value
     if (this.stringMap[axis] !== null) {
       const mapValues = _.values(this.stringMap[axis]);
-      const offset = props.categoryOffset;
-      return [_.min(mapValues) - offset, _.max(mapValues) + offset];
+      return [_.min(mapValues), _.max(mapValues)];
     } else {
       // find the global min and max
       const allData = _.flatten(_.pluck(this.datasets, "data"));
@@ -221,7 +225,7 @@ class VBar extends React.Component {
   }
 
   getBarPath(x, y0, y1) {
-    const size = this.getBarWidth() / 2;
+    const size = this.barWidth / 2;
     return "M " + (x - size) + "," + y0 + " " +
       "L " + (x - size) + "," + y1 +
       "L " + (x + size) + "," + y1 +
@@ -245,18 +249,16 @@ class VBar extends React.Component {
     const centerOffset = index - center;
     const totalWidth = this._pixelsToValue(this.props.barPadding) +
       this._pixelsToValue(this.props.barWidth);
-    let bandCenter;
     if (this.props.categories && _.isArray(this.props.categories[0])) {
       // figure out which band this x value belongs to, and shift it to the
       // center of that band before calculating the usual offset
       const xBand = _.filter(this.props.categories, (band) => {
         return (x >= _.min(band) && x <= _.max(band));
       });
-      bandCenter = _.isArray(xBand[0]) ?
-        (_.max(xBand[0]) + _.min(xBand[0])) / 2 : undefined;
-      return bandCenter + (centerOffset * totalWidth);
+      const bandCenter = _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
+      return this.props.stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
     }
-    return x + (centerOffset * totalWidth);
+    return this.props.stacked ? x  : x  + (centerOffset * totalWidth);
   }
 
   getYOffset(y, index, barIndex) {
@@ -278,7 +280,7 @@ class VBar extends React.Component {
       const yOffset = this.getYOffset(minY, index, barIndex);
       const y0 = this.props.stacked ? yOffset : minY;
       const y1 = this.props.stacked ? yOffset + data.y : data.y;
-      const x = this.props.stacked ? data.x : this._adjustX(data.x, index);
+      const x = this._adjustX(data.x, index);
       const scaledX = this.scale.x.call(this, x);
       const scaledY0 = this.scale.y.call(this, y0);
       const scaledY1 = this.scale.y.call(this, y1);
@@ -325,8 +327,7 @@ class VictoryBar extends React.Component {
         dataAttributes: this.props.dataAttributes,
         style: this.props.style,
         barWidth: this.props.barWidth,
-        barPadding: this.props.barPadding,
-        categoryOffset: this.props.categoryOffset
+        barPadding: this.props.barPadding
       };
       return (
         <VictoryAnimation data={propsToAnimate}>

@@ -18,15 +18,15 @@ class App extends React.Component {
     return _.map(_.range(5), () => {
       return [
         {
-          x: "red",
+          x: "rabbits",
           y: _.random(1, 5)
         },
         {
-          x: "green",
+          x: "cats",
           y: _.random(1, 10)
         },
         {
-          x: "blue",
+          x: "dogs",
           y: _.random(1, 15)
         }
       ];
