@@ -272,7 +272,7 @@ class VBar extends React.Component {
     }, 0);
   }
 
-  getBarElements(dataset, style, index) {
+  getBarElements(dataset, index) {
     return _.map(dataset.data, (data, barIndex) => {
       const minY = _.min(this.domain.y);
       const yOffset = this.getYOffset(minY, index, barIndex);
@@ -286,9 +286,9 @@ class VBar extends React.Component {
       const pathElement = (
         <path
           d={path}
-          fill={dataset.attrs.color || style.color || "blue"}
+          fill={data.color || dataset.attrs.color || this.styles.color || "blue"}
           key={"series-" + index + "-bar-" + barIndex}
-          opacity={dataset.attrs.opacity || style.opacity || 1}
+          opacity={dataset.attrs.opacity || this.styles.opacity || 1}
           shapeRendering="optimizeSpeed"
           stroke="transparent"
           strokeWidth={0}>
@@ -300,8 +300,7 @@ class VBar extends React.Component {
 
   plotDataPoints() {
     return _.map(this.datasets, (dataset, index) => {
-      const style = this.styles;
-      return this.getBarElements(dataset, style, index);
+      return this.getBarElements(dataset, index);
     });
   }
 
@@ -319,22 +318,23 @@ class VBar extends React.Component {
 
 @Radium
 class VictoryBar extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   render() {
     if (this.props.animate) {
+      const propsToAnimate = {
+        data: this.props.data,
+        dataAttributes: this.props.dataAttributes,
+        style: this.props.style,
+        barWidth: this.props.barWidth,
+        barPadding: this.props.barPadding,
+        categoryOffset: this.props.categoryOffset
+      };
       return (
-        <VictoryAnimation data={this.props}>
+        <VictoryAnimation data={propsToAnimate}>
           {(props) => {
             return (
               <VBar
-                {...props}
-                stacked={this.props.stacked}
-                scale={this.props.scale}
-                animate={this.props.animate}
-                containerElement={this.props.containerElement}/>
+                {...this.props}
+                {...props}/>
             );
           }}
         </VictoryAnimation>
