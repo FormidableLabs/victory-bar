@@ -258,7 +258,7 @@ class VBar extends React.Component {
       const bandCenter = _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
       return this.props.stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
     }
-    return this.props.stacked ? x  : x  + (centerOffset * totalWidth);
+    return this.props.stacked ? x : x + (centerOffset * totalWidth);
   }
 
   getYOffset(y, index, barIndex) {
