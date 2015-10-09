@@ -272,7 +272,8 @@ class VBar extends React.Component {
   }
 
   getBarElements(dataset, index) {
-    return _.map(dataset.data, (data, barIndex) => {
+    // create one path for all bars of the same data series
+    const path = _.reduce(dataset.data, (memo, data, barIndex) => {
       const minY = _.min(this.domain.y);
       const yOffset = this.getYOffset(minY, index, barIndex);
       const y0 = this.props.stacked ? yOffset : minY;
@@ -281,20 +282,21 @@ class VBar extends React.Component {
       const scaledX = this.scale.x.call(this, x);
       const scaledY0 = this.scale.y.call(this, y0);
       const scaledY1 = this.scale.y.call(this, y1);
-      const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
-      const pathElement = (
-        <path
-          d={path}
-          fill={dataset.attrs.color || this.style.color || "blue"}
-          key={"series-" + index + "-bar-" + barIndex}
-          opacity={dataset.attrs.opacity || this.style.opacity || 1}
-          shapeRendering="optimizeSpeed"
-          stroke="transparent"
-          strokeWidth={0}>
-        </path>
-      );
-      return pathElement;
-    });
+      const partialPath = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : "";
+      return memo + partialPath;
+    }, "");
+
+    return (
+      <path
+        d={path}
+        fill={dataset.attrs.color || this.style.color || "blue"}
+        key={"series-" + index}
+        opacity={dataset.attrs.opacity || this.style.opacity || 1}
+        shapeRendering="optimizeSpeed"
+        stroke="transparent"
+        strokeWidth={0}>
+      </path>
+    );
   }
 
   plotDataPoints() {
@@ -329,6 +331,7 @@ class VictoryBar extends React.Component {
                 stacked={this.props.stacked}
                 scale={this.props.scale}
                 animate={this.props.animate}
+                categoryOffset={this.props.categoryOffset}
                 containerElement={this.props.containerElement}/>
             );
           }}
