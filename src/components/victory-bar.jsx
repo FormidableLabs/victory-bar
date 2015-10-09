@@ -16,7 +16,7 @@ class VBar extends React.Component {
   }
 
   getCalculatedValues(props) {
-    this.styles = this.getStyles(props);
+    this.style = this.getStyles(props);
     this.stringMap = {
       x: this.createStringMap(props, "x"),
       y: this.createStringMap(props, "y")
@@ -151,25 +151,21 @@ class VBar extends React.Component {
     }
     // if the range is not given in props, calculate it from width, height and margin
     return axis === "x" ?
-      [this.styles.margin, this.styles.width - this.styles.margin] :
-      [this.styles.height - this.styles.margin, this.styles.margin];
+      [this.style.margin, this.style.width - this.style.margin] :
+      [this.style.height - this.style.margin, this.style.margin];
   }
 
   getDomain(props, axis) {
     const categoryDomain = this._getDomainFromCategories(props, axis);
-    let domain;
     if (props.domain) {
-      domain = props.domain[axis] || props.domain;
+      return props.domain[axis] || props.domain;
     } else if (categoryDomain) {
-      domain = categoryDomain;
+      return categoryDomain;
     } else if (props.data) {
-      domain = this._getDomainFromData(props, axis);
+      return this._getDomainFromData(props, axis);
     } else {
-      domain = this._getDomainFromScale(props, axis);
+      return this._getDomainFromScale(props, axis);
     }
-    const offset = props.categoryOffset;
-    return axis === "x" ? [_.min(domain) - offset, _.max(domain) + offset] : domain;
-
   }
 
   _getDomainFromCategories(props, axis) {
@@ -202,7 +198,8 @@ class VBar extends React.Component {
     // offset by the bar offset value
     if (this.stringMap[axis] !== null) {
       const mapValues = _.values(this.stringMap[axis]);
-      return [_.min(mapValues), _.max(mapValues)];
+      const offset = props.categoryOffset;
+      return [_.min(mapValues) - offset, _.max(mapValues) + offset];
     } else {
       // find the global min and max
       const allData = _.flatten(_.pluck(this.datasets, "data"));
@@ -219,9 +216,9 @@ class VBar extends React.Component {
     }
   }
 
-  getBarWidth() {
+  getBarWidth(props) {
     // todo calculate / enforce max width
-    return this.props.barWidth;
+    return props.barWidth;
   }
 
   getBarPath(x, y0, y1) {
@@ -288,9 +285,9 @@ class VBar extends React.Component {
       const pathElement = (
         <path
           d={path}
-          fill={data.color || dataset.attrs.color || this.styles.color || "blue"}
+          fill={dataset.attrs.color || this.style.color || "blue"}
           key={"series-" + index + "-bar-" + barIndex}
-          opacity={dataset.attrs.opacity || this.styles.opacity || 1}
+          opacity={dataset.attrs.opacity || this.style.opacity || 1}
           shapeRendering="optimizeSpeed"
           stroke="transparent"
           strokeWidth={0}>
@@ -309,33 +306,30 @@ class VBar extends React.Component {
   render() {
     if (this.props.containerElement === "svg") {
       return (
-        <svg style={this.styles}>{this.plotDataPoints()}</svg>
+        <svg style={this.style}>{this.plotDataPoints()}</svg>
       );
     }
     return (
-      <g style={this.styles}>{this.plotDataPoints()}</g>
+      <g style={this.style}>{this.plotDataPoints()}</g>
     );
   }
 }
 
 @Radium
 class VictoryBar extends React.Component {
+
   render() {
     if (this.props.animate) {
-      const propsToAnimate = {
-        data: this.props.data,
-        dataAttributes: this.props.dataAttributes,
-        style: this.props.style,
-        barWidth: this.props.barWidth,
-        barPadding: this.props.barPadding
-      };
       return (
-        <VictoryAnimation data={propsToAnimate}>
+        <VictoryAnimation data={this.props}>
           {(props) => {
             return (
               <VBar
-                {...this.props}
-                {...props}/>
+                {...props}
+                stacked={this.props.stacked}
+                scale={this.props.scale}
+                animate={this.props.animate}
+                containerElement={this.props.containerElement}/>
             );
           }}
         </VictoryAnimation>
