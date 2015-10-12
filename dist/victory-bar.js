@@ -70,6 +70,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  value: true
 	});
 	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 	
 	var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
@@ -96,8 +98,341 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _d32 = _interopRequireDefault(_d3);
 	
-	var VictoryBar = (function (_React$Component) {
-	  _inherits(VictoryBar, _React$Component);
+	var _log = __webpack_require__(22);
+	
+	var _log2 = _interopRequireDefault(_log);
+	
+	var _victoryAnimation = __webpack_require__(23);
+	
+	var VBar = (function (_React$Component) {
+	  _inherits(VBar, _React$Component);
+	
+	  function VBar(props) {
+	    _classCallCheck(this, VBar);
+	
+	    _get(Object.getPrototypeOf(VBar.prototype), "constructor", this).call(this, props);
+	    this.getCalculatedValues(props);
+	  }
+	
+	  _createClass(VBar, [{
+	    key: "componentWillReceiveProps",
+	    value: function componentWillReceiveProps(nextProps) {
+	      this.getCalculatedValues(nextProps);
+	    }
+	  }, {
+	    key: "getCalculatedValues",
+	    value: function getCalculatedValues(props) {
+	      this.style = this.getStyles(props);
+	      this.stringMap = {
+	        x: this.createStringMap(props, "x"),
+	        y: this.createStringMap(props, "y")
+	      };
+	      this.datasets = this.consolidateData(props);
+	      this.range = {
+	        x: this.getRange(props, "x"),
+	        y: this.getRange(props, "y")
+	      };
+	      this.domain = {
+	        x: this.getDomain(props, "x"),
+	        y: this.getDomain(props, "y")
+	      };
+	      this.scale = {
+	        x: this.getScale(props, "x"),
+	        y: this.getScale(props, "y")
+	      };
+	      this.barWidth = this.getBarWidth(props);
+	    }
+	  }, {
+	    key: "getStyles",
+	    value: function getStyles(props) {
+	      return _lodash2["default"].merge({
+	        borderColor: "transparent",
+	        borderWidth: 0,
+	        color: "#756f6a",
+	        opacity: 1,
+	        margin: 20,
+	        width: 500,
+	        height: 300,
+	        fontFamily: "Helvetica",
+	        fontSize: 10,
+	        textAnchor: "middle"
+	      }, props.style);
+	    }
+	  }, {
+	    key: "consolidateData",
+	    value: function consolidateData(props) {
+	      var _this = this;
+	
+	      if (props.data) {
+	        var dataFromProps = _lodash2["default"].isArray(props.data[0]) ? props.data : [props.data];
+	        return _lodash2["default"].map(dataFromProps, function (dataset, index) {
+	          return {
+	            attrs: _this._getAttributes(props, index),
+	            data: _lodash2["default"].map(dataset, function (data) {
+	              return _lodash2["default"].merge(data, {
+	                // map string data to numeric values, and add names
+	                x: _lodash2["default"].isString(data.x) ? _this.stringMap.x[data.x] : data.x,
+	                xName: _lodash2["default"].isString(data.x) ? data.x : undefined,
+	                y: _lodash2["default"].isString(data.y) ? _this.stringMap.y[data.y] : data.y,
+	                yName: _lodash2["default"].isString(data.y) ? data.y : undefined
+	              });
+	            })
+	          };
+	        });
+	      } else {
+	        return [{
+	          attrs: {},
+	          data: []
+	        }];
+	      }
+	    }
+	  }, {
+	    key: "_getAttributes",
+	    value: function _getAttributes(props, index) {
+	      var attributes = props.dataAttributes && props.dataAttributes[index] ? props.dataAttributes[index] : props.dataAttributes;
+	      var requiredAttributes = {
+	        name: attributes && attributes.name ? attributes.name : "data-" + index
+	      };
+	      return _lodash2["default"].merge(requiredAttributes, attributes);
+	    }
+	  }, {
+	    key: "containsStrings",
+	    value: function containsStrings(collection) {
+	      return _lodash2["default"].some(collection, function (item) {
+	        return _lodash2["default"].isString(item);
+	      });
+	    }
+	  }, {
+	    key: "createStringMap",
+	    value: function createStringMap(props, axis) {
+	      // if categories exist and are strings, create a map using only those strings
+	      // dont alter the order.
+	      var categories = props.categories ? props.categories[axis] || props.categories : undefined;
+	      if (categories && this.containsStrings(categories)) {
+	        return _lodash2["default"].zipObject(_lodash2["default"].map(categories, function (tick, index) {
+	          return ["" + tick, index + 1];
+	        }));
+	      }
+	      // collect strings from props.data
+	      if (props.data) {
+	        var data = _lodash2["default"].isArray(props.data) ? _lodash2["default"].flattenDeep(props.data) : props.data;
+	        // create a unique, sorted set of strings
+	        var stringData = _lodash2["default"].chain(data).pluck(axis).map(function (datum) {
+	          return _lodash2["default"].isString(datum) ? datum : null;
+	        }).compact().uniq().sort().value();
+	
+	        return _lodash2["default"].isEmpty(stringData) ? null : _lodash2["default"].zipObject(_lodash2["default"].map(stringData, function (string, index) {
+	          return [string, index + 1];
+	        }));
+	      } else {
+	        return {
+	          x: null,
+	          y: null
+	        };
+	      }
+	    }
+	  }, {
+	    key: "getScale",
+	    value: function getScale(props, axis) {
+	      var scale = props.scale[axis] ? props.scale[axis]().copy() : props.scale().copy();
+	      var range = this.range[axis];
+	      var domain = this.domain[axis];
+	      scale.range(range);
+	      scale.domain(domain);
+	      // hacky check for identity scale
+	      if (_lodash2["default"].difference(scale.range(), range).length !== 0) {
+	        // identity scale, reset the domain and range
+	        scale.range(range);
+	        scale.domain(range);
+	      }
+	      return scale;
+	    }
+	  }, {
+	    key: "getRange",
+	    value: function getRange(props, axis) {
+	      if (props.range) {
+	        return props.range[axis] ? props.range[axis] : props.range;
+	      }
+	      // if the range is not given in props, calculate it from width, height and margin
+	      return axis === "x" ? [this.style.margin, this.style.width - this.style.margin] : [this.style.height - this.style.margin, this.style.margin];
+	    }
+	  }, {
+	    key: "getDomain",
+	    value: function getDomain(props, axis) {
+	      var categoryDomain = this._getDomainFromCategories(props, axis);
+	      if (props.domain) {
+	        return props.domain[axis] || props.domain;
+	      } else if (categoryDomain) {
+	        return categoryDomain;
+	      } else if (props.data) {
+	        return this._getDomainFromData(props, axis);
+	      } else {
+	        return this._getDomainFromScale(props, axis);
+	      }
+	    }
+	  }, {
+	    key: "_getDomainFromCategories",
+	    value: function _getDomainFromCategories(props, axis) {
+	      if (axis !== "x" || !props.categories || this.containsStrings(props.categories)) {
+	        return undefined;
+	      }
+	      return [_lodash2["default"].min(_lodash2["default"].flatten(props.categories)), _lodash2["default"].max(_lodash2["default"].flatten(props.categories))];
+	    }
+	
+	    // helper method for getDomain
+	  }, {
+	    key: "_getDomainFromScale",
+	    value: function _getDomainFromScale(props, axis) {
+	      // The scale will never be undefined due to default props
+	      var scaleDomain = props.scale[axis] ? props.scale[axis]().domain() : props.scale().domain();
+	
+	      // Warn when particular types of scales need more information to produce meaningful lines
+	      if (_lodash2["default"].isDate(scaleDomain[0])) {
+	        _log2["default"].warn("please specify a domain or data when using time scales");
+	      } else if (scaleDomain.length === 0) {
+	        _log2["default"].warn("please specify a domain or data when using ordinal or quantile scales");
+	      } else if (scaleDomain.length === 1) {
+	        _log2["default"].warn("please specify a domain or data when using a threshold scale");
+	      }
+	      return scaleDomain;
+	    }
+	
+	    // helper method for getDomain
+	  }, {
+	    key: "_getDomainFromData",
+	    value: function _getDomainFromData(props, axis) {
+	      // if a sensible string map exists, return the minimum and maximum values
+	      // offset by the bar offset value
+	      if (this.stringMap[axis] !== null) {
+	        var mapValues = _lodash2["default"].values(this.stringMap[axis]);
+	        var offset = props.categoryPadding;
+	        return [_lodash2["default"].min(mapValues) - offset, _lodash2["default"].max(mapValues) + offset];
+	      } else {
+	        // find the global min and max
+	        var allData = _lodash2["default"].flatten(_lodash2["default"].pluck(this.datasets, "data"));
+	        var min = _lodash2["default"].min(_lodash2["default"].pluck(allData, axis));
+	        var max = _lodash2["default"].max(_lodash2["default"].pluck(allData, axis));
+	        // find the cumulative max for stacked chart types
+	        // this is only sensible for the y domain
+	        // TODO check assumption
+	        var cumulativeMax = props.stacked && axis === "y" ? _lodash2["default"].reduce(this.datasets, function (memo, dataset) {
+	          return memo + (_lodash2["default"].max(_lodash2["default"].pluck(dataset.data, axis)) - _lodash2["default"].min(_lodash2["default"].pluck(dataset.data, axis)));
+	        }, 0) : -Infinity;
+	        return [min, _lodash2["default"].max([max, cumulativeMax])];
+	      }
+	    }
+	  }, {
+	    key: "getBarWidth",
+	    value: function getBarWidth(props) {
+	      // todo calculate / enforce max width
+	      return props.barWidth;
+	    }
+	  }, {
+	    key: "getBarPath",
+	    value: function getBarPath(x, y0, y1) {
+	      var size = this.barWidth / 2;
+	      return "M " + (x - size) + "," + y0 + " " + "L " + (x - size) + "," + y1 + "L " + (x + size) + "," + y1 + "L " + (x + size) + "," + y0 + "L " + (x - size) + "," + y0;
+	    }
+	  }, {
+	    key: "_pixelsToValue",
+	    value: function _pixelsToValue(pixels) {
+	      var xRange = this.range.x;
+	      var xDomain = this.domain.x;
+	      return (_lodash2["default"].max(xDomain) - _lodash2["default"].min(xDomain)) / (_lodash2["default"].max(xRange) - _lodash2["default"].min(xRange)) * pixels;
+	    }
+	  }, {
+	    key: "_adjustX",
+	    value: function _adjustX(x, index) {
+	      if (this.stringMap.x === null && !this.props.categories) {
+	        // don't adjust x if the x axis is numeric
+	        return x;
+	      }
+	      var center = this.datasets.length % 2 === 0 ? this.datasets.length / 2 : (this.datasets.length - 1) / 2;
+	      var centerOffset = index - center;
+	      var totalWidth = this._pixelsToValue(this.props.barPadding) + this._pixelsToValue(this.props.barWidth);
+	      if (this.props.categories && _lodash2["default"].isArray(this.props.categories[0])) {
+	        // figure out which band this x value belongs to, and shift it to the
+	        // center of that band before calculating the usual offset
+	        var xBand = _lodash2["default"].filter(this.props.categories, function (band) {
+	          return x >= _lodash2["default"].min(band) && x <= _lodash2["default"].max(band);
+	        });
+	        var bandCenter = _lodash2["default"].isArray(xBand[0]) && (_lodash2["default"].max(xBand[0]) + _lodash2["default"].min(xBand[0])) / 2;
+	        return this.props.stacked ? bandCenter : bandCenter + centerOffset * totalWidth;
+	      }
+	      return this.props.stacked ? x : x + centerOffset * totalWidth;
+	    }
+	  }, {
+	    key: "getYOffset",
+	    value: function getYOffset(y, index, barIndex) {
+	      if (index === 0) {
+	        return y;
+	      }
+	      var previousDataSets = _lodash2["default"].take(this.datasets, index);
+	      var previousBars = _lodash2["default"].map(previousDataSets, function (dataset) {
+	        return _lodash2["default"].pluck(dataset.data, "y");
+	      });
+	      return _lodash2["default"].reduce(previousBars, function (memo, bar) {
+	        return memo + bar[barIndex];
+	      }, 0);
+	    }
+	  }, {
+	    key: "getBarElements",
+	    value: function getBarElements(dataset, index) {
+	      var _this2 = this;
+	
+	      return _lodash2["default"].map(dataset.data, function (data, barIndex) {
+	        var minY = _lodash2["default"].min(_this2.domain.y);
+	        var yOffset = _this2.getYOffset(minY, index, barIndex);
+	        var y0 = _this2.props.stacked ? yOffset : minY;
+	        var y1 = _this2.props.stacked ? yOffset + data.y : data.y;
+	        var x = _this2._adjustX(data.x, index);
+	        var scaledX = _this2.scale.x.call(_this2, x);
+	        var scaledY0 = _this2.scale.y.call(_this2, y0);
+	        var scaledY1 = _this2.scale.y.call(_this2, y1);
+	        var path = scaledX ? _this2.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
+	        var pathElement = _react2["default"].createElement("path", {
+	          d: path,
+	          fill: dataset.attrs.color || _this2.style.color || "blue",
+	          key: "series-" + index + "-bar-" + barIndex,
+	          opacity: dataset.attrs.opacity || _this2.style.opacity || 1,
+	          shapeRendering: "optimizeSpeed",
+	          stroke: "transparent",
+	          strokeWidth: 0 });
+	        return pathElement;
+	      });
+	    }
+	  }, {
+	    key: "plotDataPoints",
+	    value: function plotDataPoints() {
+	      var _this3 = this;
+	
+	      return _lodash2["default"].map(this.datasets, function (dataset, index) {
+	        return _this3.getBarElements(dataset, index);
+	      });
+	    }
+	  }, {
+	    key: "render",
+	    value: function render() {
+	      if (this.props.containerElement === "svg") {
+	        return _react2["default"].createElement(
+	          "svg",
+	          { style: this.style },
+	          this.plotDataPoints()
+	        );
+	      }
+	      return _react2["default"].createElement(
+	        "g",
+	        { style: this.style },
+	        this.plotDataPoints()
+	      );
+	    }
+	  }]);
+	
+	  return VBar;
+	})(_react2["default"].Component);
+	
+	var VictoryBar = (function (_React$Component2) {
+	  _inherits(VictoryBar, _React$Component2);
 	
 	  function VictoryBar() {
 	    _classCallCheck(this, _VictoryBar);
@@ -106,93 +441,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  _createClass(VictoryBar, [{
-	    key: "drawStackedBars",
-	    value: function drawStackedBars() {
-	      var _this = this;
-	
-	      // make a copy so we don't mutate props
-	      var localCopyOfData = _lodash2["default"].cloneDeep(this.props.data);
-	
-	      // set up color scales, this will be abstracted
-	      var color = _d32["default"].scale.ordinal().range(this.props.colorCategories).domain(_d32["default"].keys(localCopyOfData[0]).filter(function (key) {
-	        return key !== "label";
-	      }));
-	
-	      // each bar segment needs to know where it goes relative to the others, hence y0 y1
-	      localCopyOfData.forEach(function (bar) {
-	        var y0 = 0;
-	        bar.segments = color.domain().map(function (segmentName) {
-	          return {
-	            segmentName: segmentName,
-	            y0: y0,
-	            y1: y0 += +bar[segmentName]
-	          };
-	        });
-	        bar.total = bar.segments[bar.segments.length - 1].y1;
-	      });
-	
-	      /* width / categories = x.rangeBand */
-	      var x = _d32["default"].scale.ordinal().rangeRoundBands([0, this.props.width], .1).domain(localCopyOfData.map(function (bar) {
-	        return bar.label;
-	      }));
-	
-	      var y = _d32["default"].scale.linear().rangeRound([this.props.height, 0]).domain([0, _d32["default"].max(localCopyOfData, function (bar) {
-	        return bar.total;
-	      })]);
-	
-	      // localCopyOfData.sort((a, b) => {
-	      //    return b.total - a.total;
-	      // });
-	
-	      var stackedBars = localCopyOfData.map(function (bar) {
-	        var scales = {
-	          color: color,
-	          x: x,
-	          y: y
-	        };
-	        return _react2["default"].createElement(
-	          "g",
-	          { className: "segmentGroup", transform: "translate(" + x(bar.label) + ",0)" },
-	          _this.props.makeSegments(bar.segments, scales)
-	        );
-	      });
-	      return stackedBars;
-	    }
-	  }, {
-	    key: "drawBars",
-	    value: function drawBars() {
-	      var _this2 = this;
-	
-	      var bars = this.props.data.map(function (bar, i) {
-	        return _react2["default"].createElement("rect", {
-	          width: 20,
-	          height: bar,
-	          x: i * 30,
-	          y: _this2.props.height - bar });
-	      });
-	      return bars;
-	    }
-	  }, {
 	    key: "render",
 	    value: function render() {
-	      // const styles = this.getStyles();
-	      if (this.props.svg) {
+	      var _this4 = this;
+	
+	      if (this.props.animate) {
 	        return _react2["default"].createElement(
-	          "svg",
-	          { width: this.props.width, height: this.props.height },
-	          _react2["default"].createElement(
-	            "g",
-	            null,
-	            _lodash2["default"].isObject(this.props.data[0]) ? this.drawStackedBars() : this.drawBars()
-	          )
-	        );
-	      } else {
-	        return _react2["default"].createElement(
-	          "g",
-	          null,
-	          _lodash2["default"].isObject(this.props.data[0]) ? this.drawStackedBars() : this.drawBars()
+	          _victoryAnimation.VictoryAnimation,
+	          { data: this.props },
+	          function (props) {
+	            return _react2["default"].createElement(VBar, _extends({}, props, {
+	              stacked: _this4.props.stacked,
+	              scale: _this4.props.scale,
+	              animate: _this4.props.animate,
+	              containerElement: _this4.props.containerElement }));
+	          }
 	        );
 	      }
+	      return _react2["default"].createElement(VBar, this.props);
 	    }
 	  }]);
 	
@@ -201,32 +467,131 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return VictoryBar;
 	})(_react2["default"].Component);
 	
-	VictoryBar.propTypes = {
-	  data: _react2["default"].PropTypes.array,
-	  svg: _react2["default"].PropTypes.bool,
-	  width: _react2["default"].PropTypes.number,
-	  height: _react2["default"].PropTypes.number,
-	  makeSegments: _react2["default"].PropTypes.func,
-	  colorCategories: _react2["default"].PropTypes.array
+	var propTypes = {
+	  /**
+	   * The data prop specifies the data to be plotted. Data should be in the form of an array
+	   * of data points, or an array of arrays of data points for multiple datasets.
+	   * Each data point should be an object with x and y properties.
+	   * @exampes [
+	   *   {x: new Date(1982, 1, 1), y: 125},
+	   *   {x: new Date(1987, 1, 1), y: 257},
+	   *   {x: new Date(1993, 1, 1), y: 345}
+	   * ],
+	   * [
+	   *   [{x: 5, y: 3}, {x: 4, y: 2}, {x: 3, y: 1}],
+	   *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}],
+	   *   [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}]
+	   * ]
+	   */
+	  data: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.shape({
+	    x: _react2["default"].PropTypes.any,
+	    y: _react2["default"].PropTypes.any
+	  })), _react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.shape({
+	    x: _react2["default"].PropTypes.any,
+	    y: _react2["default"].PropTypes.any
+	  })))]),
+	  /**
+	   * The dataAttributes prop describes how a data set should be styled.
+	   * This prop can be given as an object, or an array of objects. If this prop is
+	   * given as an array of objects, the properties of each object in the array will
+	   * be applied to the data points in the corresponding array of the data prop.
+	   * @exampes {color: "blue", opacity: 0.6},
+	   * [{color: "red"}, {color: "orange"}]
+	   */
+	  dataAttributes: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.object, _react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.object)]),
+	  /**
+	   * The categories prop specifies the categories for a bar chart. This prop should
+	   * be given as an array of string values, numeric values, or arrays. When this prop is
+	   * given as an array of arrays, the minimum and maximum values of the arrays define range bands,
+	   * allowing numeric data to be grouped into segments.
+	   * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
+	   */
+	  categories: _react2["default"].PropTypes.array,
+	  /**
+	   * The domain prop describes the range of values your bar chart will cover. This prop can be
+	   * given as a array of the minimum and maximum expected values for your bar chart,
+	   * or as an object that specifies separate arrays for x and y.
+	   * If this prop is not provided, a domain will be calculated from data, or other
+	   * available information.
+	   * @exampes [-1, 1], {x: [0, 100], y: [0, 1]}
+	   */
+	  domain: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.array, _react2["default"].PropTypes.shape({
+	    x: _react2["default"].PropTypes.array,
+	    y: _react2["default"].PropTypes.array
+	  })]),
+	  /**
+	   * The range prop describes the range of pixels your bar chart will cover. This prop can be
+	   * given as a array of the minimum and maximum expected values for your bar chart,
+	   * or as an object that specifies separate arrays for x and y.
+	   * If this prop is not provided, a range will be calculated based on the height,
+	   * width, and margin provided in the style prop, or in default styles. It is usually
+	   * a good idea to let the chart component calculate its own range.
+	   * @exampes [0, 500], {x: [0, 500], y: [500, 300]}
+	   */
+	  range: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.array, _react2["default"].PropTypes.shape({
+	    x: _react2["default"].PropTypes.array,
+	    y: _react2["default"].PropTypes.array
+	  })]),
+	  /**
+	   * The scale prop determines which scales your chart should use. This prop can be
+	   * given as a function, or as an object that specifies separate functions for x and y.
+	   * @exampes () => d3.time.scale(), {x: () => d3.scale.linear(), y: () => d3.scale.log()}
+	   */
+	  scale: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.func, _react2["default"].PropTypes.shape({
+	    x: _react2["default"].PropTypes.func,
+	    y: _react2["default"].PropTypes.func
+	  })]),
+	  categoryPadding: _react2["default"].PropTypes.number,
+	  /**
+	   * The barPadding prop specifies the padding in number of pixels between bars
+	   * rendered in a bar chart.
+	   */
+	  barPadding: _react2["default"].PropTypes.number,
+	  /**
+	   * The barWidth prop specifies the width in number of pixels for bars rendered in a bar chart.
+	   */
+	  barWidth: _react2["default"].PropTypes.number,
+	  /**
+	   * The animate prop determines whether the chart should animate with changing data.
+	   */
+	  animate: _react2["default"].PropTypes.bool,
+	  /**
+	   * The stacked prop determines whether the chart should consist of stacked bars.
+	   * When this prop is set to false, grouped bars will be rendered instead.
+	   */
+	  stacked: _react2["default"].PropTypes.bool,
+	  /**
+	   * The style prop specifies styles for your chart. VictoryBar relies on Radium,
+	   * so valid Radium style objects should work for this prop, however height, width, and margin
+	   * are used to calculate range, and need to be expressed as a number of pixels
+	   * @example {width: 500, height: 300}
+	   */
+	  style: _react2["default"].PropTypes.node,
+	  /**
+	   * The containerElement prop specifies which element the compnent will render.
+	   * For standalone bars, the containerElement prop should be "svg". If you need to
+	   * compose bar with other chart components, the containerElement prop should
+	   * be "g", and will need to be rendered within an svg tag.
+	   */
+	  containerElement: _react2["default"].PropTypes.oneOf(["g", "svg"])
 	};
 	
-	VictoryBar.defaultProps = {
-	  data: [10, 30, 50, 80, 110],
-	  svg: true,
-	  width: 800,
-	  height: 600,
-	  makeSegments: function makeSegments(segments, scales) {
-	    var barSvg = segments.map(function (segment) {
-	      return _react2["default"].createElement("rect", {
-	        fill: scales.color(segment.segmentName),
-	        width: scales.x.rangeBand(),
-	        height: scales.y(segment.y0) - scales.y(segment.y1),
-	        y: scales.y(segment.y1) });
-	    });
-	    return barSvg;
+	var defaultProps = {
+	  animate: false,
+	  stacked: false,
+	  barWidth: 8,
+	  barPadding: 6,
+	  categoryPadding: 0.5,
+	  scale: function scale() {
+	    return _d32["default"].scale.linear();
 	  },
-	  colorCategories: ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]
+	  containerElement: "svg"
 	};
+	
+	VictoryBar.propTypes = propTypes;
+	VictoryBar.defaultProps = defaultProps;
+	VBar.propTypes = propTypes;
+	VBar.defaultProps = defaultProps;
 	
 	exports["default"] = VictoryBar;
 	module.exports = exports["default"];
@@ -23574,6 +23939,199 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (true) !(__WEBPACK_AMD_DEFINE_FACTORY__ = (d3), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)); else if (typeof module === "object" && module.exports) module.exports = d3;
 	  this.d3 = d3;
 	}();
+
+/***/ },
+/* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {/* eslint-disable*/
+	"use strict";
+	
+	module.exports = {
+	  warn: function warn(message) {
+	    if (process.env.NODE_ENV !== "production") {
+	      if (console && console.warn) {
+	        console.warn(message);
+	      }
+	    }
+	  }
+	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+
+/***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	module.exports = {
+	  VictoryAnimation: __webpack_require__(24)
+	};
+
+/***/ },
+/* 24 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*global requestAnimationFrame, cancelAnimationFrame, setTimeout*/
+	
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	
+	var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var _react = __webpack_require__(2);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _d3 = __webpack_require__(21);
+	
+	var _d32 = _interopRequireDefault(_d3);
+	
+	var VictoryAnimation = (function (_React$Component) {
+	  _inherits(VictoryAnimation, _React$Component);
+	
+	  function VictoryAnimation(props) {
+	    _classCallCheck(this, VictoryAnimation);
+	
+	    _get(Object.getPrototypeOf(VictoryAnimation.prototype), "constructor", this).call(this, props);
+	    /* defaults */
+	    this.state = Array.isArray(this.props.data) ? this.props.data[0] : this.props.data;
+	    this.interpolator = null;
+	    this.step = 0;
+	    this.queue = [];
+	    /* build easing function */
+	    this.ease = _d32["default"].ease(this.props.easing);
+	    /*
+	      unlike React.createClass({}), there is no autobinding of this in ES6 classes
+	      so we bind functionToBeRunEachFrame to current instance of victory animation class
+	    */
+	    this.functionToBeRunEachFrame = this.functionToBeRunEachFrame.bind(this);
+	  }
+	
+	  /* lifecycle */
+	
+	  _createClass(VictoryAnimation, [{
+	    key: "componentWillReceiveProps",
+	    value: function componentWillReceiveProps(nextProps) {
+	      var _this = this;
+	
+	      /* cancel existing loop if it exists */
+	      if (this.raf) {
+	        cancelAnimationFrame(this.raf);
+	      }
+	      /* If an object was supplied */
+	      if (Array.isArray(nextProps.data) === false) {
+	        /* compare cached version to next props */
+	        this.interpolator = _d32["default"].interpolate(this.state, nextProps.data);
+	        /* reset step to zero */
+	        this.step = 0;
+	        /* start request animation frame */
+	        setTimeout(function () {
+	          _this.raf = _this.functionToBeRunEachFrame();
+	        }, this.props.delay);
+	        /* If an array was supplied */
+	      } else {
+	          /* Build our tween queue */
+	          nextProps.data.forEach(function (data) {
+	            _this.queue.push(data);
+	          });
+	          /* Start traversing the tween queue */
+	          this.traverseQueue();
+	        }
+	    }
+	
+	    /* Traverse the tween queue */
+	  }, {
+	    key: "traverseQueue",
+	    value: function traverseQueue() {
+	      var _this2 = this;
+	
+	      if (this.queue.length > 0) {
+	        /* Get the next index */
+	        var data = this.queue[0];
+	        /* compare cached version to next props */
+	        this.interpolator = _d32["default"].interpolate(this.state, data);
+	        /* reset step to zero */
+	        this.step = 0;
+	        setTimeout(function () {
+	          _this2.raf = _this2.functionToBeRunEachFrame();
+	        }, this.props.delay);
+	      }
+	    }
+	
+	    /* every frame we... */
+	  }, {
+	    key: "functionToBeRunEachFrame",
+	    value: function functionToBeRunEachFrame() {
+	      /*
+	        step can generate imprecise values, sometimes greater than 1
+	        if this happens set the state to 1 and return, cancelling the loop
+	      */
+	      if (this.step >= 1) {
+	        this.step = 1;
+	        this.setState(this.interpolator(this.step));
+	        if (this.queue.length > 0) {
+	          cancelAnimationFrame(this.raf);
+	          this.queue.shift();
+	          this.traverseQueue();
+	        }
+	        return;
+	      }
+	      /*
+	        if we're not at the end of the loop, set the state by passing
+	        current step value that's transformed by the ease function to the
+	        interpolator, which is cached for performance whenever props are received
+	      */
+	      this.setState(this.interpolator(this.ease(this.step)));
+	      /* increase step by velocity */
+	      this.step += this.props.velocity;
+	      /*
+	        requestAnimationFrame calls a function on a frame.
+	        continue the loop by feeding functionToBeRunEachFrame
+	      */
+	      this.raf = requestAnimationFrame(this.functionToBeRunEachFrame);
+	    }
+	  }, {
+	    key: "render",
+	    value: function render() {
+	      return this.props.children(this.state);
+	    }
+	  }]);
+	
+	  return VictoryAnimation;
+	})(_react2["default"].Component);
+	
+	VictoryAnimation.propTypes = {
+	  velocity: _react2["default"].PropTypes.number,
+	  easing: _react2["default"].PropTypes.string,
+	  delay: _react2["default"].PropTypes.number,
+	  data: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.object, _react2["default"].PropTypes.array])
+	};
+	
+	VictoryAnimation.defaultProps = {
+	  /* velocity modifies step each frame */
+	  velocity: 0.02,
+	  /* easing modifies step each frame */
+	  easing: "quad-in-out",
+	  /* delay between transitions */
+	  delay: 0,
+	  /* we got nothin' */
+	  data: {}
+	};
+	
+	exports["default"] = VictoryAnimation;
+	module.exports = exports["default"];
 
 /***/ }
 /******/ ])
