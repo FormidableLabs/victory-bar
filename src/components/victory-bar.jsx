@@ -198,7 +198,7 @@ class VBar extends React.Component {
     // offset by the bar offset value
     if (this.stringMap[axis] !== null) {
       const mapValues = _.values(this.stringMap[axis]);
-      const offset = props.categoryOffset;
+      const offset = props.categoryPadding;
       return [_.min(mapValues) - offset, _.max(mapValues) + offset];
     } else {
       // find the global min and max
@@ -340,7 +340,22 @@ class VictoryBar extends React.Component {
 }
 
 const propTypes = {
-  data: React.PropTypes.oneOfType([ // maybe this should just be "node"
+  /**
+   * The data prop specifies the data to be plotted. Data should be in the form of an array
+   * of data points, or an array of arrays of data points for multiple datasets.
+   * Each data point should be an object with x and y properties.
+   * @exampes [
+   *   {x: new Date(1982, 1, 1), y: 125},
+   *   {x: new Date(1987, 1, 1), y: 257},
+   *   {x: new Date(1993, 1, 1), y: 345}
+   * ],
+   * [
+   *   [{x: 5, y: 3}, {x: 4, y: 2}, {x: 3, y: 1}],
+   *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}],
+   *   [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}]
+   * ]
+   */
+  data: React.PropTypes.oneOfType([
     React.PropTypes.arrayOf(
       React.PropTypes.shape({
         x: React.PropTypes.any,
@@ -356,11 +371,34 @@ const propTypes = {
       )
     )
   ]),
+  /**
+   * The dataAttributes prop describes how a data set should be styled.
+   * This prop can be given as an object, or an array of objects. If this prop is
+   * given as an array of objects, the properties of each object in the array will
+   * be applied to the data points in the corresponding array of the data prop.
+   * @exampes {color: "blue", opacity: 0.6},
+   * [{color: "red"}, {color: "orange"}]
+   */
   dataAttributes: React.PropTypes.oneOfType([
     React.PropTypes.object,
     React.PropTypes.arrayOf(React.PropTypes.object)
   ]),
+  /**
+   * The categories prop specifies the categories for a bar chart. This prop should
+   * be given as an array of string values, numeric values, or arrays. When this prop is
+   * given as an array of arrays, the minimum and maximum values of the arrays define range bands,
+   * allowing numeric data to be grouped into segments.
+   * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
+   */
   categories: React.PropTypes.array,
+  /**
+   * The domain prop describes the range of values your bar chart will cover. This prop can be
+   * given as a array of the minimum and maximum expected values for your bar chart,
+   * or as an object that specifies separate arrays for x and y.
+   * If this prop is not provided, a domain will be calculated from data, or other
+   * available information.
+   * @exampes [-1, 1], {x: [0, 100], y: [0, 1]}
+   */
   domain: React.PropTypes.oneOfType([
     React.PropTypes.array,
     React.PropTypes.shape({
@@ -368,6 +406,15 @@ const propTypes = {
       y: React.PropTypes.array
     })
   ]),
+  /**
+   * The range prop describes the range of pixels your bar chart will cover. This prop can be
+   * given as a array of the minimum and maximum expected values for your bar chart,
+   * or as an object that specifies separate arrays for x and y.
+   * If this prop is not provided, a range will be calculated based on the height,
+   * width, and margin provided in the style prop, or in default styles. It is usually
+   * a good idea to let the chart component calculate its own range.
+   * @exampes [0, 500], {x: [0, 500], y: [500, 300]}
+   */
   range: React.PropTypes.oneOfType([
     React.PropTypes.array,
     React.PropTypes.shape({
@@ -375,6 +422,11 @@ const propTypes = {
       y: React.PropTypes.array
     })
   ]),
+  /**
+   * The scale prop determines which scales your chart should use. This prop can be
+   * given as a function, or as an object that specifies separate functions for x and y.
+   * @exampes () => d3.time.scale(), {x: () => d3.scale.linear(), y: () => d3.scale.log()}
+   */
   scale: React.PropTypes.oneOfType([
     React.PropTypes.func,
     React.PropTypes.shape({
@@ -382,12 +434,38 @@ const propTypes = {
       y: React.PropTypes.func
     })
   ]),
-  categoryOffset: React.PropTypes.number,
+  categoryPadding: React.PropTypes.number,
+  /**
+   * The barPadding prop specifies the padding in number of pixels between bars
+   * rendered in a bar chart.
+   */
   barPadding: React.PropTypes.number,
+  /**
+   * The barWidth prop specifies the width in number of pixels for bars rendered in a bar chart.
+   */
   barWidth: React.PropTypes.number,
+  /**
+   * The animate prop determines whether the chart should animate with changing data.
+   */
   animate: React.PropTypes.bool,
+  /**
+   * The stacked prop determines whether the chart should consist of stacked bars.
+   * When this prop is set to false, grouped bars will be rendered instead.
+   */
   stacked: React.PropTypes.bool,
+  /**
+   * The style prop specifies styles for your chart. VictoryBar relies on Radium,
+   * so valid Radium style objects should work for this prop, however height, width, and margin
+   * are used to calculate range, and need to be expressed as a number of pixels
+   * @example {width: 500, height: 300}
+   */
   style: React.PropTypes.node,
+  /**
+   * The containerElement prop specifies which element the compnent will render.
+   * For standalone bars, the containerElement prop should be "svg". If you need to
+   * compose bar with other chart components, the containerElement prop should
+   * be "g", and will need to be rendered within an svg tag.
+   */
   containerElement: React.PropTypes.oneOf(["g", "svg"])
 };
 
@@ -396,7 +474,7 @@ const defaultProps = {
   stacked: false,
   barWidth: 8,
   barPadding: 6,
-  categoryOffset: 0.5,
+  categoryPadding: 0.5,
   scale: () => d3.scale.linear(),
   containerElement: "svg"
 };
