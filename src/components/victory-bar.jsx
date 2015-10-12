@@ -2,148 +2,486 @@ import React from "react";
 import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
+import log from "../log";
+import {VictoryAnimation} from "victory-animation";
 
-@Radium
-class VictoryBar extends React.Component {
-  drawStackedBars() {
-    // make a copy so we don't mutate props
-    const localCopyOfData = _.cloneDeep(this.props.data);
+class VBar extends React.Component {
+  constructor(props) {
+    super(props);
+    this.getCalculatedValues(props);
+  }
 
-    // set up color scales, this will be abstracted
-    const color = d3.scale.ordinal()
-      .range(this.props.colorCategories).domain(
-        d3.keys(localCopyOfData[0])
-          .filter((key) => {
-            return key !== "label";
-          })
-      );
+  componentWillReceiveProps(nextProps) {
+    this.getCalculatedValues(nextProps);
+  }
 
-    // each bar segment needs to know where it goes relative to the others, hence y0 y1
-    _.forEach(localCopyOfData, (bar) => {
-      let y0 = 0;
-      bar.segments = _.map(color.domain(), (segmentName) => {
+  getCalculatedValues(props) {
+    this.style = this.getStyles(props);
+    this.stringMap = {
+      x: this.createStringMap(props, "x"),
+      y: this.createStringMap(props, "y")
+    };
+    this.datasets = this.consolidateData(props);
+    this.range = {
+      x: this.getRange(props, "x"),
+      y: this.getRange(props, "y")
+    };
+    this.domain = {
+      x: this.getDomain(props, "x"),
+      y: this.getDomain(props, "y")
+    };
+    this.scale = {
+      x: this.getScale(props, "x"),
+      y: this.getScale(props, "y")
+    };
+    this.barWidth = this.getBarWidth(props);
+  }
+
+  getStyles(props) {
+    return _.merge({
+      borderColor: "transparent",
+      borderWidth: 0,
+      color: "#756f6a",
+      opacity: 1,
+      margin: 20,
+      width: 500,
+      height: 300,
+      fontFamily: "Helvetica",
+      fontSize: 10,
+      textAnchor: "middle"
+    }, props.style);
+  }
+
+  consolidateData(props) {
+    if (props.data) {
+      const dataFromProps = _.isArray(props.data[0]) ? props.data : [props.data];
+      return _.map(dataFromProps, (dataset, index) => {
         return {
-          segmentName,
-          y0,
-          y1: y0 += +bar[segmentName]
+          attrs: this._getAttributes(props, index),
+          data: _.map(dataset, (data) => {
+            return _.merge(data, {
+              // map string data to numeric values, and add names
+              x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
+              xName: _.isString(data.x) ? data.x : undefined,
+              y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
+              yName: _.isString(data.y) ? data.y : undefined
+            });
+          })
         };
       });
-      bar.total = bar.segments[bar.segments.length - 1].y1;
-    });
+    } else {
+      return [{
+        attrs: {},
+        data: []
+      }];
+    }
+  }
 
-    /* width / categories = x.rangeBand */
-    const x = d3.scale.ordinal()
-      .rangeRoundBands([0, this.props.width - this.props.totalReductionInX], this.props.barPadding)
-      .domain(_.map(localCopyOfData, (bar) => {
-        return bar.label;
+  _getAttributes(props, index) {
+    const attributes = props.dataAttributes && props.dataAttributes[index] ?
+      props.dataAttributes[index] : props.dataAttributes;
+    const requiredAttributes = {
+      name: attributes && attributes.name ? attributes.name : "data-" + index
+    };
+    return _.merge(requiredAttributes, attributes);
+  }
+
+  containsStrings(collection) {
+    return _.some(collection, function (item) {
+      return _.isString(item);
+    });
+  }
+
+  createStringMap(props, axis) {
+    // if categories exist and are strings, create a map using only those strings
+    // dont alter the order.
+    const categories = props.categories ?
+      (props.categories[axis] || props.categories) : undefined;
+    if (categories && this.containsStrings(categories)) {
+      return _.zipObject(_.map(categories, (tick, index) => {
+        return ["" + tick, index + 1];
       }));
+    }
+    // collect strings from props.data
+    if (props.data) {
+      const data = _.isArray(props.data) ? _.flattenDeep(props.data) : props.data;
+      // create a unique, sorted set of strings
+      const stringData = _.chain(data)
+        .pluck(axis)
+        .map((datum) => {
+          return _.isString(datum) ? datum : null;
+        })
+        .compact()
+        .uniq()
+        .sort()
+        .value();
 
-    const y = d3.scale.linear()
-      .rangeRound([this.props.height - this.props.totalReductionInY, 0])
-      .domain([0, d3.max(localCopyOfData, (bar) => {
-        return bar.total;
-      })]);
-
-    // localCopyOfData.sort((a, b) => {
-    //    return b.total - a.total;
-    // });
-
-    return _.map(localCopyOfData, (bar, i) => {
-      const scales = {
-        color,
-        x,
-        y
+      return _.isEmpty(stringData) ?
+        null :
+        _.zipObject(_.map(stringData, (string, index) => {
+          return [string, index + 1];
+        }));
+    } else {
+      return {
+        x: null,
+        y: null
       };
+    }
+  }
 
-      return (
-        <g
-          key={i}
-          className={"segmentGroup"}
-          transform={"translate(" + x(bar.label) + ",0)"}>
-          {this.props.makeSegments(bar.segments, scales)}
-        </g>
+  getScale(props, axis) {
+    const scale = props.scale[axis] ? props.scale[axis]().copy() :
+      props.scale().copy();
+    const range = this.range[axis];
+    const domain = this.domain[axis];
+    scale.range(range);
+    scale.domain(domain);
+    // hacky check for identity scale
+    if (_.difference(scale.range(), range).length !== 0) {
+      // identity scale, reset the domain and range
+      scale.range(range);
+      scale.domain(range);
+    }
+    return scale;
+  }
+
+  getRange(props, axis) {
+    if (props.range) {
+      return props.range[axis] ? props.range[axis] : props.range;
+    }
+    // if the range is not given in props, calculate it from width, height and margin
+    return axis === "x" ?
+      [this.style.margin, this.style.width - this.style.margin] :
+      [this.style.height - this.style.margin, this.style.margin];
+  }
+
+  getDomain(props, axis) {
+    const categoryDomain = this._getDomainFromCategories(props, axis);
+    if (props.domain) {
+      return props.domain[axis] || props.domain;
+    } else if (categoryDomain) {
+      return categoryDomain;
+    } else if (props.data) {
+      return this._getDomainFromData(props, axis);
+    } else {
+      return this._getDomainFromScale(props, axis);
+    }
+  }
+
+  _getDomainFromCategories(props, axis) {
+    if (axis !== "x" || !props.categories || this.containsStrings(props.categories)) {
+      return undefined;
+    }
+    return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
+  }
+
+  // helper method for getDomain
+  _getDomainFromScale(props, axis) {
+    // The scale will never be undefined due to default props
+    const scaleDomain = props.scale[axis] ? props.scale[axis]().domain() :
+      props.scale().domain();
+
+    // Warn when particular types of scales need more information to produce meaningful lines
+    if (_.isDate(scaleDomain[0])) {
+      log.warn("please specify a domain or data when using time scales");
+    } else if (scaleDomain.length === 0) {
+      log.warn("please specify a domain or data when using ordinal or quantile scales");
+    } else if (scaleDomain.length === 1) {
+      log.warn("please specify a domain or data when using a threshold scale");
+    }
+    return scaleDomain;
+  }
+
+  // helper method for getDomain
+  _getDomainFromData(props, axis) {
+    // if a sensible string map exists, return the minimum and maximum values
+    // offset by the bar offset value
+    if (this.stringMap[axis] !== null) {
+      const mapValues = _.values(this.stringMap[axis]);
+      const offset = props.categoryPadding;
+      return [_.min(mapValues) - offset, _.max(mapValues) + offset];
+    } else {
+      // find the global min and max
+      const allData = _.flatten(_.pluck(this.datasets, "data"));
+      const min = _.min(_.pluck(allData, axis));
+      const max = _.max(_.pluck(allData, axis));
+      // find the cumulative max for stacked chart types
+      // this is only sensible for the y domain
+      // TODO check assumption
+      const cumulativeMax = (props.stacked && axis === "y") ?
+        _.reduce(this.datasets, (memo, dataset) => {
+          return memo + (_.max(_.pluck(dataset.data, axis)) - _.min(_.pluck(dataset.data, axis)));
+        }, 0) : -Infinity;
+      return [min, _.max([max, cumulativeMax])];
+    }
+  }
+
+  getBarWidth(props) {
+    // todo calculate / enforce max width
+    return props.barWidth;
+  }
+
+  getBarPath(x, y0, y1) {
+    const size = this.barWidth / 2;
+    return "M " + (x - size) + "," + y0 + " " +
+      "L " + (x - size) + "," + y1 +
+      "L " + (x + size) + "," + y1 +
+      "L " + (x + size) + "," + y0 +
+      "L " + (x - size) + "," + y0;
+  }
+
+  _pixelsToValue(pixels) {
+    const xRange = this.range.x;
+    const xDomain = this.domain.x;
+    return (_.max(xDomain) - _.min(xDomain)) / (_.max(xRange) - _.min(xRange)) * pixels;
+  }
+
+  _adjustX(x, index) {
+    if (this.stringMap.x === null && !this.props.categories) {
+      // don't adjust x if the x axis is numeric
+      return x;
+    }
+    const center = this.datasets.length % 2 === 0 ?
+      this.datasets.length / 2 : (this.datasets.length - 1) / 2;
+    const centerOffset = index - center;
+    const totalWidth = this._pixelsToValue(this.props.barPadding) +
+      this._pixelsToValue(this.props.barWidth);
+    if (this.props.categories && _.isArray(this.props.categories[0])) {
+      // figure out which band this x value belongs to, and shift it to the
+      // center of that band before calculating the usual offset
+      const xBand = _.filter(this.props.categories, (band) => {
+        return (x >= _.min(band) && x <= _.max(band));
+      });
+      const bandCenter = _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
+      return this.props.stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
+    }
+    return this.props.stacked ? x : x + (centerOffset * totalWidth);
+  }
+
+  getYOffset(y, index, barIndex) {
+    if (index === 0) {
+      return y;
+    }
+    const previousDataSets = _.take(this.datasets, index);
+    const previousBars = _.map(previousDataSets, (dataset) => {
+      return _.pluck(dataset.data, "y");
+    });
+    return _.reduce(previousBars, (memo, bar) => {
+      return memo + bar[barIndex];
+    }, 0);
+  }
+
+  getBarElements(dataset, index) {
+    return _.map(dataset.data, (data, barIndex) => {
+      const minY = _.min(this.domain.y);
+      const yOffset = this.getYOffset(minY, index, barIndex);
+      const y0 = this.props.stacked ? yOffset : minY;
+      const y1 = this.props.stacked ? yOffset + data.y : data.y;
+      const x = this._adjustX(data.x, index);
+      const scaledX = this.scale.x.call(this, x);
+      const scaledY0 = this.scale.y.call(this, y0);
+      const scaledY1 = this.scale.y.call(this, y1);
+      const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
+      const pathElement = (
+        <path
+          d={path}
+          fill={dataset.attrs.color || this.style.color || "blue"}
+          key={"series-" + index + "-bar-" + barIndex}
+          opacity={dataset.attrs.opacity || this.style.opacity || 1}
+          shapeRendering="optimizeSpeed"
+          stroke="transparent"
+          strokeWidth={0}>
+        </path>
       );
+      return pathElement;
     });
   }
 
-  drawBars() {
-    return _.map(this.props.data, (bar, i) => {
-      return (
-        <rect
-          key={i}
-          width={20}
-          height={bar}
-          x={i * 30}
-          y={this.props.height - bar}/>
-      );
+  plotDataPoints() {
+    return _.map(this.datasets, (dataset, index) => {
+      return this.getBarElements(dataset, index);
     });
   }
 
-  // offsets and squishing to fit inside axis
   render() {
-    if (this.props.svg) {
+    if (this.props.containerElement === "svg") {
       return (
-        <svg width={this.props.width} height={this.props.height}>
-          <g transform={"translate(" + this.props.translateX + "," + this.props.translateY + ")"}>
-            { _.isObject(this.props.data[0]) ? this.drawStackedBars() : this.drawBars() }
-          </g>
-        </svg>
+        <svg style={this.style}>{this.plotDataPoints()}</svg>
       );
     }
-
     return (
-      <g transform={"translate(" + this.props.translateX + "," + this.props.translateY + ")"}>
-        { _.isObject(this.props.data[0]) ? this.drawStackedBars() : this.drawBars() }
-      </g>
+      <g style={this.style}>{this.plotDataPoints()}</g>
     );
   }
 }
 
-VictoryBar.propTypes = {
+@Radium
+class VictoryBar extends React.Component {
+
+  render() {
+    if (this.props.animate) {
+      return (
+        <VictoryAnimation data={this.props}>
+          {(props) => {
+            return (
+              <VBar
+                {...props}
+                stacked={this.props.stacked}
+                scale={this.props.scale}
+                animate={this.props.animate}
+                containerElement={this.props.containerElement}/>
+            );
+          }}
+        </VictoryAnimation>
+      );
+    }
+    return (<VBar {...this.props}/>);
+  }
+}
+
+const propTypes = {
+  /**
+   * The data prop specifies the data to be plotted. Data should be in the form of an array
+   * of data points, or an array of arrays of data points for multiple datasets.
+   * Each data point should be an object with x and y properties.
+   * @exampes [
+   *   {x: new Date(1982, 1, 1), y: 125},
+   *   {x: new Date(1987, 1, 1), y: 257},
+   *   {x: new Date(1993, 1, 1), y: 345}
+   * ],
+   * [
+   *   [{x: 5, y: 3}, {x: 4, y: 2}, {x: 3, y: 1}],
+   *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}],
+   *   [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}]
+   * ]
+   */
+  data: React.PropTypes.oneOfType([
+    React.PropTypes.arrayOf(
+      React.PropTypes.shape({
+        x: React.PropTypes.any,
+        y: React.PropTypes.any
+      })
+    ),
+    React.PropTypes.arrayOf(
+      React.PropTypes.arrayOf(
+        React.PropTypes.shape({
+          x: React.PropTypes.any,
+          y: React.PropTypes.any
+        })
+      )
+    )
+  ]),
+  /**
+   * The dataAttributes prop describes how a data set should be styled.
+   * This prop can be given as an object, or an array of objects. If this prop is
+   * given as an array of objects, the properties of each object in the array will
+   * be applied to the data points in the corresponding array of the data prop.
+   * @exampes {color: "blue", opacity: 0.6},
+   * [{color: "red"}, {color: "orange"}]
+   */
+  dataAttributes: React.PropTypes.oneOfType([
+    React.PropTypes.object,
+    React.PropTypes.arrayOf(React.PropTypes.object)
+  ]),
+  /**
+   * The categories prop specifies the categories for a bar chart. This prop should
+   * be given as an array of string values, numeric values, or arrays. When this prop is
+   * given as an array of arrays, the minimum and maximum values of the arrays define range bands,
+   * allowing numeric data to be grouped into segments.
+   * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
+   */
+  categories: React.PropTypes.array,
+  /**
+   * The domain prop describes the range of values your bar chart will cover. This prop can be
+   * given as a array of the minimum and maximum expected values for your bar chart,
+   * or as an object that specifies separate arrays for x and y.
+   * If this prop is not provided, a domain will be calculated from data, or other
+   * available information.
+   * @exampes [-1, 1], {x: [0, 100], y: [0, 1]}
+   */
+  domain: React.PropTypes.oneOfType([
+    React.PropTypes.array,
+    React.PropTypes.shape({
+      x: React.PropTypes.array,
+      y: React.PropTypes.array
+    })
+  ]),
+  /**
+   * The range prop describes the range of pixels your bar chart will cover. This prop can be
+   * given as a array of the minimum and maximum expected values for your bar chart,
+   * or as an object that specifies separate arrays for x and y.
+   * If this prop is not provided, a range will be calculated based on the height,
+   * width, and margin provided in the style prop, or in default styles. It is usually
+   * a good idea to let the chart component calculate its own range.
+   * @exampes [0, 500], {x: [0, 500], y: [500, 300]}
+   */
+  range: React.PropTypes.oneOfType([
+    React.PropTypes.array,
+    React.PropTypes.shape({
+      x: React.PropTypes.array,
+      y: React.PropTypes.array
+    })
+  ]),
+  /**
+   * The scale prop determines which scales your chart should use. This prop can be
+   * given as a function, or as an object that specifies separate functions for x and y.
+   * @exampes () => d3.time.scale(), {x: () => d3.scale.linear(), y: () => d3.scale.log()}
+   */
+  scale: React.PropTypes.oneOfType([
+    React.PropTypes.func,
+    React.PropTypes.shape({
+      x: React.PropTypes.func,
+      y: React.PropTypes.func
+    })
+  ]),
+  categoryPadding: React.PropTypes.number,
+  /**
+   * The barPadding prop specifies the padding in number of pixels between bars
+   * rendered in a bar chart.
+   */
   barPadding: React.PropTypes.number,
-  data: React.PropTypes.array,
-  svg: React.PropTypes.bool,
-  width: React.PropTypes.number,
-  height: React.PropTypes.number,
-  makeSegments: React.PropTypes.func,
-  colorCategories: React.PropTypes.array,
-  translateX: React.PropTypes.number,
-  translateY: React.PropTypes.number,
-  totalReductionInY: React.PropTypes.number,
-  totalReductionInX: React.PropTypes.number
+  /**
+   * The barWidth prop specifies the width in number of pixels for bars rendered in a bar chart.
+   */
+  barWidth: React.PropTypes.number,
+  /**
+   * The animate prop determines whether the chart should animate with changing data.
+   */
+  animate: React.PropTypes.bool,
+  /**
+   * The stacked prop determines whether the chart should consist of stacked bars.
+   * When this prop is set to false, grouped bars will be rendered instead.
+   */
+  stacked: React.PropTypes.bool,
+  /**
+   * The style prop specifies styles for your chart. VictoryBar relies on Radium,
+   * so valid Radium style objects should work for this prop, however height, width, and margin
+   * are used to calculate range, and need to be expressed as a number of pixels
+   * @example {width: 500, height: 300}
+   */
+  style: React.PropTypes.node,
+  /**
+   * The containerElement prop specifies which element the compnent will render.
+   * For standalone bars, the containerElement prop should be "svg". If you need to
+   * compose bar with other chart components, the containerElement prop should
+   * be "g", and will need to be rendered within an svg tag.
+   */
+  containerElement: React.PropTypes.oneOf(["g", "svg"])
 };
 
-VictoryBar.defaultProps = {
-  barPadding: 0.1,
-  data: [10, 30, 50, 80, 110],
-  svg: true,
-  width: 800,
-  height: 600,
-  makeSegments: (segments, scales) => {
-    return _.map(segments, (segment, i) => {
-      return (
-        <rect
-          key={i}
-          fill={scales.color(segment.segmentName)}
-          width={scales.x.rangeBand()}
-          height={scales.y(segment.y0) - scales.y(segment.y1)}
-          y={scales.y(segment.y1)}/>
-      );
-    });
-  },
-  colorCategories: [
-    "#98abc5",
-    "#8a89a6",
-    "#7b6888",
-    "#6b486b",
-    "#a05d56",
-    "#d0743c",
-    "#ff8c00"
-  ],
-  totalReductionInX: 0,
-  totalReductionInY: 0,
-  translateX: 0,
-  translateY: 0
+const defaultProps = {
+  animate: false,
+  stacked: false,
+  barWidth: 8,
+  barPadding: 6,
+  categoryPadding: 0.5,
+  scale: () => d3.scale.linear(),
+  containerElement: "svg"
 };
+
+VictoryBar.propTypes = propTypes;
+VictoryBar.defaultProps = defaultProps;
+VBar.propTypes = propTypes;
+VBar.defaultProps = defaultProps;
 
 export default VictoryBar;
