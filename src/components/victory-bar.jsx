@@ -130,8 +130,8 @@ class VBar extends React.Component {
   }
 
   getScale(props, axis) {
-    const scale = props.scale[axis] ? props.scale[axis]().copy() :
-      props.scale().copy();
+    const scale = props.scale[axis] ? props.scale[axis].copy() :
+      props.scale.copy();
     const range = this.range[axis];
     const domain = this.domain[axis];
     scale.range(range);
@@ -178,8 +178,8 @@ class VBar extends React.Component {
   // helper method for getDomain
   _getDomainFromScale(props, axis) {
     // The scale will never be undefined due to default props
-    const scaleDomain = props.scale[axis] ? props.scale[axis]().domain() :
-      props.scale().domain();
+    const scaleDomain = props.scale[axis] ? props.scale[axis].domain() :
+      props.scale.domain();
 
     // Warn when particular types of scales need more information to produce meaningful lines
     if (_.isDate(scaleDomain[0])) {
@@ -198,8 +198,7 @@ class VBar extends React.Component {
     // offset by the bar offset value
     if (this.stringMap[axis] !== null) {
       const mapValues = _.values(this.stringMap[axis]);
-      const offset = props.categoryPadding;
-      return [_.min(mapValues) - offset, _.max(mapValues) + offset];
+      return [_.min(mapValues), _.max(mapValues)];
     } else {
       // find the global min and max
       const allData = _.flatten(_.pluck(this.datasets, "data"));
@@ -321,7 +320,7 @@ class VictoryBar extends React.Component {
   render() {
     if (this.props.animate) {
       return (
-        <VictoryAnimation data={this.props}>
+        <VictoryAnimation {...this.props.animate} data={this.props}>
           {(props) => {
             return (
               <VBar
@@ -425,7 +424,7 @@ const propTypes = {
   /**
    * The scale prop determines which scales your chart should use. This prop can be
    * given as a function, or as an object that specifies separate functions for x and y.
-   * @exampes () => d3.time.scale(), {x: () => d3.scale.linear(), y: () => d3.scale.log()}
+   * @exampes d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
    */
   scale: React.PropTypes.oneOfType([
     React.PropTypes.func,
@@ -434,7 +433,6 @@ const propTypes = {
       y: React.PropTypes.func
     })
   ]),
-  categoryPadding: React.PropTypes.number,
   /**
    * The barPadding prop specifies the padding in number of pixels between bars
    * rendered in a bar chart.
@@ -445,9 +443,12 @@ const propTypes = {
    */
   barWidth: React.PropTypes.number,
   /**
-   * The animate prop determines whether the chart should animate with changing data.
+   * The animate prop specifies props for victory-animation to use. It this prop is
+   * not given, the bar chart will not tween between changing data / style props.
+   * Large datasets might animate slowly due to the inherent limits of svg rendering.
+   * @examples {line: {delay: 5, velocity: 10, onEnd: () => alert("woo!")}}
    */
-  animate: React.PropTypes.bool,
+  animate: React.PropTypes.object,
   /**
    * The stacked prop determines whether the chart should consist of stacked bars.
    * When this prop is set to false, grouped bars will be rendered instead.
@@ -470,12 +471,10 @@ const propTypes = {
 };
 
 const defaultProps = {
-  animate: false,
   stacked: false,
   barWidth: 8,
   barPadding: 6,
-  categoryPadding: 0.5,
-  scale: () => d3.scale.linear(),
+  scale: d3.scale.linear(),
   containerElement: "svg"
 };
 

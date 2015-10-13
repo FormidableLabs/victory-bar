@@ -76,7 +76,7 @@ class App extends React.Component {
             ]}
             categories={[[1, 3], [4, 7], [9, 11]]}
             containerElement="svg"
-            animate={true}/>
+            animate={{velocity: 0.02}}/>
 
             <VictoryBar
             data={this.state.barData}
@@ -89,7 +89,7 @@ class App extends React.Component {
             ]}
             stacked={true}
             containerElement="svg"
-            animate={true}/>
+            animate={{velocity: 0.02}}/>
 
 
         </p>
