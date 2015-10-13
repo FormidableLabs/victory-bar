@@ -234,7 +234,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: "getScale",
 	    value: function getScale(props, axis) {
-	      var scale = props.scale[axis] ? props.scale[axis]().copy() : props.scale().copy();
+	      var scale = props.scale[axis] ? props.scale[axis].copy() : props.scale.copy();
 	      var range = this.range[axis];
 	      var domain = this.domain[axis];
 	      scale.range(range);
@@ -284,7 +284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: "_getDomainFromScale",
 	    value: function _getDomainFromScale(props, axis) {
 	      // The scale will never be undefined due to default props
-	      var scaleDomain = props.scale[axis] ? props.scale[axis]().domain() : props.scale().domain();
+	      var scaleDomain = props.scale[axis] ? props.scale[axis].domain() : props.scale.domain();
 	
 	      // Warn when particular types of scales need more information to produce meaningful lines
 	      if (_lodash2["default"].isDate(scaleDomain[0])) {
@@ -305,8 +305,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // offset by the bar offset value
 	      if (this.stringMap[axis] !== null) {
 	        var mapValues = _lodash2["default"].values(this.stringMap[axis]);
-	        var offset = props.categoryPadding;
-	        return [_lodash2["default"].min(mapValues) - offset, _lodash2["default"].max(mapValues) + offset];
+	        return [_lodash2["default"].min(mapValues), _lodash2["default"].max(mapValues)];
 	      } else {
 	        // find the global min and max
 	        var allData = _lodash2["default"].flatten(_lodash2["default"].pluck(this.datasets, "data"));
@@ -448,7 +447,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (this.props.animate) {
 	        return _react2["default"].createElement(
 	          _victoryAnimation.VictoryAnimation,
-	          { data: this.props },
+	          _extends({}, this.props.animate, { data: this.props }),
 	          function (props) {
 	            return _react2["default"].createElement(VBar, _extends({}, props, {
 	              stacked: _this4.props.stacked,
@@ -535,13 +534,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  /**
 	   * The scale prop determines which scales your chart should use. This prop can be
 	   * given as a function, or as an object that specifies separate functions for x and y.
-	   * @exampes () => d3.time.scale(), {x: () => d3.scale.linear(), y: () => d3.scale.log()}
+	   * @exampes d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
 	   */
 	  scale: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.func, _react2["default"].PropTypes.shape({
 	    x: _react2["default"].PropTypes.func,
 	    y: _react2["default"].PropTypes.func
 	  })]),
-	  categoryPadding: _react2["default"].PropTypes.number,
 	  /**
 	   * The barPadding prop specifies the padding in number of pixels between bars
 	   * rendered in a bar chart.
@@ -552,9 +550,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	   */
 	  barWidth: _react2["default"].PropTypes.number,
 	  /**
-	   * The animate prop determines whether the chart should animate with changing data.
+	   * The animate prop specifies props for victory-animation to use. It this prop is
+	   * not given, the bar chart will not tween between changing data / style props.
+	   * Large datasets might animate slowly due to the inherent limits of svg rendering.
+	   * @examples {line: {delay: 5, velocity: 10, onEnd: () => alert("woo!")}}
 	   */
-	  animate: _react2["default"].PropTypes.bool,
+	  animate: _react2["default"].PropTypes.object,
 	  /**
 	   * The stacked prop determines whether the chart should consist of stacked bars.
 	   * When this prop is set to false, grouped bars will be rendered instead.
@@ -577,14 +578,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	var defaultProps = {
-	  animate: false,
 	  stacked: false,
 	  barWidth: 8,
 	  barPadding: 6,
-	  categoryPadding: 0.5,
-	  scale: function scale() {
-	    return _d32["default"].scale.linear();
-	  },
+	  scale: _d32["default"].scale.linear(),
 	  containerElement: "svg"
 	};
 	
