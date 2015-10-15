@@ -11,14 +11,15 @@ const styles = {
     height: 300,
     margin: 50
   },
-  bar: {
+  data: {
     width: 8,
     padding: 6,
     stroke: "transparent",
     strokeWidth: 0,
     fill: "#756f6a",
     opacity: 1
-  }
+  },
+  labels: {}
 };
 
 class VBar extends React.Component {
@@ -57,10 +58,11 @@ class VBar extends React.Component {
     if (!props.style) {
       return styles;
     }
-    const {bar, ...base} = props.style;
+    const {data, labels, ...base} = props.style;
     return {
       base: _.merge({}, styles.base, base),
-      bar: _.merge({}, styles.bar, bar)
+      data: _.merge({}, styles.data, data),
+      labels: _.merge({}, styles.labels, labels)
     };
   }
 
@@ -230,7 +232,7 @@ class VBar extends React.Component {
 
   getBarWidth() {
     // todo calculate / enforce max width
-    return this.style.bar.width;
+    return this.style.data.width;
   }
 
   getBarPath(x, y0, y1) {
@@ -256,8 +258,8 @@ class VBar extends React.Component {
     const center = this.datasets.length % 2 === 0 ?
       this.datasets.length / 2 : (this.datasets.length - 1) / 2;
     const centerOffset = index - center;
-    const totalWidth = this._pixelsToValue(this.style.bar.padding) +
-      this._pixelsToValue(this.style.bar.width);
+    const totalWidth = this._pixelsToValue(this.style.data.padding) +
+      this._pixelsToValue(this.style.data.width);
     if (this.props.categories && _.isArray(this.props.categories[0])) {
       // figure out which band this x value belongs to, and shift it to the
       // center of that band before calculating the usual offset
@@ -294,7 +296,7 @@ class VBar extends React.Component {
       const scaledY0 = this.scale.y.call(this, y0);
       const scaledY1 = this.scale.y.call(this, y1);
       const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
-      const style = _.merge({}, this.style.bar, dataset.attrs, data);
+      const style = _.merge({}, this.style.data, dataset.attrs, data);
       const pathElement = (
         <path
           d={path}
