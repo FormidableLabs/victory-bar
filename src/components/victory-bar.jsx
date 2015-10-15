@@ -5,6 +5,23 @@ import d3 from "d3";
 import log from "../log";
 import {VictoryAnimation} from "victory-animation";
 
+const styles = {
+  base: {
+    width: 500,
+    height: 300,
+    margin: 50
+  },
+  data: {
+    width: 8,
+    padding: 6,
+    stroke: "transparent",
+    strokeWidth: 0,
+    fill: "#756f6a",
+    opacity: 1
+  },
+  labels: {}
+};
+
 class VBar extends React.Component {
   constructor(props) {
     super(props);
@@ -38,18 +55,15 @@ class VBar extends React.Component {
   }
 
   getStyles(props) {
-    return _.merge({
-      borderColor: "transparent",
-      borderWidth: 0,
-      color: "#756f6a",
-      opacity: 1,
-      margin: 20,
-      width: 500,
-      height: 300,
-      fontFamily: "Helvetica",
-      fontSize: 10,
-      textAnchor: "middle"
-    }, props.style);
+    if (!props.style) {
+      return styles;
+    }
+    const {data, labels, ...base} = props.style;
+    return {
+      base: _.merge({}, styles.base, base),
+      data: _.merge({}, styles.data, data),
+      labels: _.merge({}, styles.labels, labels)
+    };
   }
 
   consolidateData(props) {
@@ -150,9 +164,10 @@ class VBar extends React.Component {
       return props.range[axis] ? props.range[axis] : props.range;
     }
     // if the range is not given in props, calculate it from width, height and margin
+    const style = this.style.base;
     return axis === "x" ?
-      [this.style.margin, this.style.width - this.style.margin] :
-      [this.style.height - this.style.margin, this.style.margin];
+      [style.margin, style.width - style.margin] :
+      [style.height - style.margin, style.margin];
   }
 
   getDomain(props, axis) {
@@ -215,9 +230,9 @@ class VBar extends React.Component {
     }
   }
 
-  getBarWidth(props) {
+  getBarWidth() {
     // todo calculate / enforce max width
-    return props.barWidth;
+    return this.style.data.width;
   }
 
   getBarPath(x, y0, y1) {
@@ -243,8 +258,8 @@ class VBar extends React.Component {
     const center = this.datasets.length % 2 === 0 ?
       this.datasets.length / 2 : (this.datasets.length - 1) / 2;
     const centerOffset = index - center;
-    const totalWidth = this._pixelsToValue(this.props.barPadding) +
-      this._pixelsToValue(this.props.barWidth);
+    const totalWidth = this._pixelsToValue(this.style.data.padding) +
+      this._pixelsToValue(this.style.data.width);
     if (this.props.categories && _.isArray(this.props.categories[0])) {
       // figure out which band this x value belongs to, and shift it to the
       // center of that band before calculating the usual offset
@@ -281,15 +296,13 @@ class VBar extends React.Component {
       const scaledY0 = this.scale.y.call(this, y0);
       const scaledY1 = this.scale.y.call(this, y1);
       const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
+      const style = _.merge({}, this.style.data, dataset.attrs, data);
       const pathElement = (
         <path
           d={path}
-          fill={dataset.attrs.color || this.style.color || "blue"}
           key={"series-" + index + "-bar-" + barIndex}
-          opacity={dataset.attrs.opacity || this.style.opacity || 1}
           shapeRendering="optimizeSpeed"
-          stroke="transparent"
-          strokeWidth={0}>
+          style={style}>
         </path>
       );
       return pathElement;
@@ -305,11 +318,11 @@ class VBar extends React.Component {
   render() {
     if (this.props.containerElement === "svg") {
       return (
-        <svg style={this.style}>{this.plotDataPoints()}</svg>
+        <svg style={this.style.base}>{this.plotDataPoints()}</svg>
       );
     }
     return (
-      <g style={this.style}>{this.plotDataPoints()}</g>
+      <g style={this.style.base}>{this.plotDataPoints()}</g>
     );
   }
 }
@@ -434,15 +447,6 @@ const propTypes = {
     })
   ]),
   /**
-   * The barPadding prop specifies the padding in number of pixels between bars
-   * rendered in a bar chart.
-   */
-  barPadding: React.PropTypes.number,
-  /**
-   * The barWidth prop specifies the width in number of pixels for bars rendered in a bar chart.
-   */
-  barWidth: React.PropTypes.number,
-  /**
    * The animate prop specifies props for victory-animation to use. It this prop is
    * not given, the bar chart will not tween between changing data / style props.
    * Large datasets might animate slowly due to the inherent limits of svg rendering.
@@ -458,9 +462,9 @@ const propTypes = {
    * The style prop specifies styles for your chart. VictoryBar relies on Radium,
    * so valid Radium style objects should work for this prop, however height, width, and margin
    * are used to calculate range, and need to be expressed as a number of pixels
-   * @example {width: 500, height: 300}
+   * @example {width: 500, height: 300, data: {fill: "red", opacity: 1, width: 8}}
    */
-  style: React.PropTypes.node,
+  style: React.PropTypes.object,
   /**
    * The containerElement prop specifies which element the compnent will render.
    * For standalone bars, the containerElement prop should be "svg". If you need to
@@ -472,8 +476,6 @@ const propTypes = {
 
 const defaultProps = {
   stacked: false,
-  barWidth: 8,
-  barPadding: 6,
   scale: d3.scale.linear(),
   containerElement: "svg"
 };

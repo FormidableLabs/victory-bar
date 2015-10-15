@@ -2,6 +2,7 @@
 /*global window:false*/
 import _ from "lodash";
 import React from "react";
+import ReactDOM from "react-dom";
 import {VictoryBar} from "../src/index";
 
 class App extends React.Component {
@@ -68,11 +69,11 @@ class App extends React.Component {
           <VictoryBar
             data={this.state.numericBarData}
             dataAttributes={[
-              {color: "cornflowerblue"},
-              {color: "orange"},
-              {color: "greenyellow"},
-              {color: "gold"},
-              {color: "tomato"}
+              {fill: "cornflowerblue"},
+              {fill: "orange"},
+              {fill: "greenyellow"},
+              {fill: "gold"},
+              {fill: "tomato"}
             ]}
             categories={[[1, 3], [4, 7], [9, 11]]}
             containerElement="svg"
@@ -81,11 +82,11 @@ class App extends React.Component {
             <VictoryBar
             data={this.state.barData}
             dataAttributes={[
-              {color: "cornflowerblue"},
-              {color: "orange"},
-              {color: "greenyellow"},
-              {color: "gold"},
-              {color: "tomato"}
+              {fill: "cornflowerblue"},
+              {fill: "orange"},
+              {fill: "greenyellow"},
+              {fill: "gold"},
+              {fill: "tomato"}
             ]}
             stacked={true}
             containerElement="svg"
@@ -100,4 +101,4 @@ class App extends React.Component {
 
 const content = document.getElementById("content");
 
-React.render(<App/>, content);
+ReactDOM.render(<App/>, content);
