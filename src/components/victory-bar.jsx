@@ -462,7 +462,7 @@ const propTypes = {
    * The style prop specifies styles for your chart. VictoryBar relies on Radium,
    * so valid Radium style objects should work for this prop, however height, width, and margin
    * are used to calculate range, and need to be expressed as a number of pixels
-   * @example {width: 500, height: 300}
+   * @example {width: 500, height: 300, data: {fill: "red", opacity: 1, width: 8}}
    */
   style: React.PropTypes.object,
   /**
