@@ -68,11 +68,11 @@ class App extends React.Component {
           <VictoryBar
             data={this.state.numericBarData}
             dataAttributes={[
-              {color: "cornflowerblue"},
-              {color: "orange"},
-              {color: "greenyellow"},
-              {color: "gold"},
-              {color: "tomato"}
+              {fill: "cornflowerblue"},
+              {fill: "orange"},
+              {fill: "greenyellow"},
+              {fill: "gold"},
+              {fill: "tomato"}
             ]}
             categories={[[1, 3], [4, 7], [9, 11]]}
             containerElement="svg"
@@ -81,11 +81,11 @@ class App extends React.Component {
             <VictoryBar
             data={this.state.barData}
             dataAttributes={[
-              {color: "cornflowerblue"},
-              {color: "orange"},
-              {color: "greenyellow"},
-              {color: "gold"},
-              {color: "tomato"}
+              {fill: "cornflowerblue"},
+              {fill: "orange"},
+              {fill: "greenyellow"},
+              {fill: "gold"},
+              {fill: "tomato"}
             ]}
             stacked={true}
             containerElement="svg"
