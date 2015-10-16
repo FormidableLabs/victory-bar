@@ -222,7 +222,7 @@ class VBar extends React.Component {
       // find the cumulative max for stacked chart types
       // this is only sensible for the y domain
       // TODO check assumption
-      const cumulativeMax = (props.stacked && axis === "y") ?
+      const cumulativeMax = (props.stacked && axis === "y" && this.datasets.length > 1) ?
         _.reduce(this.datasets, (memo, dataset) => {
           return memo + (_.max(_.pluck(dataset.data, axis)) - _.min(_.pluck(dataset.data, axis)));
         }, 0) : -Infinity;
