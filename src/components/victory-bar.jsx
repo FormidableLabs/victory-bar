@@ -332,18 +332,15 @@ class VictoryBar extends React.Component {
 
   render() {
     if (this.props.animate) {
+      // Do less work by having `VictoryAnimation` tween only values that
+      // make sense to tween. In the future, allow customization of animated
+      // prop whitelist/blacklist?
+      const animateData = _.omit(this.props, [
+        "stacked", "scale", "animate", "containerElement"
+      ]);
       return (
-        <VictoryAnimation {...this.props.animate} data={this.props}>
-          {(props) => {
-            return (
-              <VBar
-                {...props}
-                stacked={this.props.stacked}
-                scale={this.props.scale}
-                animate={this.props.animate}
-                containerElement={this.props.containerElement}/>
-            );
-          }}
+        <VictoryAnimation {...this.props.animate} data={animateData}>
+          {props => <VBar {...this.props} {...props}/>}
         </VictoryAnimation>
       );
     }
