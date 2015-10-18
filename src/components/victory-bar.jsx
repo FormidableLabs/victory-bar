@@ -19,7 +19,14 @@ const styles = {
     fill: "#756f6a",
     opacity: 1
   },
-  labels: {}
+  labels: {
+    padding: 5,
+    fontFamily: "Helvetica",
+    fontSize: 10,
+    strokeWidth: 0,
+    stroke: "transparent",
+    textAnchor: "middle"
+  }
 };
 
 class VBar extends React.Component {
@@ -414,6 +421,20 @@ class VBar extends React.Component {
     }, 0);
   }
 
+  getTextLines(text, x, y) {
+    if (!text) {
+      return "";
+    }
+    // TODO: split text to new lines based on font size, number of characters and total width
+    const textString = "" + text;
+    // text lines are reversed
+    const textLines = textString.split("\n").reverse();
+    return _.map(textLines, (line, index) => {
+      const offset = (index + 1) * -(this.style.labels.padding);
+      return (<tspan x={x} dy={offset} key={"text-line-" + index}>{line}</tspan>);
+    });
+  }
+
   getBarElements(dataset, index) {
     return _.map(dataset.data, (data, barIndex) => {
       const minY = _.min(this.domain.y);
@@ -426,7 +447,24 @@ class VBar extends React.Component {
       const scaledY1 = this.scale.y.call(this, y1);
       const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
       const style = _.merge({}, this.style.data, dataset.attrs, data);
-      const pathElement = (
+      if (data.label && !this.props.stacked) {
+        return (
+          <g key={"series-" + index + "-bar-" + barIndex}>
+            <path
+              d={path}
+              shapeRendering="optimizeSpeed"
+              style={style}>
+            </path>
+            <text
+              x={scaledX}
+              y={scaledY1}
+              style={this.style.labels}>
+              {this.getTextLines(data.label, scaledX, scaledY1)}
+            </text>
+          </g>
+        );
+      }
+      return (
         <path
           d={path}
           key={"series-" + index + "-bar-" + barIndex}
@@ -434,7 +472,6 @@ class VBar extends React.Component {
           style={style}>
         </path>
       );
-      return pathElement;
     });
   }
 
