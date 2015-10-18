@@ -427,11 +427,10 @@ class VBar extends React.Component {
     }
     // TODO: split text to new lines based on font size, number of characters and total width
     const textString = "" + text;
-    // text lines are reversed
-    const textLines = textString.split("\n").reverse();
+    const textLines = textString.split("\n");
     return _.map(textLines, (line, index) => {
-      const offset = (index + 1) * -(this.style.labels.padding);
-      return (<tspan x={x} dy={offset} key={"text-line-" + index}>{line}</tspan>);
+      const offset = (textLines.length - index) * -(this.style.labels.fontSize);
+      return (<tspan x={x} y={y} dy={offset} key={"text-line-" + index}>{line}</tspan>);
     });
   }
 
