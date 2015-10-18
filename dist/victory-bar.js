@@ -126,6 +126,120 @@ return /******/ (function(modules) { // webpackBootstrap
 	var VBar = (function (_React$Component) {
 	  _inherits(VBar, _React$Component);
 	
+	  _createClass(VBar, null, [{
+	    key: "propTypes",
+	    value: {
+	      /**
+	       * The data prop specifies the data to be plotted. Data should be in the form of an array
+	       * of data points, or an array of arrays of data points for multiple datasets.
+	       * Each data point should be an object with x and y properties.
+	       * @exampes [
+	       *   {x: new Date(1982, 1, 1), y: 125},
+	       *   {x: new Date(1987, 1, 1), y: 257},
+	       *   {x: new Date(1993, 1, 1), y: 345}
+	       * ],
+	       * [
+	       *   [{x: 5, y: 3}, {x: 4, y: 2}, {x: 3, y: 1}],
+	       *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}],
+	       *   [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}]
+	       * ]
+	       */
+	      data: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.shape({
+	        x: _react2["default"].PropTypes.any,
+	        y: _react2["default"].PropTypes.any
+	      })), _react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.shape({
+	        x: _react2["default"].PropTypes.any,
+	        y: _react2["default"].PropTypes.any
+	      })))]),
+	      /**
+	       * The dataAttributes prop describes how a data set should be styled.
+	       * This prop can be given as an object, or an array of objects. If this prop is
+	       * given as an array of objects, the properties of each object in the array will
+	       * be applied to the data points in the corresponding array of the data prop.
+	       * @exampes {color: "blue", opacity: 0.6},
+	       * [{color: "red"}, {color: "orange"}]
+	       */
+	      dataAttributes: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.object, _react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.object)]),
+	      /**
+	       * The categories prop specifies the categories for a bar chart. This prop should
+	       * be given as an array of string values, numeric values, or arrays. When this prop is
+	       * given as an array of arrays, the minimum and maximum values of the arrays define range bands,
+	       * allowing numeric data to be grouped into segments.
+	       * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
+	       */
+	      categories: _react2["default"].PropTypes.array,
+	      /**
+	       * The domain prop describes the range of values your bar chart will cover. This prop can be
+	       * given as a array of the minimum and maximum expected values for your bar chart,
+	       * or as an object that specifies separate arrays for x and y.
+	       * If this prop is not provided, a domain will be calculated from data, or other
+	       * available information.
+	       * @exampes [-1, 1], {x: [0, 100], y: [0, 1]}
+	       */
+	      domain: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.array, _react2["default"].PropTypes.shape({
+	        x: _react2["default"].PropTypes.array,
+	        y: _react2["default"].PropTypes.array
+	      })]),
+	      /**
+	       * The range prop describes the range of pixels your bar chart will cover. This prop can be
+	       * given as a array of the minimum and maximum expected values for your bar chart,
+	       * or as an object that specifies separate arrays for x and y.
+	       * If this prop is not provided, a range will be calculated based on the height,
+	       * width, and margin provided in the style prop, or in default styles. It is usually
+	       * a good idea to let the chart component calculate its own range.
+	       * @exampes [0, 500], {x: [0, 500], y: [500, 300]}
+	       */
+	      range: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.array, _react2["default"].PropTypes.shape({
+	        x: _react2["default"].PropTypes.array,
+	        y: _react2["default"].PropTypes.array
+	      })]),
+	      /**
+	       * The scale prop determines which scales your chart should use. This prop can be
+	       * given as a function, or as an object that specifies separate functions for x and y.
+	       * @exampes d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
+	       */
+	      scale: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.func, _react2["default"].PropTypes.shape({
+	        x: _react2["default"].PropTypes.func,
+	        y: _react2["default"].PropTypes.func
+	      })]),
+	      /**
+	       * The animate prop specifies props for victory-animation to use. It this prop is
+	       * not given, the bar chart will not tween between changing data / style props.
+	       * Large datasets might animate slowly due to the inherent limits of svg rendering.
+	       * @examples {line: {delay: 5, velocity: 10, onEnd: () => alert("woo!")}}
+	       */
+	      animate: _react2["default"].PropTypes.object,
+	      /**
+	       * The stacked prop determines whether the chart should consist of stacked bars.
+	       * When this prop is set to false, grouped bars will be rendered instead.
+	       */
+	      stacked: _react2["default"].PropTypes.bool,
+	      /**
+	       * The style prop specifies styles for your chart. VictoryBar relies on Radium,
+	       * so valid Radium style objects should work for this prop, however height, width, and margin
+	       * are used to calculate range, and need to be expressed as a number of pixels
+	       * @example {width: 500, height: 300, data: {fill: "red", opacity: 1, width: 8}}
+	       */
+	      style: _react2["default"].PropTypes.object,
+	      /**
+	       * The containerElement prop specifies which element the compnent will render.
+	       * For standalone bars, the containerElement prop should be "svg". If you need to
+	       * compose bar with other chart components, the containerElement prop should
+	       * be "g", and will need to be rendered within an svg tag.
+	       */
+	      containerElement: _react2["default"].PropTypes.oneOf(["g", "svg"])
+	    },
+	    enumerable: true
+	  }, {
+	    key: "defaultProps",
+	    value: {
+	      stacked: false,
+	      scale: _d32["default"].scale.linear(),
+	      containerElement: "svg"
+	    },
+	    enumerable: true
+	  }]);
+	
 	  function VBar(props) {
 	    _classCallCheck(this, VBar);
 	
@@ -465,139 +579,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var _this4 = this;
 	
 	      if (this.props.animate) {
+	        // Do less work by having `VictoryAnimation` tween only values that
+	        // make sense to tween. In the future, allow customization of animated
+	        // prop whitelist/blacklist?
+	        var animateData = _lodash2["default"].omit(this.props, ["stacked", "scale", "animate", "containerElement"]);
 	        return _react2["default"].createElement(
 	          _victoryAnimation.VictoryAnimation,
-	          _extends({}, this.props.animate, { data: this.props }),
+	          _extends({}, this.props.animate, { data: animateData }),
 	          function (props) {
-	            return _react2["default"].createElement(VBar, _extends({}, props, {
-	              stacked: _this4.props.stacked,
-	              scale: _this4.props.scale,
-	              animate: _this4.props.animate,
-	              containerElement: _this4.props.containerElement }));
+	            return _react2["default"].createElement(VBar, _extends({}, _this4.props, props));
 	          }
 	        );
 	      }
 	      return _react2["default"].createElement(VBar, this.props);
 	    }
+	  }], [{
+	    key: "propTypes",
+	
+	    /* eslint-disable react/prop-types */
+	    // ^ see: https://github.com/yannickcr/eslint-plugin-react/issues/106
+	    value: _extends({}, VBar.propTypes),
+	    enumerable: true
+	  }, {
+	    key: "defaultProps",
+	    value: _extends({}, VBar.defaultProps),
+	    enumerable: true
 	  }]);
 	
 	  var _VictoryBar = VictoryBar;
 	  VictoryBar = (0, _radium2["default"])(VictoryBar) || VictoryBar;
 	  return VictoryBar;
 	})(_react2["default"].Component);
-	
-	var propTypes = {
-	  /**
-	   * The data prop specifies the data to be plotted. Data should be in the form of an array
-	   * of data points, or an array of arrays of data points for multiple datasets.
-	   * Each data point should be an object with x and y properties.
-	   * @exampes [
-	   *   {x: new Date(1982, 1, 1), y: 125},
-	   *   {x: new Date(1987, 1, 1), y: 257},
-	   *   {x: new Date(1993, 1, 1), y: 345}
-	   * ],
-	   * [
-	   *   [{x: 5, y: 3}, {x: 4, y: 2}, {x: 3, y: 1}],
-	   *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}],
-	   *   [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}]
-	   * ]
-	   */
-	  data: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.shape({
-	    x: _react2["default"].PropTypes.any,
-	    y: _react2["default"].PropTypes.any
-	  })), _react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.shape({
-	    x: _react2["default"].PropTypes.any,
-	    y: _react2["default"].PropTypes.any
-	  })))]),
-	  /**
-	   * The dataAttributes prop describes how a data set should be styled.
-	   * This prop can be given as an object, or an array of objects. If this prop is
-	   * given as an array of objects, the properties of each object in the array will
-	   * be applied to the data points in the corresponding array of the data prop.
-	   * @exampes {color: "blue", opacity: 0.6},
-	   * [{color: "red"}, {color: "orange"}]
-	   */
-	  dataAttributes: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.object, _react2["default"].PropTypes.arrayOf(_react2["default"].PropTypes.object)]),
-	  /**
-	   * The categories prop specifies the categories for a bar chart. This prop should
-	   * be given as an array of string values, numeric values, or arrays. When this prop is
-	   * given as an array of arrays, the minimum and maximum values of the arrays define range bands,
-	   * allowing numeric data to be grouped into segments.
-	   * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
-	   */
-	  categories: _react2["default"].PropTypes.array,
-	  /**
-	   * The domain prop describes the range of values your bar chart will cover. This prop can be
-	   * given as a array of the minimum and maximum expected values for your bar chart,
-	   * or as an object that specifies separate arrays for x and y.
-	   * If this prop is not provided, a domain will be calculated from data, or other
-	   * available information.
-	   * @exampes [-1, 1], {x: [0, 100], y: [0, 1]}
-	   */
-	  domain: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.array, _react2["default"].PropTypes.shape({
-	    x: _react2["default"].PropTypes.array,
-	    y: _react2["default"].PropTypes.array
-	  })]),
-	  /**
-	   * The range prop describes the range of pixels your bar chart will cover. This prop can be
-	   * given as a array of the minimum and maximum expected values for your bar chart,
-	   * or as an object that specifies separate arrays for x and y.
-	   * If this prop is not provided, a range will be calculated based on the height,
-	   * width, and margin provided in the style prop, or in default styles. It is usually
-	   * a good idea to let the chart component calculate its own range.
-	   * @exampes [0, 500], {x: [0, 500], y: [500, 300]}
-	   */
-	  range: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.array, _react2["default"].PropTypes.shape({
-	    x: _react2["default"].PropTypes.array,
-	    y: _react2["default"].PropTypes.array
-	  })]),
-	  /**
-	   * The scale prop determines which scales your chart should use. This prop can be
-	   * given as a function, or as an object that specifies separate functions for x and y.
-	   * @exampes d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
-	   */
-	  scale: _react2["default"].PropTypes.oneOfType([_react2["default"].PropTypes.func, _react2["default"].PropTypes.shape({
-	    x: _react2["default"].PropTypes.func,
-	    y: _react2["default"].PropTypes.func
-	  })]),
-	  /**
-	   * The animate prop specifies props for victory-animation to use. It this prop is
-	   * not given, the bar chart will not tween between changing data / style props.
-	   * Large datasets might animate slowly due to the inherent limits of svg rendering.
-	   * @examples {line: {delay: 5, velocity: 10, onEnd: () => alert("woo!")}}
-	   */
-	  animate: _react2["default"].PropTypes.object,
-	  /**
-	   * The stacked prop determines whether the chart should consist of stacked bars.
-	   * When this prop is set to false, grouped bars will be rendered instead.
-	   */
-	  stacked: _react2["default"].PropTypes.bool,
-	  /**
-	   * The style prop specifies styles for your chart. VictoryBar relies on Radium,
-	   * so valid Radium style objects should work for this prop, however height, width, and margin
-	   * are used to calculate range, and need to be expressed as a number of pixels
-	   * @example {width: 500, height: 300, data: {fill: "red", opacity: 1, width: 8}}
-	   */
-	  style: _react2["default"].PropTypes.object,
-	  /**
-	   * The containerElement prop specifies which element the compnent will render.
-	   * For standalone bars, the containerElement prop should be "svg". If you need to
-	   * compose bar with other chart components, the containerElement prop should
-	   * be "g", and will need to be rendered within an svg tag.
-	   */
-	  containerElement: _react2["default"].PropTypes.oneOf(["g", "svg"])
-	};
-	
-	var defaultProps = {
-	  stacked: false,
-	  scale: _d32["default"].scale.linear(),
-	  containerElement: "svg"
-	};
-	
-	VictoryBar.propTypes = propTypes;
-	VictoryBar.defaultProps = defaultProps;
-	VBar.propTypes = propTypes;
-	VBar.defaultProps = defaultProps;
 	
 	exports["default"] = VictoryBar;
 	module.exports = exports["default"];
