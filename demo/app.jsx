@@ -93,15 +93,14 @@ class App extends React.Component {
             animate={{velocity: 0.02}}/>
             <VictoryBar
             data={[
-              {x: "a", y: 1},
-              {x: "b", y: 3},
-              {x: "c", y: 10},
-              {x: "d", y: 5}
+              {x: "a", y: 1, label: "one\nthing"},
+              {x: "b", y: 3, label: "two\nthings"},
+              {x: "c", y: 10, label: "red\nthings"},
+              {x: "d", y: 5, label: "blue\nthings"}
             ]}
             dataAttributes={[
               {fill: "cornflowerblue"}
             ]}
-            stacked={true}
             containerElement="svg"/>
 
         </p>
