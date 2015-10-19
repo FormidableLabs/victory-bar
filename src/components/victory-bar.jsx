@@ -138,18 +138,17 @@ class VBar extends React.Component {
      */
     style: React.PropTypes.object,
     /**
-     * The containerElement prop specifies which element the compnent will render.
-     * For standalone bars, the containerElement prop should be "svg". If you need to
-     * compose bar with other chart components, the containerElement prop should
-     * be "g", and will need to be rendered within an svg tag.
+     * The standalone prop determines whether the component will render a standalone svg
+     * or a <g> tag that will be included in an external svg. Set standalone to false to
+     * compose VictoryBar with other components within an enclosing <svg> tag.
      */
-    containerElement: React.PropTypes.oneOf(["g", "svg"])
+    standalone: React.PropTypes.bool
   };
 
   static defaultProps = {
     stacked: false,
     scale: d3.scale.linear(),
-    containerElement: "svg"
+    standalone: true
   };
 
   constructor(props) {
@@ -445,7 +444,7 @@ class VBar extends React.Component {
   }
 
   render() {
-    if (this.props.containerElement === "svg") {
+    if (this.props.standalone === true) {
       return (
         <svg style={this.style.base}>{this.plotDataPoints()}</svg>
       );
@@ -469,7 +468,7 @@ export default class VictoryBar extends React.Component {
       // make sense to tween. In the future, allow customization of animated
       // prop whitelist/blacklist?
       const animateData = _.omit(this.props, [
-        "stacked", "scale", "animate", "containerElement"
+        "stacked", "scale", "animate", "standalone"
       ]);
       return (
         <VictoryAnimation {...this.props.animate} data={animateData}>
