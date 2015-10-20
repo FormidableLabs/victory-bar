@@ -47,7 +47,7 @@ class App extends React.Component {
         },
         {
           x: _.random(9, 11),
-          y: _.random(1, 15)
+          y: _.random(-15, 15)
         }
       ];
     });
@@ -93,8 +93,8 @@ class App extends React.Component {
             animate={{velocity: 0.02}}/>
             <VictoryBar
             data={[
-              {x: "a", y: 1, label: "one\nthing"},
-              {x: "b", y: 3, label: "two\nthings"},
+              {x: "a", y: -3, label: "one\nthing"},
+              {x: "b", y: -1, label: "two\nthings"},
               {x: "c", y: 10, label: "red\nthings"},
               {x: "d", y: 5, label: "blue\nthings"}
             ]}

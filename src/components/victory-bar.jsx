@@ -6,7 +6,7 @@ import log from "../log";
 import {VictoryAnimation} from "victory-animation";
 
 const styles = {
-  base: {
+  parent: {
     width: 500,
     height: 300,
     margin: 50
@@ -193,9 +193,9 @@ class VBar extends React.Component {
     if (!props.style) {
       return styles;
     }
-    const {data, labels, ...base} = props.style;
+    const {data, labels, parent} = props.style;
     return {
-      base: _.merge({}, styles.base, base),
+      parent: _.merge({}, styles.parent, parent),
       data: _.merge({}, styles.data, data),
       labels: _.merge({}, styles.labels, labels)
     };
@@ -299,7 +299,7 @@ class VBar extends React.Component {
       return props.range[axis] ? props.range[axis] : props.range;
     }
     // if the range is not given in props, calculate it from width, height and margin
-    const style = this.style.base;
+    const style = this.style.parent;
     return axis === "x" ?
       [style.margin, style.width - style.margin] :
       [style.height - style.margin, style.margin];
@@ -416,11 +416,13 @@ class VBar extends React.Component {
       return _.pluck(dataset.data, "y");
     });
     return _.reduce(previousBars, (memo, bar) => {
-      return memo + bar[barIndex];
+      const barValue = bar[barIndex];
+      const sameSign = (y < 0 && barValue < 0) || (y >= 0 && barValue >= 0);
+      return sameSign ? memo + barValue : memo;
     }, 0);
   }
 
-  getTextLines(text, x, y) {
+  getTextLines(text, position, sign) {
     if (!text) {
       return "";
     }
@@ -428,16 +430,21 @@ class VBar extends React.Component {
     const textString = "" + text;
     const textLines = textString.split("\n");
     return _.map(textLines, (line, index) => {
-      const offset = (textLines.length - index) * -(this.style.labels.fontSize);
-      return (<tspan x={x} y={y} dy={offset} key={"text-line-" + index}>{line}</tspan>);
+      const order = sign === 1 ? (textLines.length - index) : (index + 1);
+      const offset = order * sign * -(this.style.labels.fontSize);
+      return (
+        <tspan x={position.x} y={position.y} dy={offset} key={"text-line-" + index}>
+          {line}
+        </tspan>
+      );
     });
   }
 
   getBarElements(dataset, index) {
     return _.map(dataset.data, (data, barIndex) => {
-      const minY = _.min(this.domain.y);
+      const minY = _.max([_.min(this.domain.y), 0]);
       const yOffset = this.getYOffset(minY, index, barIndex);
-      const y0 = this.props.stacked ? yOffset : minY;
+      const y0 = this.props.stacked ? yOffset : _.max([minY, 0]);
       const y1 = this.props.stacked ? yOffset + data.y : data.y;
       const x = this._adjustX(data.x, index);
       const scaledX = this.scale.x.call(this, x);
@@ -446,6 +453,8 @@ class VBar extends React.Component {
       const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
       const style = _.merge({}, this.style.data, dataset.attrs, data);
       if (data.label && !this.props.stacked) {
+        const sign = data.y >= 0 ? 1 : -1;
+        const position = {x: scaledX, y: scaledY1};
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -454,10 +463,10 @@ class VBar extends React.Component {
               style={style}>
             </path>
             <text
-              x={scaledX}
-              y={scaledY1}
+              x={position.x}
+              y={position.y}
               style={this.style.labels}>
-              {this.getTextLines(data.label, scaledX, scaledY1)}
+              {this.getTextLines(data.label, position, sign)}
             </text>
           </g>
         );
@@ -482,11 +491,11 @@ class VBar extends React.Component {
   render() {
     if (this.props.standalone === true) {
       return (
-        <svg style={this.style.base}>{this.plotDataPoints()}</svg>
+        <svg style={this.style.parent}>{this.plotDataPoints()}</svg>
       );
     }
     return (
-      <g style={this.style.base}>{this.plotDataPoints()}</g>
+      <g style={this.style.parent}>{this.plotDataPoints()}</g>
     );
   }
 }
