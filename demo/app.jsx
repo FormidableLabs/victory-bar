@@ -59,7 +59,7 @@ class App extends React.Component {
         barData: this.getBarData(),
         numericBarData: this.getNumericBarData()
       });
-    }, 4000);
+    }, 40000);
   }
 
   render() {

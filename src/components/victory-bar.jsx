@@ -1,4 +1,4 @@
-import React from "react";
+  import React from "react";
 import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
@@ -187,6 +187,7 @@ class VBar extends React.Component {
       y: this.getScale(props, "y")
     };
     this.barWidth = this.getBarWidth(props);
+    this.categoryLabels = this.getCategotyLabels(props);
   }
 
   getStyles(props) {
@@ -359,9 +360,15 @@ class VBar extends React.Component {
       // TODO check assumption
       const cumulativeMax = (props.stacked && axis === "y" && this.datasets.length > 1) ?
         _.reduce(this.datasets, (memo, dataset) => {
-          return memo + (_.max(_.pluck(dataset.data, axis)) - _.min(_.pluck(dataset.data, axis)));
+          const localMax = (_.max(_.pluck(dataset.data, "y")))
+          return localMax > 0 ? memo + localMax : memo;
         }, 0) : -Infinity;
-      return [min, _.max([max, cumulativeMax])];
+      const cumulativeMin = (props.stacked && axis === "y" && this.datasets.length > 1) ?
+        _.reduce(this.datasets, (memo, dataset) => {
+          const localMin = (_.min(_.pluck(dataset.data, "y")))
+          return localMin < 0 ? memo + localMin : memo;
+        }, 0) : Infinity;
+      return [_.min([min, cumulativeMin]), _.max([max, cumulativeMax])];
     }
   }
 
@@ -385,11 +392,12 @@ class VBar extends React.Component {
     return (_.max(xDomain) - _.min(xDomain)) / (_.max(xRange) - _.min(xRange)) * pixels;
   }
 
-  _adjustX(x, index) {
+  _adjustX(x, index, options) {
     if (this.stringMap.x === null && !this.props.categories) {
       // don't adjust x if the x axis is numeric
       return x;
     }
+    const stacked = options && options.stacked;
     const center = this.datasets.length % 2 === 0 ?
       this.datasets.length / 2 : (this.datasets.length - 1) / 2;
     const centerOffset = index - center;
@@ -402,9 +410,9 @@ class VBar extends React.Component {
         return (x >= _.min(band) && x <= _.max(band));
       });
       const bandCenter = _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
-      return this.props.stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
+      return stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
     }
-    return this.props.stacked ? x : x + (centerOffset * totalWidth);
+    return stacked ? x : x + (centerOffset * totalWidth);
   }
 
   getYOffset(data, index, barIndex) {
@@ -442,18 +450,88 @@ class VBar extends React.Component {
     });
   }
 
+  getCategotyLabels(props) {
+    if (props.categoryLabels) {
+      return props.categoryLabels;
+    } else if (props.categories) {
+      return _.isArray(props.categories[0]) ?
+        _.map(props.categories, (arr) => {_.min(arr) + " - " + _.max(arr)}) :
+        props.categories;
+    } else if (this.stringMap.x) {
+      return _.keys(this.stringMap.x);
+    } else {
+      return null;
+    }
+  }
+
+  drawCategoryLabels(){
+    if (!this.categoryLabels) {
+      return;
+    }
+
+    const dataValues = _.map(this.datasets, (dataset, index) => {
+      return _.map(dataset.data, (data, barIndex) => {
+        return {
+          x: this._adjustX(data.x, index, {stacked: true}),
+          y: this.props.stacked ? this.getYOffset(data, index, barIndex) + data.y : data.y
+        };
+      });
+    });
+
+    const dataByX = _.groupBy(_.flatten(dataValues), "x");
+    const xValues = _.keys(dataByX);
+    const dataToLabel = _.map(xValues, (x) => {
+      return {
+        x: +x,
+        maxY: _.max(_.pluck(dataByX[x], "y")),
+        minY: _.min(_.pluck(dataByX[x], "y"))
+      };
+    });
+
+    console.log(dataToLabel)
+
+    const position = _.map(dataToLabel, (data) => {
+      const sign = data.y >= 0 ? 1 : -1;
+      const y = sign > 0 ? data.maxY : data.minY
+      return {
+        x: this.scale.x.call(this, data.x),
+        y: this.scale.y.call(this, y),
+        sign
+      };
+    });
+    console.log(position)
+
+    return _.map(this.categoryLabels, (label, index) => {
+      return (
+        <text
+          key={"category-label-" + index}
+          x={position[index].x}
+          y={position[index].y}
+          style={this.style.labels}>
+          {this.getTextLines(label, position[index], position[index].sign)}
+        </text>
+      );
+    });
+  }
+
   getBarElements(dataset, index) {
+    const isCenter = Math.floor(this.datasets.length / 2) === index;
+    const isLast = this.datasets.length === index + 1;
+    const stacked = this.props.stacked;
     return _.map(dataset.data, (data, barIndex) => {
       const yOffset = this.getYOffset(data, index, barIndex);
-      const y0 = this.props.stacked ? yOffset : _.max([_.min(this.domain.y), 0]);
-      const y1 = this.props.stacked ? yOffset + data.y : data.y;
-      const x = this._adjustX(data.x, index);
+      const y0 = stacked ? yOffset : _.max([_.min(this.domain.y), 0]);
+      const y1 = stacked ? yOffset + data.y : data.y;
+      const x = this._adjustX(data.x, index, {stacked: stacked});
       const scaledX = this.scale.x.call(this, x);
       const scaledY0 = this.scale.y.call(this, y0);
       const scaledY1 = this.scale.y.call(this, y1);
       const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
       const style = _.merge({}, this.style.data, dataset.attrs, data);
-      if (data.label && !this.props.stacked) {
+      const categoryLabel = (stacked && isLast) || (!stacked && isCenter) ?
+        this.categoryLabels[barIndex] : undefined;
+      const label = stacked ? categoryLabel : (data.label || categoryLabel)
+      if (label) {
         const sign = data.y >= 0 ? 1 : -1;
         const position = {x: scaledX, y: scaledY1};
         return (
@@ -492,11 +570,17 @@ class VBar extends React.Component {
   render() {
     if (this.props.standalone === true) {
       return (
-        <svg style={this.style.parent}>{this.plotDataPoints()}</svg>
+        <svg style={this.style.parent}>
+          {this.drawCategoryLabels()}
+          {this.plotDataPoints()}
+        </svg>
       );
     }
     return (
-      <g style={this.style.parent}>{this.plotDataPoints()}</g>
+      <g style={this.style.parent}>
+        {this.drawCategoryLabels()}
+        {this.plotDataPoints()}
+      </g>
     );
   }
 }
