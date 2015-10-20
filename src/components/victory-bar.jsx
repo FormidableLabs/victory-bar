@@ -1,4 +1,4 @@
-  import React from "react";
+import React from "react";
 import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
@@ -82,6 +82,17 @@ class VBar extends React.Component {
      * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
      */
     categories: React.PropTypes.array,
+    /**
+     * The categoryLabels prop defines labels that will appear above each bar or
+     * group of bars in your bar chart This prop should be given as an array of values.
+     * The number of elements in the label array should be equal to number of elements in
+     * the categories array, or if categories is not defined, to the number of unique
+     * x values in your data. Use this prop to add labels to stacked bars and groups of
+     * bars. Adding labels to individual bars can be accomplished by adding a label
+     * property directly to the data object.
+     * @examples: ["spring", "summer", "fall", "winter"]
+     */
+    categoryLabels: React.PropTypes.array,
     /**
      * The domain prop describes the range of values your bar chart will cover. This prop can be
      * given as a array of the minimum and maximum expected values for your bar chart,
@@ -187,7 +198,6 @@ class VBar extends React.Component {
       y: this.getScale(props, "y")
     };
     this.barWidth = this.getBarWidth(props);
-    this.categoryLabels = this.getCategotyLabels(props);
   }
 
   getStyles(props) {
@@ -245,10 +255,8 @@ class VBar extends React.Component {
   createStringMap(props, axis) {
     // if categories exist and are strings, create a map using only those strings
     // dont alter the order.
-    const categories = props.categories ?
-      (props.categories[axis] || props.categories) : undefined;
-    if (categories && this.containsStrings(categories)) {
-      return _.zipObject(_.map(categories, (tick, index) => {
+    if (props.categories && this.containsStrings(props.categories)) {
+      return _.zipObject(_.map(props.categories, (tick, index) => {
         return ["" + tick, index + 1];
       }));
     }
@@ -360,12 +368,12 @@ class VBar extends React.Component {
       // TODO check assumption
       const cumulativeMax = (props.stacked && axis === "y" && this.datasets.length > 1) ?
         _.reduce(this.datasets, (memo, dataset) => {
-          const localMax = (_.max(_.pluck(dataset.data, "y")))
+          const localMax = (_.max(_.pluck(dataset.data, "y")));
           return localMax > 0 ? memo + localMax : memo;
         }, 0) : -Infinity;
       const cumulativeMin = (props.stacked && axis === "y" && this.datasets.length > 1) ?
         _.reduce(this.datasets, (memo, dataset) => {
-          const localMin = (_.min(_.pluck(dataset.data, "y")))
+          const localMin = (_.min(_.pluck(dataset.data, "y")));
           return localMin < 0 ? memo + localMin : memo;
         }, 0) : Infinity;
       return [_.min([min, cumulativeMin]), _.max([max, cumulativeMax])];
@@ -377,7 +385,8 @@ class VBar extends React.Component {
     return this.style.data.width;
   }
 
-  getBarPath(x, y0, y1) {
+  getBarPath(position) {
+    const {x, y0, y1} = position;
     const size = this.barWidth / 2;
     return "M " + (x - size) + "," + y0 + " " +
       "L " + (x - size) + "," + y1 +
@@ -443,97 +452,63 @@ class VBar extends React.Component {
       const order = sign === 1 ? (textLines.length - index) : (index + 1);
       const offset = order * sign * -(this.style.labels.fontSize);
       return (
-        <tspan x={position.x} y={position.y} dy={offset} key={"text-line-" + index}>
+        <tspan x={position.x} y={position.y1} dy={offset} key={"text-line-" + index}>
           {line}
         </tspan>
       );
     });
   }
 
-  getCategotyLabels(props) {
-    if (props.categoryLabels) {
-      return props.categoryLabels;
-    } else if (props.categories) {
-      return _.isArray(props.categories[0]) ?
-        _.map(props.categories, (arr) => {_.min(arr) + " - " + _.max(arr)}) :
-        props.categories;
-    } else if (this.stringMap.x) {
-      return _.keys(this.stringMap.x);
+  selectCategotyLabel(x) {
+    let index;
+    if (this.stringMap.x) {
+      return this.props.categoryLabels[x - 1];
+    } else if (this.props.categories) {
+      index = _.findIndex(this.props.categories, (category) => {
+        return _.isArray(category) ? (_.min(category) <= x && _.max(category) >= x) :
+          category === x;
+      });
+      return this.props.categoryLabels[index];
     } else {
-      return null;
+      const allX = _.map(this.datasets, (dataset) => {
+        return _.map(dataset.data, "x");
+      });
+      const uniqueX = _.uniq(_.flatten(allX));
+      index = (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
+      return this.props.categoryLabels[index];
     }
   }
 
-  drawCategoryLabels(){
-    if (!this.categoryLabels) {
-      return;
-    }
-
-    const dataValues = _.map(this.datasets, (dataset, index) => {
-      return _.map(dataset.data, (data, barIndex) => {
-        return {
-          x: this._adjustX(data.x, index, {stacked: true}),
-          y: this.props.stacked ? this.getYOffset(data, index, barIndex) + data.y : data.y
-        };
-      });
-    });
-
-    const dataByX = _.groupBy(_.flatten(dataValues), "x");
-    const xValues = _.keys(dataByX);
-    const dataToLabel = _.map(xValues, (x) => {
-      return {
-        x: +x,
-        maxY: _.max(_.pluck(dataByX[x], "y")),
-        minY: _.min(_.pluck(dataByX[x], "y"))
-      };
-    });
-
-    console.log(dataToLabel)
-
-    const position = _.map(dataToLabel, (data) => {
-      const sign = data.y >= 0 ? 1 : -1;
-      const y = sign > 0 ? data.maxY : data.minY
-      return {
-        x: this.scale.x.call(this, data.x),
-        y: this.scale.y.call(this, y),
-        sign
-      };
-    });
-    console.log(position)
-
-    return _.map(this.categoryLabels, (label, index) => {
-      return (
-        <text
-          key={"category-label-" + index}
-          x={position[index].x}
-          y={position[index].y}
-          style={this.style.labels}>
-          {this.getTextLines(label, position[index], position[index].sign)}
-        </text>
-      );
-    });
+  getBarPosition(data, index, barIndex) {
+    const stacked = this.props.stacked;
+    const yOffset = this.getYOffset(data, index, barIndex);
+    const y0 = stacked ? yOffset : _.max([_.min(this.domain.y), 0]);
+    const y1 = stacked ? yOffset + data.y : data.y;
+    const x = this._adjustX(data.x, index, {stacked});
+    return {
+      x: this.scale.x.call(this, x),
+      y0: this.scale.y.call(this, y0),
+      y1: this.scale.y.call(this, y1)
+    };
   }
 
   getBarElements(dataset, index) {
     const isCenter = Math.floor(this.datasets.length / 2) === index;
     const isLast = this.datasets.length === index + 1;
     const stacked = this.props.stacked;
+    const plotCategoryLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
-      const yOffset = this.getYOffset(data, index, barIndex);
-      const y0 = stacked ? yOffset : _.max([_.min(this.domain.y), 0]);
-      const y1 = stacked ? yOffset + data.y : data.y;
-      const x = this._adjustX(data.x, index, {stacked: stacked});
-      const scaledX = this.scale.x.call(this, x);
-      const scaledY0 = this.scale.y.call(this, y0);
-      const scaledY1 = this.scale.y.call(this, y1);
-      const path = scaledX ? this.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
+      const position = this.getBarPosition(data, index, barIndex);
+      const path = position.x ? this.getBarPath(position) : undefined;
       const style = _.merge({}, this.style.data, dataset.attrs, data);
-      const categoryLabel = (stacked && isLast) || (!stacked && isCenter) ?
-        this.categoryLabels[barIndex] : undefined;
-      const label = stacked ? categoryLabel : (data.label || categoryLabel)
+      let categoryLabel;
+      if (this.props.categoryLabels && plotCategoryLabel) {
+        categoryLabel = this.selectCategotyLabel(data.x);
+      }
+      const label = stacked ? categoryLabel : (data.label || categoryLabel);
+
       if (label) {
         const sign = data.y >= 0 ? 1 : -1;
-        const position = {x: scaledX, y: scaledY1};
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -543,9 +518,9 @@ class VBar extends React.Component {
             </path>
             <text
               x={position.x}
-              y={position.y}
+              y={position.y1}
               style={this.style.labels}>
-              {this.getTextLines(data.label, position, sign)}
+              {this.getTextLines(label, position, sign)}
             </text>
           </g>
         );
@@ -571,14 +546,12 @@ class VBar extends React.Component {
     if (this.props.standalone === true) {
       return (
         <svg style={this.style.parent}>
-          {this.drawCategoryLabels()}
           {this.plotDataPoints()}
         </svg>
       );
     }
     return (
       <g style={this.style.parent}>
-        {this.drawCategoryLabels()}
         {this.plotDataPoints()}
       </g>
     );

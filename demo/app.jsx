@@ -59,7 +59,7 @@ class App extends React.Component {
         barData: this.getBarData(),
         numericBarData: this.getNumericBarData()
       });
-    }, 40000);
+    }, 4000);
   }
 
   render() {
@@ -88,6 +88,7 @@ class App extends React.Component {
               {fill: "gold"},
               {fill: "tomato"}
             ]}
+            categoryLabels={["one", "two", "three"]}
             stacked={true}
             containerElement="svg"
             animate={{velocity: 0.02}}/>
