@@ -1,6 +1,6 @@
 {
   "name": "victory-bar",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "description": "Victory Component",
   "main": "lib/index.js",
   "repository": {

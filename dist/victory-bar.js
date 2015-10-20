@@ -78,8 +78,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 	
-	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
-	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
@@ -107,7 +105,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _victoryAnimation = __webpack_require__(31);
 	
 	var styles = {
-	  base: {
+	  parent: {
 	    width: 500,
 	    height: 300,
 	    margin: 50
@@ -120,7 +118,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    fill: "#756f6a",
 	    opacity: 1
 	  },
-	  labels: {}
+	  labels: {
+	    padding: 5,
+	    fontFamily: "Helvetica",
+	    fontSize: 10,
+	    strokeWidth: 0,
+	    stroke: "transparent",
+	    textAnchor: "middle"
+	  }
 	};
 	
 	var VBar = (function (_React$Component) {
@@ -168,6 +173,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	       * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
 	       */
 	      categories: _react2["default"].PropTypes.array,
+	      /**
+	       * The categoryLabels prop defines labels that will appear above each bar or
+	       * group of bars in your bar chart This prop should be given as an array of values.
+	       * The number of elements in the label array should be equal to number of elements in
+	       * the categories array, or if categories is not defined, to the number of unique
+	       * x values in your data. Use this prop to add labels to stacked bars and groups of
+	       * bars. Adding labels to individual bars can be accomplished by adding a label
+	       * property directly to the data object.
+	       * @examples: ["spring", "summer", "fall", "winter"]
+	       */
+	      categoryLabels: _react2["default"].PropTypes.array,
 	      /**
 	       * The domain prop describes the range of values your bar chart will cover. This prop can be
 	       * given as a array of the minimum and maximum expected values for your bar chart,
@@ -222,12 +238,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	       */
 	      style: _react2["default"].PropTypes.object,
 	      /**
-	       * The containerElement prop specifies which element the compnent will render.
-	       * For standalone bars, the containerElement prop should be "svg". If you need to
-	       * compose bar with other chart components, the containerElement prop should
-	       * be "g", and will need to be rendered within an svg tag.
+	       * The standalone prop determines whether the component will render a standalone svg
+	       * or a <g> tag that will be included in an external svg. Set standalone to false to
+	       * compose VictoryBar with other components within an enclosing <svg> tag.
 	       */
-	      containerElement: _react2["default"].PropTypes.oneOf(["g", "svg"])
+	      standalone: _react2["default"].PropTypes.bool
 	    },
 	    enumerable: true
 	  }, {
@@ -235,7 +250,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: {
 	      stacked: false,
 	      scale: _d32["default"].scale.linear(),
-	      containerElement: "svg"
+	      standalone: true
 	    },
 	    enumerable: true
 	  }]);
@@ -284,11 +299,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var _props$style = props.style;
 	      var data = _props$style.data;
 	      var labels = _props$style.labels;
-	
-	      var base = _objectWithoutProperties(_props$style, ["data", "labels"]);
+	      var parent = _props$style.parent;
 	
 	      return {
-	        base: _lodash2["default"].merge({}, styles.base, base),
+	        parent: _lodash2["default"].merge({}, styles.parent, parent),
 	        data: _lodash2["default"].merge({}, styles.data, data),
 	        labels: _lodash2["default"].merge({}, styles.labels, labels)
 	      };
@@ -342,9 +356,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function createStringMap(props, axis) {
 	      // if categories exist and are strings, create a map using only those strings
 	      // dont alter the order.
-	      var categories = props.categories ? props.categories[axis] || props.categories : undefined;
-	      if (categories && this.containsStrings(categories)) {
-	        return _lodash2["default"].zipObject(_lodash2["default"].map(categories, function (tick, index) {
+	      if (props.categories && this.containsStrings(props.categories)) {
+	        return _lodash2["default"].zipObject(_lodash2["default"].map(props.categories, function (tick, index) {
 	          return ["" + tick, index + 1];
 	        }));
 	      }
@@ -389,7 +402,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return props.range[axis] ? props.range[axis] : props.range;
 	      }
 	      // if the range is not given in props, calculate it from width, height and margin
-	      var style = this.style.base;
+	      var style = this.style.parent;
 	      return axis === "x" ? [style.margin, style.width - style.margin] : [style.height - style.margin, style.margin];
 	    }
 	  }, {
@@ -451,9 +464,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // this is only sensible for the y domain
 	        // TODO check assumption
 	        var cumulativeMax = props.stacked && axis === "y" && this.datasets.length > 1 ? _lodash2["default"].reduce(this.datasets, function (memo, dataset) {
-	          return memo + (_lodash2["default"].max(_lodash2["default"].pluck(dataset.data, axis)) - _lodash2["default"].min(_lodash2["default"].pluck(dataset.data, axis)));
+	          var localMax = _lodash2["default"].max(_lodash2["default"].pluck(dataset.data, "y"));
+	          return localMax > 0 ? memo + localMax : memo;
 	        }, 0) : -Infinity;
-	        return [min, _lodash2["default"].max([max, cumulativeMax])];
+	        var cumulativeMin = props.stacked && axis === "y" && this.datasets.length > 1 ? _lodash2["default"].reduce(this.datasets, function (memo, dataset) {
+	          var localMin = _lodash2["default"].min(_lodash2["default"].pluck(dataset.data, "y"));
+	          return localMin < 0 ? memo + localMin : memo;
+	        }, 0) : Infinity;
+	        return [_lodash2["default"].min([min, cumulativeMin]), _lodash2["default"].max([max, cumulativeMax])];
 	      }
 	    }
 	  }, {
@@ -464,7 +482,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }, {
 	    key: "getBarPath",
-	    value: function getBarPath(x, y0, y1) {
+	    value: function getBarPath(position) {
+	      var x = position.x;
+	      var y0 = position.y0;
+	      var y1 = position.y1;
+	
 	      var size = this.barWidth / 2;
 	      return "M " + (x - size) + "," + y0 + " " + "L " + (x - size) + "," + y1 + "L " + (x + size) + "," + y1 + "L " + (x + size) + "," + y0 + "L " + (x - size) + "," + y0;
 	    }
@@ -477,11 +499,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }, {
 	    key: "_adjustX",
-	    value: function _adjustX(x, index) {
+	    value: function _adjustX(x, index, options) {
 	      if (this.stringMap.x === null && !this.props.categories) {
 	        // don't adjust x if the x axis is numeric
 	        return x;
 	      }
+	      var stacked = options && options.stacked;
 	      var center = this.datasets.length % 2 === 0 ? this.datasets.length / 2 : (this.datasets.length - 1) / 2;
 	      var centerOffset = index - center;
 	      var totalWidth = this._pixelsToValue(this.style.data.padding) + this._pixelsToValue(this.style.data.width);
@@ -492,70 +515,152 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return x >= _lodash2["default"].min(band) && x <= _lodash2["default"].max(band);
 	        });
 	        var bandCenter = _lodash2["default"].isArray(xBand[0]) && (_lodash2["default"].max(xBand[0]) + _lodash2["default"].min(xBand[0])) / 2;
-	        return this.props.stacked ? bandCenter : bandCenter + centerOffset * totalWidth;
+	        return stacked ? bandCenter : bandCenter + centerOffset * totalWidth;
 	      }
-	      return this.props.stacked ? x : x + centerOffset * totalWidth;
+	      return stacked ? x : x + centerOffset * totalWidth;
 	    }
 	  }, {
 	    key: "getYOffset",
-	    value: function getYOffset(y, index, barIndex) {
+	    value: function getYOffset(data, index, barIndex) {
+	      var minY = _lodash2["default"].min(this.domain.y);
 	      if (index === 0) {
-	        return y;
+	        return _lodash2["default"].max([minY, 0]);
 	      }
+	      var y = data.y;
 	      var previousDataSets = _lodash2["default"].take(this.datasets, index);
 	      var previousBars = _lodash2["default"].map(previousDataSets, function (dataset) {
 	        return _lodash2["default"].pluck(dataset.data, "y");
 	      });
 	      return _lodash2["default"].reduce(previousBars, function (memo, bar) {
-	        return memo + bar[barIndex];
+	        var barValue = bar[barIndex];
+	        var sameSign = y < 0 && barValue < 0 || y >= 0 && barValue >= 0;
+	        return sameSign ? memo + barValue : memo;
 	      }, 0);
+	    }
+	  }, {
+	    key: "getTextLines",
+	    value: function getTextLines(text, position, sign) {
+	      var _this2 = this;
+	
+	      if (!text) {
+	        return "";
+	      }
+	      // TODO: split text to new lines based on font size, number of characters and total width
+	      var textString = "" + text;
+	      var textLines = textString.split("\n");
+	      return _lodash2["default"].map(textLines, function (line, index) {
+	        var order = sign === 1 ? textLines.length - index : index + 1;
+	        var offset = order * sign * -_this2.style.labels.fontSize;
+	        return _react2["default"].createElement(
+	          "tspan",
+	          { x: position.x, y: position.y1, dy: offset, key: "text-line-" + index },
+	          line
+	        );
+	      });
+	    }
+	  }, {
+	    key: "selectCategotyLabel",
+	    value: function selectCategotyLabel(x) {
+	      var index = undefined;
+	      if (this.stringMap.x) {
+	        return this.props.categoryLabels[x - 1];
+	      } else if (this.props.categories) {
+	        index = _lodash2["default"].findIndex(this.props.categories, function (category) {
+	          return _lodash2["default"].isArray(category) ? _lodash2["default"].min(category) <= x && _lodash2["default"].max(category) >= x : category === x;
+	        });
+	        return this.props.categoryLabels[index];
+	      } else {
+	        var allX = _lodash2["default"].map(this.datasets, function (dataset) {
+	          return _lodash2["default"].map(dataset.data, "x");
+	        });
+	        var uniqueX = _lodash2["default"].uniq(_lodash2["default"].flatten(allX));
+	        index = _lodash2["default"].findIndex(_lodash2["default"].sortBy(uniqueX), function (n) {
+	          return n === x;
+	        });
+	        return this.props.categoryLabels[index];
+	      }
+	    }
+	  }, {
+	    key: "getBarPosition",
+	    value: function getBarPosition(data, index, barIndex) {
+	      var stacked = this.props.stacked;
+	      var yOffset = this.getYOffset(data, index, barIndex);
+	      var y0 = stacked ? yOffset : _lodash2["default"].max([_lodash2["default"].min(this.domain.y), 0]);
+	      var y1 = stacked ? yOffset + data.y : data.y;
+	      var x = this._adjustX(data.x, index, { stacked: stacked });
+	      return {
+	        x: this.scale.x.call(this, x),
+	        y0: this.scale.y.call(this, y0),
+	        y1: this.scale.y.call(this, y1)
+	      };
 	    }
 	  }, {
 	    key: "getBarElements",
 	    value: function getBarElements(dataset, index) {
-	      var _this2 = this;
+	      var _this3 = this;
 	
+	      var isCenter = Math.floor(this.datasets.length / 2) === index;
+	      var isLast = this.datasets.length === index + 1;
+	      var stacked = this.props.stacked;
+	      var plotCategoryLabel = stacked && isLast || !stacked && isCenter;
 	      return _lodash2["default"].map(dataset.data, function (data, barIndex) {
-	        var minY = _lodash2["default"].min(_this2.domain.y);
-	        var yOffset = _this2.getYOffset(minY, index, barIndex);
-	        var y0 = _this2.props.stacked ? yOffset : minY;
-	        var y1 = _this2.props.stacked ? yOffset + data.y : data.y;
-	        var x = _this2._adjustX(data.x, index);
-	        var scaledX = _this2.scale.x.call(_this2, x);
-	        var scaledY0 = _this2.scale.y.call(_this2, y0);
-	        var scaledY1 = _this2.scale.y.call(_this2, y1);
-	        var path = scaledX ? _this2.getBarPath(scaledX, scaledY0, scaledY1) : undefined;
-	        var style = _lodash2["default"].merge({}, _this2.style.data, dataset.attrs, data);
-	        var pathElement = _react2["default"].createElement("path", {
+	        var position = _this3.getBarPosition(data, index, barIndex);
+	        var path = position.x ? _this3.getBarPath(position) : undefined;
+	        var style = _lodash2["default"].merge({}, _this3.style.data, dataset.attrs, data);
+	        var categoryLabel = undefined;
+	        if (_this3.props.categoryLabels && plotCategoryLabel) {
+	          categoryLabel = _this3.selectCategotyLabel(data.x);
+	        }
+	        var label = stacked ? categoryLabel : data.label || categoryLabel;
+	
+	        if (label) {
+	          var sign = data.y >= 0 ? 1 : -1;
+	          return _react2["default"].createElement(
+	            "g",
+	            { key: "series-" + index + "-bar-" + barIndex },
+	            _react2["default"].createElement("path", {
+	              d: path,
+	              shapeRendering: "optimizeSpeed",
+	              style: style }),
+	            _react2["default"].createElement(
+	              "text",
+	              {
+	                x: position.x,
+	                y: position.y1,
+	                style: _this3.style.labels },
+	              _this3.getTextLines(label, position, sign)
+	            )
+	          );
+	        }
+	        return _react2["default"].createElement("path", {
 	          d: path,
 	          key: "series-" + index + "-bar-" + barIndex,
 	          shapeRendering: "optimizeSpeed",
 	          style: style });
-	        return pathElement;
 	      });
 	    }
 	  }, {
 	    key: "plotDataPoints",
 	    value: function plotDataPoints() {
-	      var _this3 = this;
+	      var _this4 = this;
 	
 	      return _lodash2["default"].map(this.datasets, function (dataset, index) {
-	        return _this3.getBarElements(dataset, index);
+	        return _this4.getBarElements(dataset, index);
 	      });
 	    }
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      if (this.props.containerElement === "svg") {
+	      if (this.props.standalone === true) {
 	        return _react2["default"].createElement(
 	          "svg",
-	          { style: this.style.base },
+	          { style: this.style.parent },
 	          this.plotDataPoints()
 	        );
 	      }
 	      return _react2["default"].createElement(
 	        "g",
-	        { style: this.style.base },
+	        { style: this.style.parent },
 	        this.plotDataPoints()
 	      );
 	    }
@@ -576,18 +681,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _createClass(VictoryBar, [{
 	    key: "render",
 	    value: function render() {
-	      var _this4 = this;
+	      var _this5 = this;
 	
 	      if (this.props.animate) {
 	        // Do less work by having `VictoryAnimation` tween only values that
 	        // make sense to tween. In the future, allow customization of animated
 	        // prop whitelist/blacklist?
-	        var animateData = _lodash2["default"].omit(this.props, ["stacked", "scale", "animate", "containerElement"]);
+	        var animateData = _lodash2["default"].omit(this.props, ["stacked", "scale", "animate", "standalone"]);
 	        return _react2["default"].createElement(
 	          _victoryAnimation.VictoryAnimation,
 	          _extends({}, this.props.animate, { data: animateData }),
 	          function (props) {
-	            return _react2["default"].createElement(VBar, _extends({}, _this4.props, props));
+	            return _react2["default"].createElement(VBar, _extends({}, _this5.props, props));
 	          }
 	        );
 	      }
