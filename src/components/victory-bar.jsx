@@ -407,10 +407,12 @@ class VBar extends React.Component {
     return this.props.stacked ? x : x + (centerOffset * totalWidth);
   }
 
-  getYOffset(y, index, barIndex) {
+  getYOffset(data, index, barIndex) {
+    const minY = _.min(this.domain.y);
     if (index === 0) {
-      return y;
+      return _.max([minY, 0]);
     }
+    const y = data.y;
     const previousDataSets = _.take(this.datasets, index);
     const previousBars = _.map(previousDataSets, (dataset) => {
       return _.pluck(dataset.data, "y");
@@ -442,9 +444,8 @@ class VBar extends React.Component {
 
   getBarElements(dataset, index) {
     return _.map(dataset.data, (data, barIndex) => {
-      const minY = _.max([_.min(this.domain.y), 0]);
-      const yOffset = this.getYOffset(minY, index, barIndex);
-      const y0 = this.props.stacked ? yOffset : _.max([minY, 0]);
+      const yOffset = this.getYOffset(data, index, barIndex);
+      const y0 = this.props.stacked ? yOffset : _.max([_.min(this.domain.y), 0]);
       const y1 = this.props.stacked ? yOffset + data.y : data.y;
       const x = this._adjustX(data.x, index);
       const scaledX = this.scale.x.call(this, x);

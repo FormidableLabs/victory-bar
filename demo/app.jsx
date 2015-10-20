@@ -28,7 +28,7 @@ class App extends React.Component {
         },
         {
           x: "dogs",
-          y: _.random(1, 15)
+          y: _.random(-15, 15)
         }
       ];
     });
