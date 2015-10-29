@@ -478,20 +478,33 @@ class VBar extends React.Component {
   }
 
   getTextLines(text, position, sign) {
+    debugger;
     if (!text) {
       return "";
     }
     // TODO: split text to new lines based on font size, number of characters and total width
     const textString = "" + text;
     const textLines = textString.split("\n");
+    const maxLength = _.max(textLines, line => { return line.length;}).length;
     return _.map(textLines, (line, index) => {
       const order = sign === 1 ? (textLines.length - index) : (index + 1);
-      const offset = order * sign * -(this.style.labels.fontSize);
+      const offsetY = order * sign * -(this.style.labels.fontSize);
+      const offsetX = sign * (this.style.labels.fontSize)/3 * maxLength;
+
+      if (this.props.horizontal) {
+        return (
+          <tspan x={position.dependent1} y={position.independent} dx={offsetX} dy={offsetY} key={"text-line-" + index}>
+            {line}
+          </tspan>
+        );
+      } else {
       return (
-        <tspan x={position.x} y={position.y1} dy={offset} key={"text-line-" + index}>
+        <tspan x={position.independent} y={position.dependent1} dx={offsetX} dy={offsetY} key={"text-line-" + index}>
           {line}
         </tspan>
-      );
+      );  
+      }
+      
     });
   }
 
@@ -544,22 +557,42 @@ class VBar extends React.Component {
       const label = stacked ? categoryLabel : (data.label || categoryLabel);
 
       if (label) {
-        const sign = data.y >= 0 ? 1 : -1;
-        return (
-          <g key={"series-" + index + "-bar-" + barIndex}>
-            <path
-              d={path}
-              shapeRendering="optimizeSpeed"
-              style={style}>
-            </path>
-            <text
-              x={position.y}
-              y={position.x1}
-              style={this.style.labels}>
-              {this.getTextLines(label, position, sign)}
-            </text>
-          </g>
-        );
+        if (this.props.horizontal) {
+          const sign = data.y >= 0 ? 1 : -1;
+          return (
+            <g key={"series-" + index + "-bar-" + barIndex}>
+              <path
+                d={path}
+                shapeRendering="optimizeSpeed"
+                style={style}>
+              </path>
+              <text
+                x={position.dependent1}
+                y={position.independent}
+                dy={20}
+                style={this.style.labels}>
+                {this.getTextLines(label, position, sign)}
+              </text>
+            </g>
+          );
+        } else {
+          const sign = data.y >= 0 ? 1 : -1;
+          return (
+            <g key={"series-" + index + "-bar-" + barIndex}>
+              <path
+                d={path}
+                shapeRendering="optimizeSpeed"
+                style={style}>
+              </path>
+              <text
+                x={position.independent}
+                y={position.dependent1}
+                style={this.style.labels}>
+                {this.getTextLines(label, position, sign)}
+              </text>
+            </g>
+          );
+        }
       }
       return (
         <path
