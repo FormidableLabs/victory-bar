@@ -7,7 +7,7 @@ import {VictoryAnimation} from "victory-animation";
 
 const styles = {
   parent: {
-    width: 400,
+    width: 300,
     height: 400,
     margin: 50
   },
@@ -490,7 +490,9 @@ class VBar extends React.Component {
       const offset = order * sign * -(this.style.labels.fontSize);
 
       if (this.props.horizontal) {
-        const offsetY = order * this.style.labels.fontSize - this.style.labels.fontSize * textLines.length / 1.6;
+        const offsetY = sign < 0 ? 
+          order * this.style.labels.fontSize - this.style.labels.fontSize * textLines.length / 1.6 :
+          order * (-1) * this.style.labels.fontSize + this.style.labels.fontSize * textLines.length / 1;
         const offsetX = sign * (this.style.labels.fontSize)/3 * maxLength;
         return (
           <tspan x={position.dependent1} y={position.independent} dx={offsetX} dy={offsetY} key={"text-line-" + index}>
