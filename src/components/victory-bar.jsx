@@ -478,7 +478,6 @@ class VBar extends React.Component {
   }
 
   getTextLines(text, position, sign) {
-    debugger;
     if (!text) {
       return "";
     }
@@ -488,10 +487,11 @@ class VBar extends React.Component {
     const maxLength = _.max(textLines, line => { return line.length;}).length;
     return _.map(textLines, (line, index) => {
       const order = sign === 1 ? (textLines.length - index) : (index + 1);
-      const offsetY = order * sign * -(this.style.labels.fontSize);
-      const offsetX = sign * (this.style.labels.fontSize)/3 * maxLength;
+      const offset = order * sign * -(this.style.labels.fontSize);
 
       if (this.props.horizontal) {
+        const offsetY = order * this.style.labels.fontSize - this.style.labels.fontSize * textLines.length / 1.6;
+        const offsetX = sign * (this.style.labels.fontSize)/3 * maxLength;
         return (
           <tspan x={position.dependent1} y={position.independent} dx={offsetX} dy={offsetY} key={"text-line-" + index}>
             {line}
@@ -499,7 +499,7 @@ class VBar extends React.Component {
         );
       } else {
       return (
-        <tspan x={position.independent} y={position.dependent1} dx={offsetX} dy={offsetY} key={"text-line-" + index}>
+        <tspan x={position.independent} y={position.dependent1} dy={offset} key={"text-line-" + index}>
           {line}
         </tspan>
       );  
@@ -569,7 +569,6 @@ class VBar extends React.Component {
               <text
                 x={position.dependent1}
                 y={position.independent}
-                dy={20}
                 style={this.style.labels}>
                 {this.getTextLines(label, position, sign)}
               </text>
