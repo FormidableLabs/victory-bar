@@ -190,6 +190,7 @@ class VBar extends React.Component {
       x: this.createStringMap(props, "x"),
       y: this.createStringMap(props, "y")
     };
+    this.data = this.getData(props);
     this.datasets = this.consolidateData(props);
     this.range = {
       x: this.getRange(props, "x"),
@@ -203,7 +204,16 @@ class VBar extends React.Component {
       x: this.getScale(props, "x"),
       y: this.getScale(props, "y")
     };
-    this.barWidth = this.getBarWidth(props);
+    this.barWidth = this.getBarWidth();
+  }
+
+  getData(props) {
+    return props.data || [
+      {x: "a", y: -3, label: "one\nthing"},
+      {x: "b", y: -1, label: "two\nthings"},
+      {x: "c", y: 10, label: "red\nthings"},
+      {x: "d", y: 5, label: "blue\nthings"}
+    ];
   }
 
   getStyles(props) {
@@ -320,7 +330,7 @@ class VBar extends React.Component {
     if (!this.props.horizontal && axis === "x" || this.props.horizontal && axis !== "x") {
       return [style.margin, style.width - style.margin];
     } else {
-      return [style.height - style.margin, style.margin]; 
+      return [style.height - style.margin, style.margin];
     }
   }
 
@@ -390,12 +400,12 @@ class VBar extends React.Component {
     }
   }
 
-  getBarWidth(props) {
+  getBarWidth() {
     // todo calculate / enforce max width
     return this.style.data.width;
   }
 
-  /** 
+  /*
    * helper method for getBarPath
    * called when the bars will be vertical
    */
@@ -406,10 +416,10 @@ class VBar extends React.Component {
       "L " + (independent - size) + "," + dependent1 +
       "L " + (independent + size) + "," + dependent1 +
       "L " + (independent + size) + "," + dependent0 +
-      "L " + (independent - size) + "," + dependent0;  
+      "L " + (independent - size) + "," + dependent0;
   }
 
-  /** 
+  /*
    * helper method for getBarPath
    * called when the bars will be horizonal
    */
@@ -484,29 +494,31 @@ class VBar extends React.Component {
     // TODO: split text to new lines based on font size, number of characters and total width
     const textString = "" + text;
     const textLines = textString.split("\n");
-    const maxLength = _.max(textLines, line => { return line.length;}).length;
+    const maxLength = _.max(textLines, line => { return line.length; }).length;
     return _.map(textLines, (line, index) => {
       const order = sign === 1 ? (textLines.length - index) : (index + 1);
       const offset = order * sign * -(this.style.labels.fontSize);
 
       if (this.props.horizontal) {
-        const offsetY = sign < 0 ? 
+        const offsetY = sign < 0 ?
           order * this.style.labels.fontSize - this.style.labels.fontSize * textLines.length / 1.6 :
-          order * (-1) * this.style.labels.fontSize + this.style.labels.fontSize * textLines.length / 1;
-        const offsetX = sign * (this.style.labels.fontSize)/3 * maxLength;
+          order * (-1) * this.style.labels.fontSize +
+            this.style.labels.fontSize * textLines.length / 1;
+        const offsetX = sign * (this.style.labels.fontSize) / 3 * maxLength;
         return (
-          <tspan x={position.dependent1} y={position.independent} dx={offsetX} dy={offsetY} key={"text-line-" + index}>
+          <tspan x={position.dependent1} y={position.independent}
+            dx={offsetX} dy={offsetY} key={"text-line-" + index}>
             {line}
           </tspan>
         );
       } else {
-      return (
-        <tspan x={position.independent} y={position.dependent1} dy={offset} key={"text-line-" + index}>
-          {line}
-        </tspan>
-      );  
+        return (
+          <tspan x={position.independent} y={position.dependent1}
+            dy={offset} key={"text-line-" + index}>
+            {line}
+          </tspan>
+        );
       }
-      
     });
   }
 
