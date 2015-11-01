@@ -29,7 +29,8 @@ const styles = {
   }
 };
 
-class VBar extends React.Component {
+@Radium
+export default class VictoryBar extends React.Component {
   static propTypes = {
     /**
      * The data prop specifies the data to be plotted. Data should be in the form of an array
@@ -169,6 +170,26 @@ class VBar extends React.Component {
     standalone: true
   };
 
+  render() {
+    if (this.props.animate) {
+      // Do less work by having `VictoryAnimation` tween only values that
+      // make sense to tween. In the future, allow customization of animated
+      // prop whitelist/blacklist?
+      const animateData = _.omit(this.props, [
+        "stacked", "scale", "animate", "standalone"
+      ]);
+      return (
+        <VictoryAnimation {...this.props.animate} data={animateData}>
+          {props => <VBar {...this.props} {...props}/>}
+        </VictoryAnimation>
+      );
+    }
+    return (<VBar {...this.props}/>);
+  }
+}
+
+class VBar extends React.Component {
+  /* eslint-disable react/prop-types */
   constructor(props) {
     super(props);
     this.getCalculatedValues(props);
@@ -555,30 +576,5 @@ class VBar extends React.Component {
         {this.plotDataPoints()}
       </g>
     );
-  }
-}
-
-@Radium
-export default class VictoryBar extends React.Component {
-  /* eslint-disable react/prop-types */
-  // ^ see: https://github.com/yannickcr/eslint-plugin-react/issues/106
-  static propTypes = {...VBar.propTypes};
-  static defaultProps = {...VBar.defaultProps};
-
-  render() {
-    if (this.props.animate) {
-      // Do less work by having `VictoryAnimation` tween only values that
-      // make sense to tween. In the future, allow customization of animated
-      // prop whitelist/blacklist?
-      const animateData = _.omit(this.props, [
-        "stacked", "scale", "animate", "standalone"
-      ]);
-      return (
-        <VictoryAnimation {...this.props.animate} data={animateData}>
-          {props => <VBar {...this.props} {...props}/>}
-        </VictoryAnimation>
-      );
-    }
-    return (<VBar {...this.props}/>);
   }
 }
