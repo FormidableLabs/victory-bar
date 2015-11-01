@@ -181,7 +181,7 @@ export default class VictoryBar extends React.Component {
       // make sense to tween. In the future, allow customization of animated
       // prop whitelist/blacklist?
       const animateData = _.omit(this.props, [
-        "stacked", "scale", "animate", "standalone"
+        "stacked", "scale", "animate", "standalone", "horizontal"
       ]);
       return (
         <VictoryAnimation {...this.props.animate} data={animateData}>
