@@ -2,13 +2,12 @@ import React from "react";
 import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
-import log from "../log";
 import {VictoryAnimation} from "victory-animation";
 
 const styles = {
   parent: {
     width: 500,
-    height: 300,
+    height: 500,
     margin: 50
   },
   data: {
@@ -21,8 +20,8 @@ const styles = {
   },
   labels: {
     padding: 5,
-    fontFamily: "Helvetica",
-    fontSize: 10,
+    fontFamily: "Helvetica", //TODO fontstack? (can React styles do that?)
+    fontSize: 14,
     strokeWidth: 0,
     stroke: "transparent",
     textAnchor: "middle"
@@ -161,7 +160,13 @@ export default class VictoryBar extends React.Component {
      * or a <g> tag that will be included in an external svg. Set standalone to false to
      * compose VictoryBar with other components within an enclosing <svg> tag.
      */
-    standalone: React.PropTypes.bool
+    standalone: React.PropTypes.bool,
+    /**
+     * The horizontal prop determines whether the bars will be laid vertically or
+     * horizontally. The bars will be vertical if this prop is false or unspecified,
+     * or horizontal if the prop is set to true.
+     */
+    horizontal: React.PropTypes.bool
   };
 
   static defaultProps = {
@@ -176,7 +181,7 @@ export default class VictoryBar extends React.Component {
       // make sense to tween. In the future, allow customization of animated
       // prop whitelist/blacklist?
       const animateData = _.omit(this.props, [
-        "stacked", "scale", "animate", "standalone"
+        "stacked", "scale", "animate", "standalone", "horizontal"
       ]);
       return (
         <VictoryAnimation {...this.props.animate} data={animateData}>
@@ -200,6 +205,7 @@ class VBar extends React.Component {
   }
 
   getCalculatedValues(props) {
+    this.data = this.getData(props);
     this.style = this.getStyles(props);
     this.stringMap = {
       x: this.createStringMap(props, "x"),
@@ -218,7 +224,16 @@ class VBar extends React.Component {
       x: this.getScale(props, "x"),
       y: this.getScale(props, "y")
     };
-    this.barWidth = this.getBarWidth(props);
+    this.barWidth = this.getBarWidth();
+  }
+
+  getData(props) {
+    return props.data || [
+      {x: "a", y: -3, label: "default\ndata"},
+      {x: "b", y: -1, label: "default\ndata"},
+      {x: "c", y: 10, label: "default\ndata"},
+      {x: "d", y: 5, label: "default\ndata"}
+    ];
   }
 
   getStyles(props) {
@@ -234,28 +249,21 @@ class VBar extends React.Component {
   }
 
   consolidateData(props) {
-    if (props.data) {
-      const dataFromProps = _.isArray(props.data[0]) ? props.data : [props.data];
-      return _.map(dataFromProps, (dataset, index) => {
-        return {
-          attrs: this._getAttributes(props, index),
-          data: _.map(dataset, (data) => {
-            return _.merge(data, {
-              // map string data to numeric values, and add names
-              x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
-              xName: _.isString(data.x) ? data.x : undefined,
-              y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
-              yName: _.isString(data.y) ? data.y : undefined
-            });
-          })
-        };
-      });
-    } else {
-      return [{
-        attrs: {},
-        data: []
-      }];
-    }
+    const dataFromProps = _.isArray(this.data[0]) ? this.data : [this.data];
+    return _.map(dataFromProps, (dataset, index) => {
+      return {
+        attrs: this._getAttributes(props, index),
+        data: _.map(dataset, (data) => {
+          return _.merge(data, {
+            // map string data to numeric values, and add names
+            x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
+            xName: _.isString(data.x) ? data.x : undefined,
+            y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
+            yName: _.isString(data.y) ? data.y : undefined
+          });
+        })
+      };
+    });
   }
 
   _getAttributes(props, index) {
@@ -275,37 +283,30 @@ class VBar extends React.Component {
 
   createStringMap(props, axis) {
     // if categories exist and are strings, create a map using only those strings
-    // dont alter the order.
+    // don't alter the order.
     if (props.categories && this.containsStrings(props.categories)) {
       return _.zipObject(_.map(props.categories, (tick, index) => {
         return ["" + tick, index + 1];
       }));
     }
-    // collect strings from props.data
-    if (props.data) {
-      const data = _.isArray(props.data) ? _.flattenDeep(props.data) : props.data;
-      // create a unique, sorted set of strings
-      const stringData = _.chain(data)
-        .pluck(axis)
-        .map((datum) => {
-          return _.isString(datum) ? datum : null;
-        })
-        .compact()
-        .uniq()
-        .sort()
-        .value();
+    // collect strings from data
+    const data = _.isArray(this.data) ? _.flattenDeep(this.data) : this.data;
+    // create a unique, sorted set of strings
+    const stringData = _.chain(data)
+      .pluck(axis)
+      .map((datum) => {
+        return _.isString(datum) ? datum : null;
+      })
+      .compact()
+      .uniq()
+      .sort()
+      .value();
 
-      return _.isEmpty(stringData) ?
-        null :
-        _.zipObject(_.map(stringData, (string, index) => {
-          return [string, index + 1];
-        }));
-    } else {
-      return {
-        x: null,
-        y: null
-      };
-    }
+    return _.isEmpty(stringData) ?
+      null :
+      _.zipObject(_.map(stringData, (string, index) => {
+        return [string, index + 1];
+      }));
   }
 
   getScale(props, axis) {
@@ -330,9 +331,13 @@ class VBar extends React.Component {
     }
     // if the range is not given in props, calculate it from width, height and margin
     const style = this.style.parent;
-    return axis === "x" ?
-      [style.margin, style.width - style.margin] :
-      [style.height - style.margin, style.margin];
+
+    // determine how to lay the axis and what direction positive and negative are
+    if (!this.props.horizontal && axis === "x" || this.props.horizontal && axis !== "x") {
+      return [style.margin, style.width - style.margin];
+    } else {
+      return [style.height - style.margin, style.margin];
+    }
   }
 
   getDomain(props, axis) {
@@ -341,10 +346,8 @@ class VBar extends React.Component {
       return props.domain[axis] || props.domain;
     } else if (categoryDomain) {
       return categoryDomain;
-    } else if (props.data) {
-      return this._getDomainFromData(props, axis);
     } else {
-      return this._getDomainFromScale(props, axis);
+      return this._getDomainFromData(props, axis);
     }
   }
 
@@ -353,23 +356,6 @@ class VBar extends React.Component {
       return undefined;
     }
     return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
-  }
-
-  // helper method for getDomain
-  _getDomainFromScale(props, axis) {
-    // The scale will never be undefined due to default props
-    const scaleDomain = props.scale[axis] ? props.scale[axis].domain() :
-      props.scale.domain();
-
-    // Warn when particular types of scales need more information to produce meaningful lines
-    if (_.isDate(scaleDomain[0])) {
-      log.warn("please specify a domain or data when using time scales");
-    } else if (scaleDomain.length === 0) {
-      log.warn("please specify a domain or data when using ordinal or quantile scales");
-    } else if (scaleDomain.length === 1) {
-      log.warn("please specify a domain or data when using a threshold scale");
-    }
-    return scaleDomain;
   }
 
   // helper method for getDomain
@@ -406,14 +392,37 @@ class VBar extends React.Component {
     return this.style.data.width;
   }
 
-  getBarPath(position) {
-    const {x, y0, y1} = position;
+  /*
+   * helper method for getBarPath
+   * called when the bars will be vertical
+   */
+  _getVerticalBarPath(position) {
+    const {independent, dependent0, dependent1} = position;
     const size = this.barWidth / 2;
-    return "M " + (x - size) + "," + y0 + " " +
-      "L " + (x - size) + "," + y1 +
-      "L " + (x + size) + "," + y1 +
-      "L " + (x + size) + "," + y0 +
-      "L " + (x - size) + "," + y0;
+    return "M " + (independent - size) + "," + dependent0 + " " +
+      "L " + (independent - size) + "," + dependent1 +
+      "L " + (independent + size) + "," + dependent1 +
+      "L " + (independent + size) + "," + dependent0 +
+      "L " + (independent - size) + "," + dependent0;
+  }
+
+  /*
+   * helper method for getBarPath
+   * called when the bars will be horizonal
+   */
+  _getHorizontalBarPath(position) {
+    const {independent, dependent0, dependent1} = position;
+    const size = this.barWidth / 2;
+    return "M " + (dependent0) + "," + (independent - size) + " " +
+      "L " + (dependent0) + "," + (independent + size) +
+      "L " + (dependent1) + "," + (independent + size) +
+      "L " + (dependent1) + "," + (independent - size) +
+      "L " + (dependent0) + "," + (independent - size);
+  }
+
+  getBarPath(position) {
+    return this.props.horizontal ?
+      this._getHorizontalBarPath(position) : this._getVerticalBarPath(position);
   }
 
   _pixelsToValue(pixels) {
@@ -469,14 +478,31 @@ class VBar extends React.Component {
     // TODO: split text to new lines based on font size, number of characters and total width
     const textString = "" + text;
     const textLines = textString.split("\n");
+    const maxLength = _.max(textLines, line => { return line.length; }).length;
     return _.map(textLines, (line, index) => {
+      const fontSize = this.style.labels.fontSize;
       const order = sign === 1 ? (textLines.length - index) : (index + 1);
-      const offset = order * sign * -(this.style.labels.fontSize);
-      return (
-        <tspan x={position.x} y={position.y1} dy={offset} key={"text-line-" + index}>
-          {line}
-        </tspan>
-      );
+      const offset = order * sign * -(fontSize);
+      if (this.props.horizontal) {
+        const offsetY = sign < 0 ?
+          order * fontSize - fontSize * textLines.length / 1.6 :
+          order * (-1) * fontSize +
+            fontSize * textLines.length / 1;
+        const offsetX = sign * (fontSize) / 3 * maxLength;
+        return (
+          <tspan x={position.dependent1} y={position.independent}
+            dx={offsetX} dy={offsetY} key={"text-line-" + index}>
+            {line}
+          </tspan>
+        );
+      } else {
+        return (
+          <tspan x={position.independent} y={position.dependent1}
+            dy={offset} key={"text-line-" + index}>
+            {line}
+          </tspan>
+        );
+      }
     });
   }
 
@@ -507,9 +533,16 @@ class VBar extends React.Component {
     const y1 = stacked ? yOffset + data.y : data.y;
     const x = this._adjustX(data.x, index, {stacked});
     return {
-      x: this.scale.x.call(this, x),
-      y0: this.scale.y.call(this, y0),
-      y1: this.scale.y.call(this, y1)
+      independent: this.scale.x.call(this, x),
+      dependent0: this.scale.y.call(this, y0),
+      dependent1: this.scale.y.call(this, y1)
+    };
+  }
+
+  getLabelPositions(props, position) {
+    return {
+      xPosition: props.horizontal ? position.dependent1 : position.independent,
+      yPosition: props.horizontal ? position.independent : position.dependent1
     };
   }
 
@@ -519,10 +552,11 @@ class VBar extends React.Component {
     const stacked = this.props.stacked;
     const plotCategoryLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
-      const position = this.getBarPosition(data, index, barIndex);
-      const path = position.x ? this.getBarPath(position) : undefined;
-      const style = _.merge({}, this.style.data, dataset.attrs, data);
       let categoryLabel;
+      const position = this.getBarPosition(data, index, barIndex);
+      const path = position.independent ? this.getBarPath(position) : undefined;
+      const style = _.merge({}, this.style.data, dataset.attrs, data);
+      const {xPosition, yPosition} = this.getLabelPositions(this.props, position);
       if (this.props.categoryLabels && plotCategoryLabel) {
         categoryLabel = this.selectCategotyLabel(data.x);
       }
@@ -538,8 +572,8 @@ class VBar extends React.Component {
               style={style}>
             </path>
             <text
-              x={position.x}
-              y={position.y1}
+              x={xPosition}
+              y={yPosition}
               style={this.style.labels}>
               {this.getTextLines(label, position, sign)}
             </text>

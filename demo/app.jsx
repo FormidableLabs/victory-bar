@@ -75,8 +75,8 @@ class App extends React.Component {
               {fill: "gold"},
               {fill: "tomato"}
             ]}
+            horizontal
             categories={[[1, 3], [4, 7], [9, 11]]}
-            containerElement="svg"
             animate={{velocity: 0.02}}/>
 
             <VictoryBar
@@ -89,20 +89,10 @@ class App extends React.Component {
               {fill: "tomato"}
             ]}
             categoryLabels={["one", "two", "three"]}
-            stacked={true}
-            containerElement="svg"
+            stacked
             animate={{velocity: 0.02}}/>
-            <VictoryBar
-            data={[
-              {x: "a", y: -3, label: "one\nthing"},
-              {x: "b", y: -1, label: "two\nthings"},
-              {x: "c", y: 10, label: "red\nthings"},
-              {x: "d", y: 5, label: "blue\nthings"}
-            ]}
-            dataAttributes={[
-              {fill: "cornflowerblue"}
-            ]}
-            containerElement="svg"/>
+
+            <VictoryBar/>
 
         </p>
       </div>
