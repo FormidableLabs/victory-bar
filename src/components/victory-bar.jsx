@@ -2,13 +2,12 @@ import React from "react";
 import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
-import log from "../log";
 import {VictoryAnimation} from "victory-animation";
 
 const styles = {
   parent: {
-    width: 300,
-    height: 400,
+    width: 500,
+    height: 500,
     margin: 50
   },
   data: {
@@ -185,6 +184,7 @@ class VBar extends React.Component {
   }
 
   getCalculatedValues(props) {
+    this.data = this.getData(props);
     this.style = this.getStyles(props);
     this.stringMap = {
       x: this.createStringMap(props, "x"),
@@ -208,10 +208,10 @@ class VBar extends React.Component {
 
   getData(props) {
     return props.data || [
-      {x: "a", y: -3, label: "one\nthing"},
-      {x: "b", y: -1, label: "two\nthings"},
-      {x: "c", y: 10, label: "red\nthings"},
-      {x: "d", y: 5, label: "blue\nthings"}
+      {x: "a", y: -3, label: "default\ndata"},
+      {x: "b", y: -1, label: "default\ndata"},
+      {x: "c", y: 10, label: "default\ndata"},
+      {x: "d", y: 5, label: "default\ndata"}
     ];
   }
 
@@ -228,28 +228,21 @@ class VBar extends React.Component {
   }
 
   consolidateData(props) {
-    if (props.data) {
-      const dataFromProps = _.isArray(props.data[0]) ? props.data : [props.data];
-      return _.map(dataFromProps, (dataset, index) => {
-        return {
-          attrs: this._getAttributes(props, index),
-          data: _.map(dataset, (data) => {
-            return _.merge(data, {
-              // map string data to numeric values, and add names
-              x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
-              xName: _.isString(data.x) ? data.x : undefined,
-              y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
-              yName: _.isString(data.y) ? data.y : undefined
-            });
-          })
-        };
-      });
-    } else {
-      return [{
-        attrs: {},
-        data: []
-      }];
-    }
+    const dataFromProps = _.isArray(this.data[0]) ? this.data : [this.data];
+    return _.map(dataFromProps, (dataset, index) => {
+      return {
+        attrs: this._getAttributes(props, index),
+        data: _.map(dataset, (data) => {
+          return _.merge(data, {
+            // map string data to numeric values, and add names
+            x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
+            xName: _.isString(data.x) ? data.x : undefined,
+            y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
+            yName: _.isString(data.y) ? data.y : undefined
+          });
+        })
+      };
+    });
   }
 
   _getAttributes(props, index) {
@@ -275,31 +268,24 @@ class VBar extends React.Component {
         return ["" + tick, index + 1];
       }));
     }
-    // collect strings from props.data
-    if (props.data) {
-      const data = _.isArray(props.data) ? _.flattenDeep(props.data) : props.data;
-      // create a unique, sorted set of strings
-      const stringData = _.chain(data)
-        .pluck(axis)
-        .map((datum) => {
-          return _.isString(datum) ? datum : null;
-        })
-        .compact()
-        .uniq()
-        .sort()
-        .value();
+    // collect strings from data
+    const data = _.isArray(this.data) ? _.flattenDeep(this.data) : this.data;
+    // create a unique, sorted set of strings
+    const stringData = _.chain(data)
+      .pluck(axis)
+      .map((datum) => {
+        return _.isString(datum) ? datum : null;
+      })
+      .compact()
+      .uniq()
+      .sort()
+      .value();
 
-      return _.isEmpty(stringData) ?
-        null :
-        _.zipObject(_.map(stringData, (string, index) => {
-          return [string, index + 1];
-        }));
-    } else {
-      return {
-        x: null,
-        y: null
-      };
-    }
+    return _.isEmpty(stringData) ?
+      null :
+      _.zipObject(_.map(stringData, (string, index) => {
+        return [string, index + 1];
+      }));
   }
 
   getScale(props, axis) {
@@ -339,10 +325,8 @@ class VBar extends React.Component {
       return props.domain[axis] || props.domain;
     } else if (categoryDomain) {
       return categoryDomain;
-    } else if (props.data) {
-      return this._getDomainFromData(props, axis);
     } else {
-      return this._getDomainFromScale(props, axis);
+      return this._getDomainFromData(props, axis);
     }
   }
 
@@ -351,23 +335,6 @@ class VBar extends React.Component {
       return undefined;
     }
     return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
-  }
-
-  // helper method for getDomain
-  _getDomainFromScale(props, axis) {
-    // The scale will never be undefined due to default props
-    const scaleDomain = props.scale[axis] ? props.scale[axis].domain() :
-      props.scale.domain();
-
-    // Warn when particular types of scales need more information to produce meaningful lines
-    if (_.isDate(scaleDomain[0])) {
-      log.warn("please specify a domain or data when using time scales");
-    } else if (scaleDomain.length === 0) {
-      log.warn("please specify a domain or data when using ordinal or quantile scales");
-    } else if (scaleDomain.length === 1) {
-      log.warn("please specify a domain or data when using a threshold scale");
-    }
-    return scaleDomain;
   }
 
   // helper method for getDomain
@@ -433,11 +400,8 @@ class VBar extends React.Component {
   }
 
   getBarPath(position) {
-    if (this.props.horizontal) {
-      return this._getHorizontalBarPath(position);
-    } else {
-      return this._getVerticalBarPath(position);
-    }
+    return this.props.horizontal ?
+      this._getHorizontalBarPath(position) : this._getVerticalBarPath(position);
   }
 
   _pixelsToValue(pixels) {
@@ -495,15 +459,15 @@ class VBar extends React.Component {
     const textLines = textString.split("\n");
     const maxLength = _.max(textLines, line => { return line.length; }).length;
     return _.map(textLines, (line, index) => {
+      const fontSize = this.style.labels.fontSize;
       const order = sign === 1 ? (textLines.length - index) : (index + 1);
-      const offset = order * sign * -(this.style.labels.fontSize);
-
+      const offset = order * sign * -(fontSize);
       if (this.props.horizontal) {
         const offsetY = sign < 0 ?
-          order * this.style.labels.fontSize - this.style.labels.fontSize * textLines.length / 1.6 :
-          order * (-1) * this.style.labels.fontSize +
-            this.style.labels.fontSize * textLines.length / 1;
-        const offsetX = sign * (this.style.labels.fontSize) / 3 * maxLength;
+          order * fontSize - fontSize * textLines.length / 1.6 :
+          order * (-1) * fontSize +
+            fontSize * textLines.length / 1;
+        const offsetX = sign * (fontSize) / 3 * maxLength;
         return (
           <tspan x={position.dependent1} y={position.independent}
             dx={offsetX} dy={offsetY} key={"text-line-" + index}>
@@ -555,17 +519,10 @@ class VBar extends React.Component {
   }
 
   getLabelPositions(props, position) {
-    let xPosition;
-    let yPosition;
-
-    if (props.horizontal) {
-      xPosition = position.dependent1;
-      yPosition = position.independent;
-    } else {
-      xPosition = position.independent;
-      yPosition = position.dependent1;
-    }
-    return {xPosition, yPosition};
+    return {
+      xPosition: props.horizontal ? position.dependent1 : position.independent,
+      yPosition: props.horizontal ? position.independent : position.dependent1
+    };
   }
 
   getBarElements(dataset, index) {
