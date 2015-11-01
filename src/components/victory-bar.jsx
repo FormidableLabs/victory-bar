@@ -190,7 +190,6 @@ class VBar extends React.Component {
       x: this.createStringMap(props, "x"),
       y: this.createStringMap(props, "y")
     };
-    this.data = this.getData(props);
     this.datasets = this.consolidateData(props);
     this.range = {
       x: this.getRange(props, "x"),
@@ -555,57 +554,53 @@ class VBar extends React.Component {
     };
   }
 
+  getLabelPositions(props, position) {
+    let xPosition;
+    let yPosition;
+
+    if (props.horizontal) {
+      xPosition = position.dependent1;
+      yPosition = position.independent;
+    } else {
+      xPosition = position.independent;
+      yPosition = position.dependent1;
+    }
+    return {xPosition, yPosition};
+  }
+
   getBarElements(dataset, index) {
     const isCenter = Math.floor(this.datasets.length / 2) === index;
     const isLast = this.datasets.length === index + 1;
     const stacked = this.props.stacked;
     const plotCategoryLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
+      let categoryLabel;
       const position = this.getBarPosition(data, index, barIndex);
       const path = position.independent ? this.getBarPath(position) : undefined;
       const style = _.merge({}, this.style.data, dataset.attrs, data);
-      let categoryLabel;
+      const {xPosition, yPosition} = this.getLabelPositions(this.props, position);
       if (this.props.categoryLabels && plotCategoryLabel) {
         categoryLabel = this.selectCategotyLabel(data.x);
       }
       const label = stacked ? categoryLabel : (data.label || categoryLabel);
 
       if (label) {
-        if (this.props.horizontal) {
-          const sign = data.y >= 0 ? 1 : -1;
-          return (
-            <g key={"series-" + index + "-bar-" + barIndex}>
-              <path
-                d={path}
-                shapeRendering="optimizeSpeed"
-                style={style}>
-              </path>
-              <text
-                x={position.dependent1}
-                y={position.independent}
-                style={this.style.labels}>
-                {this.getTextLines(label, position, sign)}
-              </text>
-            </g>
-          );
-        } else {
-          const sign = data.y >= 0 ? 1 : -1;
-          return (
-            <g key={"series-" + index + "-bar-" + barIndex}>
-              <path
-                d={path}
-                shapeRendering="optimizeSpeed"
-                style={style}>
-              </path>
-              <text
-                x={position.independent}
-                y={position.dependent1}
-                style={this.style.labels}>
-                {this.getTextLines(label, position, sign)}
-              </text>
-            </g>
-          );
-        }
+        const sign = data.y >= 0 ? 1 : -1;
+        return (
+          <g key={"series-" + index + "-bar-" + barIndex}>
+            <path
+              d={path}
+              shapeRendering="optimizeSpeed"
+              style={style}>
+            </path>
+            <text
+              x={xPosition}
+              y={yPosition}
+              style={this.style.labels}>
+              {this.getTextLines(label, position, sign)}
+            </text>
+          </g>
+        );
       }
       return (
         <path
