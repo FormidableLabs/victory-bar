@@ -6,8 +6,8 @@ import {VictoryAnimation} from "victory-animation";
 
 const styles = {
   parent: {
-    width: 500,
-    height: 500,
+    width: 400,
+    height: 400,
     margin: 50
   },
   data: {
