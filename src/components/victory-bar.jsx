@@ -28,6 +28,13 @@ const styles = {
   }
 };
 
+const defaultData = [
+  {x: "a", y: -3, label: "default\ndata"},
+  {x: "b", y: -1, label: "default\ndata"},
+  {x: "c", y: 10, label: "default\ndata"},
+  {x: "d", y: 5, label: "default\ndata"}
+];
+
 @Radium
 export default class VictoryBar extends React.Component {
   static propTypes = {
@@ -170,6 +177,7 @@ export default class VictoryBar extends React.Component {
   };
 
   static defaultProps = {
+    data: defaultData,
     stacked: false,
     scale: d3.scale.linear(),
     standalone: true
@@ -205,7 +213,6 @@ class VBar extends React.Component {
   }
 
   getCalculatedValues(props) {
-    this.data = this.getData(props);
     this.style = this.getStyles(props);
     this.stringMap = {
       x: this.createStringMap(props, "x"),
@@ -227,15 +234,6 @@ class VBar extends React.Component {
     this.barWidth = this.getBarWidth();
   }
 
-  getData(props) {
-    return props.data || [
-      {x: "a", y: -3, label: "default\ndata"},
-      {x: "b", y: -1, label: "default\ndata"},
-      {x: "c", y: 10, label: "default\ndata"},
-      {x: "d", y: 5, label: "default\ndata"}
-    ];
-  }
-
   getStyles(props) {
     if (!props.style) {
       return styles;
@@ -249,7 +247,7 @@ class VBar extends React.Component {
   }
 
   consolidateData(props) {
-    const dataFromProps = _.isArray(this.data[0]) ? this.data : [this.data];
+    const dataFromProps = _.isArray(props.data[0]) ? props.data : [props.data];
     return _.map(dataFromProps, (dataset, index) => {
       return {
         attrs: this._getAttributes(props, index),
@@ -290,7 +288,7 @@ class VBar extends React.Component {
       }));
     }
     // collect strings from data
-    const data = _.isArray(this.data) ? _.flattenDeep(this.data) : this.data;
+    const data = _.isArray(props.data) ? _.flattenDeep(props.data) : props.data;
     // create a unique, sorted set of strings
     const stringData = _.chain(data)
       .pluck(axis)
