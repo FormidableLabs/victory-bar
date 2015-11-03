@@ -29,10 +29,10 @@ const styles = {
 };
 
 const defaultData = [
-  {x: 1, y: 1, label: "default\ndata"},
-  {x: 2, y: 2, label: "default\ndata"},
-  {x: 3, y: 3, label: "default\ndata"},
-  {x: 4, y: 4, label: "default\ndata"}
+  {x: 1, y: 1},
+  {x: 2, y: 2},
+  {x: 3, y: 3},
+  {x: 4, y: 4}
 ];
 
 @Radium
