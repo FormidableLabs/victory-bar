@@ -145,22 +145,6 @@ export default class VictoryBar extends React.Component {
      */
     horizontal: React.PropTypes.bool,
     /**
-     * The range prop describes the range of pixels your bar chart will cover. This prop can be
-     * given as a array of the minimum and maximum expected values for your bar chart,
-     * or as an object that specifies separate arrays for x and y.
-     * If this prop is not provided, a range will be calculated based on the height,
-     * width, and margin provided in the style prop, or in default styles. It is usually
-     * a good idea to let the chart component calculate its own range.
-     * @exampes [0, 500], {x: [0, 500], y: [500, 300]}
-     */
-    range: React.PropTypes.oneOfType([
-      React.PropTypes.array,
-      React.PropTypes.shape({
-        x: React.PropTypes.array,
-        y: React.PropTypes.array
-      })
-    ]),
-    /**
      * The scale prop determines which scales your chart should use. This prop can be
      * given as a function, or as an object that specifies separate functions for x and y.
      * @exampes d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
@@ -345,10 +329,7 @@ class VBar extends React.Component {
   }
 
   getRange(props, axis) {
-    if (props.range) {
-      return props.range[axis] ? props.range[axis] : props.range;
-    }
-    // if the range is not given in props, calculate it from width, height and margin
+    // calculate range from width, height and margin
     const style = this.style.parent;
 
     // determine how to lay the axis and what direction positive and negative are
