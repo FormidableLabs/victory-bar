@@ -265,12 +265,21 @@ class VBar extends React.Component {
   }
 
   _getAttributes(props, index) {
-    const attributes = props.dataAttributes && props.dataAttributes[index] ?
+    let attributes = props.dataAttributes && props.dataAttributes[index] ?
       props.dataAttributes[index] : props.dataAttributes;
+    // see if attributes as fill; if it does not, add fill as randomly
+    // generated. see what's going on here to figure out how to get to fill
+    attributes ? attributes.fill = attributes.fill || this.getColor() :
+      attributes = {fill: this.getColor()};
+
     const requiredAttributes = {
       name: attributes && attributes.name ? attributes.name : "data-" + index
     };
     return _.merge(requiredAttributes, attributes);
+  }
+
+  getColor() {
+    return "#9f9f9f";    
   }
 
   containsStrings(collection) {
