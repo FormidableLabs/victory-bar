@@ -3,6 +3,7 @@ import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
 import {VictoryAnimation} from "victory-animation";
+import Util from "../../../victory-util/src/index";
 
 const styles = {
   parent: {
@@ -267,9 +268,8 @@ class VBar extends React.Component {
   _getAttributes(props, index) {
     let attributes = props.dataAttributes && props.dataAttributes[index] ?
       props.dataAttributes[index] : props.dataAttributes;
-    // see if attributes as fill; if it does not, add fill as randomly
-    // generated. see what's going on here to figure out how to get to fill
-    attributes ? attributes.fill = attributes.fill || this.getColor() :
+    // note: getColor will be replaced by Util.style.grayscaleColors
+    attributes ? attributes.fill = attributes.fill || getColor("bar") :
       attributes = {fill: this.getColor()};
 
     const requiredAttributes = {
@@ -278,8 +278,11 @@ class VBar extends React.Component {
     return _.merge(requiredAttributes, attributes);
   }
 
-  getColor() {
-    return "#9f9f9f";    
+  // this is a temporary function until the grayscaleColors method is merged
+  // into the released version of VictoryUtil
+  getColor(name) {
+    return Util.style.grayscaleColors ? Util.style.grayscaleColors(name) :
+      "#9f9f9f";    
   }
 
   containsStrings(collection) {
