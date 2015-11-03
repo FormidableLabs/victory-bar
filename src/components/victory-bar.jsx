@@ -3,7 +3,7 @@ import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
 import {VictoryAnimation} from "victory-animation";
-import Util from "../../../victory-util/src/index";
+import Util from "victory-util";
 
 const styles = {
   parent: {
@@ -40,6 +40,13 @@ const defaultData = [
 export default class VictoryBar extends React.Component {
   static propTypes = {
     /**
+     * The animate prop specifies props for victory-animation to use. It this prop is
+     * not given, the bar chart will not tween between changing data / style props.
+     * Large datasets might animate slowly due to the inherent limits of svg rendering.
+     * @examples {line: {delay: 5, velocity: 10, onEnd: () => alert("woo!")}}
+     */
+    animate: React.PropTypes.object,
+    /**
      * The data prop specifies the data to be plotted. Data should be in the form of an array
      * of data points, or an array of arrays of data points for multiple datasets.
      * Each data point should be an object with x and y properties.
@@ -75,8 +82,8 @@ export default class VictoryBar extends React.Component {
      * This prop can be given as an object, or an array of objects. If this prop is
      * given as an array of objects, the properties of each object in the array will
      * be applied to the data points in the corresponding array of the data prop.
-     * @exampes {color: "blue", opacity: 0.6},
-     * [{color: "red"}, {color: "orange"}]
+     * @exampes {fill: "blue", opacity: 0.6},
+     * [{fill: "red"}, {fill: "orange"}]
      */
     dataAttributes: React.PropTypes.oneOfType([
       React.PropTypes.object,
@@ -102,6 +109,16 @@ export default class VictoryBar extends React.Component {
      */
     categoryLabels: React.PropTypes.array,
     /**
+     * The colorScale prop is an optional prop that defines the color scale the chart's bars
+     * will be created on. This prop should be given as a string, which will one of the five
+     * baked-in color scales: "victory", "grayscale", "red", "bluePurple", and "yellowBlue".
+     * If it is not defined, the default Victory grayscale will be used, and if the fill
+     * property on the dataAttributes prop is defined, it will overwrite the colorScale prop.
+     */
+    colorScale: React.PropTypes.oneOf([
+      "victory", "grayscale", "red", "bluePurple", "yellowBlue"
+    ]),
+    /**
      * The domain prop describes the range of values your bar chart will cover. This prop can be
      * given as a array of the minimum and maximum expected values for your bar chart,
      * or as an object that specifies separate arrays for x and y.
@@ -116,6 +133,12 @@ export default class VictoryBar extends React.Component {
         y: React.PropTypes.array
       })
     ]),
+    /**
+     * The horizontal prop determines whether the bars will be laid vertically or
+     * horizontally. The bars will be vertical if this prop is false or unspecified,
+     * or horizontal if the prop is set to true.
+     */
+    horizontal: React.PropTypes.bool,
     /**
      * The range prop describes the range of pixels your bar chart will cover. This prop can be
      * given as a array of the minimum and maximum expected values for your bar chart,
@@ -145,24 +168,10 @@ export default class VictoryBar extends React.Component {
       })
     ]),
     /**
-     * The animate prop specifies props for victory-animation to use. It this prop is
-     * not given, the bar chart will not tween between changing data / style props.
-     * Large datasets might animate slowly due to the inherent limits of svg rendering.
-     * @examples {line: {delay: 5, velocity: 10, onEnd: () => alert("woo!")}}
-     */
-    animate: React.PropTypes.object,
-    /**
      * The stacked prop determines whether the chart should consist of stacked bars.
      * When this prop is set to false, grouped bars will be rendered instead.
      */
     stacked: React.PropTypes.bool,
-    /**
-     * The style prop specifies styles for your chart. VictoryBar relies on Radium,
-     * so valid Radium style objects should work for this prop, however height, width, and margin
-     * are used to calculate range, and need to be expressed as a number of pixels
-     * @example {width: 500, height: 300, data: {fill: "red", opacity: 1, width: 8}}
-     */
-    style: React.PropTypes.object,
     /**
      * The standalone prop determines whether the component will render a standalone svg
      * or a <g> tag that will be included in an external svg. Set standalone to false to
@@ -170,11 +179,12 @@ export default class VictoryBar extends React.Component {
      */
     standalone: React.PropTypes.bool,
     /**
-     * The horizontal prop determines whether the bars will be laid vertically or
-     * horizontally. The bars will be vertical if this prop is false or unspecified,
-     * or horizontal if the prop is set to true.
+     * The style prop specifies styles for your chart. VictoryBar relies on Radium,
+     * so valid Radium style objects should work for this prop, however height, width, and margin
+     * are used to calculate range, and need to be expressed as a number of pixels
+     * @example {width: 500, height: 300, data: {fill: "red", opacity: 1, width: 8}}
      */
-    horizontal: React.PropTypes.bool
+    style: React.PropTypes.object
   };
 
   static defaultProps = {
@@ -280,19 +290,13 @@ class VBar extends React.Component {
   }
 
   getColor(index) {
-    return Util.style.generateColorScale("victory")[index%5];
-  }
-
-  containsStrings(collection) {
-    return _.some(collection, function (item) {
-      return _.isString(item);
-    });
+    return Util.style.getColorScale(this.props.colorScale)[index%5];
   }
 
   createStringMap(props, axis) {
     // if categories exist and are strings, create a map using only those strings
     // don't alter the order.
-    if (props.categories && this.containsStrings(props.categories)) {
+    if (props.categories && Util.collection.containsStrings(props.categories)) {
       return _.zipObject(_.map(props.categories, (tick, index) => {
         return ["" + tick, index + 1];
       }));
@@ -360,7 +364,7 @@ class VBar extends React.Component {
   }
 
   _getDomainFromCategories(props, axis) {
-    if (axis !== "x" || !props.categories || this.containsStrings(props.categories)) {
+    if (axis !== "x" || !props.categories || Util.collection.containsStrings(props.categories)) {
       return undefined;
     }
     return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
