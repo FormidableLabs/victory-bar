@@ -278,10 +278,11 @@ class VBar extends React.Component {
   _getAttributes(props, index) {
     let attributes = props.dataAttributes && props.dataAttributes[index] ?
       props.dataAttributes[index] : props.dataAttributes;
-    // see if attributes as fill; if it does not, add fill as randomly
-    // generated. see what's going on here to figure out how to get to fill
-    attributes ? attributes.fill = attributes.fill || this.getColor(index) :
+    if (attributes) {
+      attributes.fill = attributes.fill || this.getColor(index);
+    } else {
       attributes = {fill: this.getColor(index)};
+    }
 
     const requiredAttributes = {
       name: attributes && attributes.name ? attributes.name : "data-" + index
@@ -290,7 +291,7 @@ class VBar extends React.Component {
   }
 
   getColor(index) {
-    return Util.style.getColorScale(this.props.colorScale)[index%5];
+    return Util.style.getColorScale(this.props.colorScale)[index % 5];
   }
 
   createStringMap(props, axis) {
