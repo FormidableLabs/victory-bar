@@ -268,9 +268,10 @@ class VBar extends React.Component {
   _getAttributes(props, index) {
     let attributes = props.dataAttributes && props.dataAttributes[index] ?
       props.dataAttributes[index] : props.dataAttributes;
-    // note: getColor will be replaced by Util.style.grayscaleColors
-    attributes ? attributes.fill = attributes.fill || getColor("bar") :
-      attributes = {fill: this.getColor()};
+    // see if attributes as fill; if it does not, add fill as randomly
+    // generated. see what's going on here to figure out how to get to fill
+    attributes ? attributes.fill = attributes.fill || this.getColor(index) :
+      attributes = {fill: this.getColor(index)};
 
     const requiredAttributes = {
       name: attributes && attributes.name ? attributes.name : "data-" + index
@@ -278,11 +279,8 @@ class VBar extends React.Component {
     return _.merge(requiredAttributes, attributes);
   }
 
-  // this is a temporary function until the grayscaleColors method is merged
-  // into the released version of VictoryUtil
-  getColor(name) {
-    return Util.style.grayscaleColors ? Util.style.grayscaleColors(name) :
-      "#9f9f9f";    
+  getColor(index) {
+    return Util.style.generateColorScale("victory")[index%5];
   }
 
   containsStrings(collection) {
@@ -294,7 +292,7 @@ class VBar extends React.Component {
   createStringMap(props, axis) {
     // if categories exist and are strings, create a map using only those strings
     // don't alter the order.
-    if (props.categories && Util.collection.containsStrings(props.categories)) {
+    if (props.categories && this.containsStrings(props.categories)) {
       return _.zipObject(_.map(props.categories, (tick, index) => {
         return ["" + tick, index + 1];
       }));
@@ -362,7 +360,7 @@ class VBar extends React.Component {
   }
 
   _getDomainFromCategories(props, axis) {
-    if (axis !== "x" || !props.categories || Util.collection.containsStrings(props.categories)) {
+    if (axis !== "x" || !props.categories || this.containsStrings(props.categories)) {
       return undefined;
     }
     return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
