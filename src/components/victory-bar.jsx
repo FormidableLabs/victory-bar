@@ -294,7 +294,7 @@ class VBar extends React.Component {
   createStringMap(props, axis) {
     // if categories exist and are strings, create a map using only those strings
     // don't alter the order.
-    if (props.categories && this.containsStrings(props.categories)) {
+    if (props.categories && Util.collection.containsStrings(props.categories)) {
       return _.zipObject(_.map(props.categories, (tick, index) => {
         return ["" + tick, index + 1];
       }));
@@ -362,7 +362,7 @@ class VBar extends React.Component {
   }
 
   _getDomainFromCategories(props, axis) {
-    if (axis !== "x" || !props.categories || this.containsStrings(props.categories)) {
+    if (axis !== "x" || !props.categories || Util.collection.containsStrings(props.categories)) {
       return undefined;
     }
     return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
