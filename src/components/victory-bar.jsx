@@ -630,6 +630,9 @@ _renderVictoryLabel(position, sign, label) {
       }
 
       if (label) {
+        // the verticalAnchor will need to change based on positive/negative bars
+        // and textAnchor will need to change when horizontal, and same with positive/negative bars
+        const sign = data.y >= 0 ? 1 : -1;
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
