@@ -16,11 +16,7 @@ const defaultStyles = {
     opacity: 1
   },
   labels: {
-    padding: 5,
-    fontFamily: "Helvetica", //TODO fontstack? (can React styles do that?)
-    fontSize: 12,
-    strokeWidth: 0,
-    stroke: "transparent"
+    fontSize: 12
   }
 };
 
