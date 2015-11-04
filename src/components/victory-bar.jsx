@@ -3,7 +3,7 @@ import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
 import {VictoryAnimation} from "victory-animation";
-import {Util} from "victory-util";
+import Util from "victory-util";
 import {VictoryLabel} from "victory-label";
 
 const styles = {
@@ -541,11 +541,36 @@ export default class VictoryBar extends React.Component {
     };
   }
 
-  getLabelPositions(props, position) {
-    return {
-      xPosition: props.horizontal ? position.dependent1 : position.independent,
-      yPosition: props.horizontal ? position.independent : position.dependent1
-    };
+  getLabel(position, sign, label) {
+    let verticalAnchor;
+    let horizontalAnchor;
+    let xPosition = this.props.horizontal ? position.dependent1 : position.independent;
+    const yPosition = this.props.horizontal ? position.independent : position.dependent1;
+
+    if (!this.props.horizontal) {
+      verticalAnchor = sign >= 0 ? "end" : "start";
+      horizontalAnchor = "middle";
+    } else {
+      verticalAnchor = "middle";
+      if (sign >= 0) {
+        horizontalAnchor = "start";
+        xPosition += 2;
+      } else {
+        horizontalAnchor = "end";
+        xPosition -= 2;
+      }
+    }
+
+    return (
+      <VictoryLabel
+        x={xPosition}
+        y={yPosition}
+        textAnchor={horizontalAnchor}
+        verticalAnchor={verticalAnchor}
+        style={this.style.labels}>
+        {label}
+      </VictoryLabel>
+    );
   }
 
   getBarElements(dataset, index) {
@@ -561,16 +586,15 @@ export default class VictoryBar extends React.Component {
         "xName", "yName", "x", "y", "label"
         ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
-      const {xPosition, yPosition} = this.getLabelPositions(this.props, position);
+      const sign = data.y >= 0 ? 1 : -1;
+
       if (this.props.categoryLabels && plotCategoryLabel) {
         categoryLabel = this.selectCategotyLabel(data.x);
       }
+
       const label = stacked ? categoryLabel : (data.label || categoryLabel);
 
       if (label) {
-        // the verticalAnchor will need to change based on positive/negative bars
-        // and textAnchor will need to change when horizontal, and same with positive/negative bars
-        const sign = data.y >= 0 ? 1 : -1;
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -578,14 +602,7 @@ export default class VictoryBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            <VictoryLabel
-              x={xPosition}
-              y={yPosition}
-              textAnchor="middle"
-              verticalAnchor="end"
-              style={this.style.labels}>
-              {label}
-            </VictoryLabel>
+            {this.getLabel(position, sign, label)}
           </g>
         );
       }
