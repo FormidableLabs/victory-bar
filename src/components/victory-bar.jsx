@@ -3,7 +3,7 @@ import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
 import {VictoryAnimation} from "victory-animation";
-import {Util} from "victory-util";
+import Util from "victory-util";
 import {VictoryLabel} from "victory-label";
 
 const defaultStyles = {
@@ -144,6 +144,22 @@ export default class VictoryBar extends React.Component {
      * or horizontal if the prop is set to true.
      */
     horizontal: React.PropTypes.bool,
+    /**
+     * The labels prop defines labels that will appear above each bar or
+     * group of bars in your bar chart. This prop should be given as an array of values.
+     * The number of elements in the label array should be equal to number of elements in
+     * the categories array, or if categories is not defined, to the number of unique
+     * x values in your data. Use this prop to add labels to individual bars, stacked bars,
+     * and groups of bars.
+     * @examples: ["spring", "summer", "fall", "winter"]
+     */
+    labels: React.PropTypes.array,
+    /**
+     * The labelComponents prop takes in an array of entire, HTML-complete label components
+     * which will be used to create labels for individual bars, stacked bars, or groups of
+     * bars as appropriate.
+     */
+    labelComponents: React.PropTypes.array,
     /**
      * The padding props specifies the amount of padding in number of pixels between
      * the edge of the chart and any rendered child components. This prop can be given
@@ -515,23 +531,25 @@ export default class VictoryBar extends React.Component {
     });
   }
 
-  selectCategotyLabel(x) {
+  selectLabel(x) {
     let index;
+    const labels = this.props.labelComponents ? this.props.labelComponents : this.props.labels;
+
     if (this.stringMap.x) {
-      return this.props.categoryLabels[x - 1];
+      return labels[x - 1];
     } else if (this.props.categories) {
       index = _.findIndex(this.props.categories, (category) => {
         return _.isArray(category) ? (_.min(category) <= x && _.max(category) >= x) :
           category === x;
       });
-      return this.props.categoryLabels[index];
+      return labels[index];
     } else {
       const allX = _.map(this.datasets, (dataset) => {
         return _.map(dataset.data, "x");
       });
       const uniqueX = _.uniq(_.flatten(allX));
       index = (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
-      return this.props.categoryLabels[index];
+      return labels[index];
     }
   }
 
@@ -548,11 +566,52 @@ export default class VictoryBar extends React.Component {
     };
   }
 
-  getLabelPositions(props, position) {
-    return {
-      xPosition: props.horizontal ? position.dependent1 : position.independent,
-      yPosition: props.horizontal ? position.independent : position.dependent1
-    };
+_renderVictoryLabel(position, sign, label) {
+    let verticalAnchor;
+    let horizontalAnchor;
+    let xPosition = this.props.horizontal ? position.dependent1 : position.independent;
+    const yPosition = this.props.horizontal ? position.independent : position.dependent1;
+    if (!this.props.horizontal) {
+      verticalAnchor = sign >= 0 ? "end" : "start";
+      horizontalAnchor = "middle";
+    } else {
+      verticalAnchor = "middle";
+      if (sign >= 0) {
+        horizontalAnchor = "start";
+        xPosition += 2;
+      } else {
+        horizontalAnchor = "end";
+        xPosition -= 2;
+      }
+    }
+    return (
+      <VictoryLabel
+        x={xPosition}
+        y={yPosition}
+        textAnchor={horizontalAnchor}
+        verticalAnchor={verticalAnchor}
+        style={this.style.labels}>
+        {label}
+      </VictoryLabel>
+    );
+  }
+
+  _renderGivenLabel(position, label) {
+    const parentLabelStyles = (this.props.style && this.props.style.labels) ?
+      this.props.style.labels : {};
+    const style = _.merge({}, parentLabelStyles, label.props.style);
+    const xPosition = this.props.horizontal ? position.dependent1 : position.independent;
+    const yPosition = this.props.horizontal ? position.independent : position.dependent1;
+
+    return React.cloneElement(label, {
+      x: xPosition,
+      y: yPosition
+    });
+  }
+
+  _renderLabel(position, sign, label) {
+    return _.isString(label) ? this._renderVictoryLabel(position, sign, label) :
+      this._renderGivenLabel(position, label);
   }
 
   getBarElements(dataset, index) {
@@ -561,23 +620,20 @@ export default class VictoryBar extends React.Component {
     const stacked = this.props.stacked;
     const plotCategoryLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
-      let categoryLabel;
+      let label;
       const position = this.getBarPosition(data, index, barIndex);
       const path = position.independent ? this.getBarPath(position) : undefined;
       const styleData = _.omit(data, [
         "xName", "yName", "x", "y", "label"
         ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
-      const {xPosition, yPosition} = this.getLabelPositions(this.props, position);
-      if (this.props.categoryLabels && plotCategoryLabel) {
-        categoryLabel = this.selectCategotyLabel(data.x);
+      const sign = data.y >= 0 ? 1 : -1;
+
+      if ((this.props.labels || this.props.labelComponents) && plotCategoryLabel) {
+        label = this.selectLabel(data.x);
       }
-      const label = stacked ? categoryLabel : (data.label || categoryLabel);
 
       if (label) {
-        // the verticalAnchor will need to change based on positive/negative bars
-        // and textAnchor will need to change when horizontal, and same with positive/negative bars
-        const sign = data.y >= 0 ? 1 : -1;
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -585,14 +641,7 @@ export default class VictoryBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            <VictoryLabel
-              x={xPosition}
-              y={yPosition}
-              textAnchor="middle"
-              verticalAnchor="end"
-              style={this.style.labels}>
-              {label}
-            </VictoryLabel>
+            {this._renderLabel(position, sign, label)}
           </g>
         );
       }
@@ -606,6 +655,7 @@ export default class VictoryBar extends React.Component {
       );
     });
   }
+
 
   plotDataPoints() {
     return _.map(this.datasets, (dataset, index) => {
