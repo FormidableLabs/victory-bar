@@ -21,7 +21,7 @@ const styles = {
   },
   labels: {
     padding: 5,
-    fontFamily: "Helvetica", //TODO fontstack? (can React styles do that?)
+    fontFamily: "Helvetica", // todo font stack
     fontSize: 14,
     strokeWidth: 0,
     stroke: "transparent",
