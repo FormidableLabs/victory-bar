@@ -81,7 +81,13 @@ class App extends React.Component {
 
             <VictoryBar
             data={this.state.barData}
-            colorScale={"yellowBlue"}
+            dataAttributes={[
+              {fill: "cornflowerblue"},
+              {fill: "orange"},
+              {fill: "greenyellow"},
+              {fill: "gold"},
+              {fill: "tomato"}
+            ]}
             categoryLabels={["one", "two", "three"]}
             stacked
             animate={{velocity: 0.02}}/>
