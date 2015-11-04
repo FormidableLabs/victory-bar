@@ -23,10 +23,9 @@ const styles = {
   labels: {
     padding: 5,
     fontFamily: "Helvetica", //TODO fontstack? (can React styles do that?)
-    fontSize: 14,
+    fontSize: 12,
     strokeWidth: 0,
-    stroke: "transparent",
-    textAnchor: "middle"
+    stroke: "transparent"
   }
 };
 
@@ -583,6 +582,8 @@ class VBar extends React.Component {
       const label = stacked ? categoryLabel : (data.label || categoryLabel);
 
       if (label) {
+        // the verticalAnchor will need to change based on positive/negative bars
+        // and textAnchor will need to change when horizontal, and same with positive/negative bars
         const sign = data.y >= 0 ? 1 : -1;
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
@@ -591,12 +592,14 @@ class VBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            <text
+            <VictoryLabel
               x={xPosition}
               y={yPosition}
+              textAnchor="middle"
+              verticalAnchor="end"
               style={this.style.labels}>
-              {this.getTextLines(label, position, sign)}
-            </text>
+              {label}
+            </VictoryLabel>
           </g>
         );
       }
