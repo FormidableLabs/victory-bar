@@ -120,7 +120,7 @@ export default class VictoryBar extends React.Component {
     colorScale: React.PropTypes.oneOfType([
       React.PropTypes.arrayOf(React.PropTypes.string),
       React.PropTypes.oneOf([
-        "victory", "grayscale", "red", "bluePurple", "yellowBlue"
+        "victory", "gray", "red", "bluePurple", "yellowBlue"
       ])
     ]),
     /**
