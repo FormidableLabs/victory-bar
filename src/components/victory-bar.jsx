@@ -3,7 +3,8 @@ import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
 import {VictoryAnimation} from "victory-animation";
-import Util from "victory-util";
+import {Util} from "victory-util";
+import {VictoryLabel} from "victory-label";
 
 const defaultStyles = {
   data: {
