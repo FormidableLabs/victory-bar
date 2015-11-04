@@ -114,9 +114,14 @@ export default class VictoryBar extends React.Component {
      * baked-in color scales: "victory", "grayscale", "red", "bluePurple", and "yellowBlue".
      * If it is not defined, the default Victory grayscale will be used, and if the fill
      * property on the dataAttributes prop is defined, it will overwrite the colorScale prop.
+     * The user can pass in an array of hex string values to use as their own scale, and
+     * VictoryBar will automatically assign values from this color scale to the bars.
      */
-    colorScale: React.PropTypes.oneOf([
-      "victory", "grayscale", "red", "bluePurple", "yellowBlue"
+    colorScale: React.PropTypes.oneOfType([
+      React.PropTypes.arrayOf(React.PropTypes.string),
+      React.PropTypes.oneOf([
+        "victory", "grayscale", "red", "bluePurple", "yellowBlue"
+      ])
     ]),
     /**
      * The domain prop describes the range of values your bar chart will cover. This prop can be
@@ -279,19 +284,20 @@ class VBar extends React.Component {
     let attributes = props.dataAttributes && props.dataAttributes[index] ?
       props.dataAttributes[index] : props.dataAttributes;
     if (attributes) {
-      attributes.fill = attributes.fill || this.getColor(index);
+      attributes.fill = attributes.fill || this.getColor(props, index);
     } else {
-      attributes = {fill: this.getColor(index)};
+      attributes = {fill: this.getColor(props, index)};
     }
-
     const requiredAttributes = {
       name: attributes && attributes.name ? attributes.name : "data-" + index
     };
     return _.merge(requiredAttributes, attributes);
   }
 
-  getColor(index) {
-    return Util.style.getColorScale(this.props.colorScale)[index % 5];
+  getColor(props, index) {
+    const useColorScale = Array.isArray(props.colorScale) ?
+      props.colorScale : Util.style.getColorScale(props.colorScale);
+    return useColorScale[index % useColorScale.length];
   }
 
   createStringMap(props, axis) {
