@@ -295,9 +295,9 @@ class VBar extends React.Component {
   }
 
   getColor(props, index) {
-    const useColorScale = Array.isArray(props.colorScale) ?
+    const colorScale = Array.isArray(props.colorScale) ?
       props.colorScale : Util.style.getColorScale(props.colorScale);
-    return useColorScale[index % useColorScale.length];
+    return colorScale[index % colorScale.length];
   }
 
   createStringMap(props, axis) {
