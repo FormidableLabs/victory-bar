@@ -67,6 +67,7 @@ class App extends React.Component {
       <div className="demo">
         <p>
           <VictoryBar
+            height={500}
             data={this.state.numericBarData}
             dataAttributes={[
               {fill: "cornflowerblue"},

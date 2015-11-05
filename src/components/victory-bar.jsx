@@ -5,12 +5,7 @@ import d3 from "d3";
 import {VictoryAnimation} from "victory-animation";
 import Util from "victory-util";
 
-const styles = {
-  parent: {
-    width: 400,
-    height: 400,
-    margin: 50
-  },
+const defaultStyles = {
   data: {
     width: 8,
     padding: 6,
@@ -35,6 +30,7 @@ const defaultData = [
   {x: 3, y: 3},
   {x: 4, y: 4}
 ];
+const defaultPadding = 30;
 
 @Radium
 export default class VictoryBar extends React.Component {
@@ -139,25 +135,28 @@ export default class VictoryBar extends React.Component {
       })
     ]),
     /**
+     * The height props specifies the height of the chart container element in pixels
+     */
+    height: React.PropTypes.number,
+    /**
      * The horizontal prop determines whether the bars will be laid vertically or
      * horizontally. The bars will be vertical if this prop is false or unspecified,
      * or horizontal if the prop is set to true.
      */
     horizontal: React.PropTypes.bool,
     /**
-     * The range prop describes the range of pixels your bar chart will cover. This prop can be
-     * given as a array of the minimum and maximum expected values for your bar chart,
-     * or as an object that specifies separate arrays for x and y.
-     * If this prop is not provided, a range will be calculated based on the height,
-     * width, and margin provided in the style prop, or in default styles. It is usually
-     * a good idea to let the chart component calculate its own range.
-     * @exampes [0, 500], {x: [0, 500], y: [500, 300]}
+     * The padding props specifies the amount of padding in number of pixels between
+     * the edge of the chart and any rendered child components. This prop can be given
+     * as a number or as an object with padding specified for top, bottom, left
+     * and right.
      */
-    range: React.PropTypes.oneOfType([
-      React.PropTypes.array,
+    padding: React.PropTypes.oneOfType([
+      React.PropTypes.number,
       React.PropTypes.shape({
-        x: React.PropTypes.array,
-        y: React.PropTypes.array
+        top: React.PropTypes.number,
+        bottom: React.PropTypes.number,
+        left: React.PropTypes.number,
+        right: React.PropTypes.number
       })
     ]),
     /**
@@ -189,14 +188,21 @@ export default class VictoryBar extends React.Component {
      * are used to calculate range, and need to be expressed as a number of pixels
      * @example {width: 500, height: 300, data: {fill: "red", opacity: 1, width: 8}}
      */
-    style: React.PropTypes.object
+    style: React.PropTypes.object,
+    /**
+     * The width props specifies the width of the chart container element in pixels
+     */
+    width: React.PropTypes.number
   };
 
   static defaultProps = {
     data: defaultData,
-    stacked: false,
+    height: 300,
+    padding: 30,
     scale: d3.scale.linear(),
-    standalone: true
+    stacked: false,
+    standalone: true,
+    width: 500
   };
 
   componentWillMount() {
@@ -213,6 +219,7 @@ export default class VictoryBar extends React.Component {
 
   getCalculatedValues(props) {
     this.style = this.getStyles(props);
+    this.padding = this.getPadding(props);
     this.stringMap = {
       x: this.createStringMap(props, "x"),
       y: this.createStringMap(props, "y")
@@ -234,14 +241,22 @@ export default class VictoryBar extends React.Component {
   }
 
   getStyles(props) {
-    if (!props.style) {
-      return styles;
-    }
-    const {data, labels, parent} = props.style;
+    const style = props.style || defaultStyles;
+    const {data, labels, parent} = style;
     return {
-      parent: _.merge({}, styles.parent, parent),
-      data: _.merge({}, styles.data, data),
-      labels: _.merge({}, styles.labels, labels)
+      parent: _.merge({height: props.height, width: props.width}, parent),
+      data: _.merge({}, defaultStyles.data, data),
+      labels: _.merge({}, defaultStyles.labels, labels)
+    };
+  }
+
+  getPadding(props) {
+    const padding = _.isNumber(props.padding) ? props.padding : defaultPadding;
+    return {
+      top: props.padding.top || padding,
+      bottom: props.padding.bottom || padding,
+      left: props.padding.left || padding,
+      right: props.padding.right || padding
     };
   }
 
@@ -318,28 +333,22 @@ export default class VictoryBar extends React.Component {
     const domain = this.domain[axis];
     scale.range(range);
     scale.domain(domain);
-    // hacky check for identity scale
-    if (_.difference(scale.range(), range).length !== 0) {
-      // identity scale, reset the domain and range
-      scale.range(range);
-      scale.domain(range);
-    }
     return scale;
   }
 
-  getRange(props, axis) {
-    if (props.range) {
-      return props.range[axis] ? props.range[axis] : props.range;
-    }
-    // if the range is not given in props, calculate it from width, height and margin
-    const style = this.style.parent;
+  getRange(props) {
+    return this.isVertical ?
+      [this.padding.top, props.height - this.padding.bottom] :
+      [this.padding.left, props.width - this.padding.right];
+  }
 
+  getRange(props, axis) {
     // determine how to lay the axis and what direction positive and negative are
-    if (!this.props.horizontal && axis === "x" || this.props.horizontal && axis !== "x") {
-      return [style.margin, style.width - style.margin];
-    } else {
-      return [style.height - style.margin, style.margin];
-    }
+    const isVertical =
+      !this.props.horizontal && axis === "x" || this.props.horizontal && axis !== "x";
+
+    return isVertical ? [this.padding.left, props.width - this.padding.right] :
+      [props.height - this.padding.bottom, this.padding.top];
   }
 
   getDomain(props, axis) {
