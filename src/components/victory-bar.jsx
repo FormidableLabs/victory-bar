@@ -336,12 +336,6 @@ export default class VictoryBar extends React.Component {
     return scale;
   }
 
-  getRange(props) {
-    return this.isVertical ?
-      [this.padding.top, props.height - this.padding.bottom] :
-      [this.padding.left, props.width - this.padding.right];
-  }
-
   getRange(props, axis) {
     // determine how to lay the axis and what direction positive and negative are
     const isVertical =
