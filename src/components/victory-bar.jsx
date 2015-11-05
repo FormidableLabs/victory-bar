@@ -19,9 +19,6 @@ const styles = {
     strokeWidth: 0,
     fill: "#756f6a",
     opacity: 1
-  },
-  labels: {
-    fontSize: 12
   }
 };
 
@@ -94,16 +91,15 @@ export default class VictoryBar extends React.Component {
      */
     categories: React.PropTypes.array,
     /**
-     * The categoryLabels prop defines labels that will appear above each bar or
-     * group of bars in your bar chart This prop should be given as an array of values.
+     * The labels prop defines labels that will appear above each bar or
+     * group of bars in your bar chart. This prop should be given as an array of values.
      * The number of elements in the label array should be equal to number of elements in
      * the categories array, or if categories is not defined, to the number of unique
-     * x values in your data. Use this prop to add labels to stacked bars and groups of
-     * bars. Adding labels to individual bars can be accomplished by adding a label
-     * property directly to the data object.
+     * x values in your data. Use this prop to add labels to individual bars, stacked bars,
+     * and groups of bars.
      * @examples: ["spring", "summer", "fall", "winter"]
      */
-    categoryLabels: React.PropTypes.array,
+    labels: React.PropTypes.array,
     /**
      * The colorScale prop is an optional prop that defines the color scale the chart's bars
      * will be created on. This prop should be given as a string, which will one of the five
@@ -116,7 +112,11 @@ export default class VictoryBar extends React.Component {
     colorScale: React.PropTypes.oneOfType([
       React.PropTypes.arrayOf(React.PropTypes.string),
       React.PropTypes.oneOf([
-        "victory", "gray", "red", "bluePurple", "yellowBlue"
+        "victory",
+        "gray",
+        "red",
+        "bluePurple",
+        "yellowBlue"
       ])
     ]),
     /**
@@ -274,7 +274,7 @@ export default class VictoryBar extends React.Component {
   }
 
   getColor(props, index) {
-    const colorScale = Array.isArray(props.colorScale) ?
+    const colorScale = _.isArray(props.colorScale) ?
       props.colorScale : Util.style.getColorScale(props.colorScale);
     return colorScale[index % colorScale.length];
   }
@@ -504,23 +504,23 @@ export default class VictoryBar extends React.Component {
     });
   }
 
-  selectCategotyLabel(x) {
+  selectCategoryLabel(x) {
     let index;
     if (this.stringMap.x) {
-      return this.props.categoryLabels[x - 1];
+      return this.props.labels[x - 1];
     } else if (this.props.categories) {
       index = _.findIndex(this.props.categories, (category) => {
         return _.isArray(category) ? (_.min(category) <= x && _.max(category) >= x) :
           category === x;
       });
-      return this.props.categoryLabels[index];
+      return this.props.labels[index];
     } else {
       const allX = _.map(this.datasets, (dataset) => {
         return _.map(dataset.data, "x");
       });
       const uniqueX = _.uniq(_.flatten(allX));
       index = (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
-      return this.props.categoryLabels[index];
+      return this.props.labels[index];
     }
   }
 
@@ -584,13 +584,13 @@ export default class VictoryBar extends React.Component {
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
       const sign = data.y >= 0 ? 1 : -1;
 
-      if (this.props.categoryLabels && plotCategoryLabel) {
-        categoryLabel = this.selectCategotyLabel(data.x);
+      if (this.props.labels && plotCategoryLabel) {
+        categoryLabel = this.selectCategoryLabel(data.x);
       }
 
-      const label = stacked ? categoryLabel : (data.label || categoryLabel);
+      // const label = stacked ? categoryLabel : (data.label || categoryLabel);
 
-      if (label) {
+      if (categoryLabel) {
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -598,7 +598,7 @@ export default class VictoryBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            {this.getLabel(position, sign, label)}
+            {this.getLabel(position, sign, categoryLabel)}
           </g>
         );
       }

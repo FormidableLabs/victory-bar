@@ -77,16 +77,32 @@ class App extends React.Component {
             ]}
             horizontal
             categories={[[1, 3], [4, 7], [9, 11]]}
+            labels={["geese", "ducks", "cornish game hens"]}
             animate={{velocity: 0.02}}/>
 
             <VictoryBar
             data={this.state.barData}
             colorScale={"yellowBlue"}
-            categoryLabels={["one", "two", "three"]}
+            labels={["one", "two", "three"]}
             stacked
             animate={{velocity: 0.02}}/>
 
-            <VictoryBar/>
+            <VictoryBar
+              data={[
+                {x: 0, y: 1},
+                {x: 1, y: -1},
+                {x: 2, y: 2}
+              ]}
+              labels={[
+                "first",
+                "middle",
+                "last"
+              ]}
+              dataAttributes={[
+                {fill: "cornflowerblue"},
+                {fill: "gold"},
+                {fill: "tomato"}
+              ]}/>
 
         </p>
       </div>
