@@ -199,29 +199,12 @@ export default class VictoryBar extends React.Component {
     standalone: true
   };
 
-  render() {
-    if (this.props.animate) {
-      // Do less work by having `VictoryAnimation` tween only values that
-      // make sense to tween. In the future, allow customization of animated
-      // prop whitelist/blacklist?
-      const animateData = _.omit(this.props, [
-        "stacked", "scale", "animate", "standalone", "horizontal"
-      ]);
-      return (
-        <VictoryAnimation {...this.props.animate} data={animateData}>
-          {props => <VBar {...this.props} {...props}/>}
-        </VictoryAnimation>
-      );
+  componentWillMount() {
+    // If animating, the `VictoryBar` instance wrapped in `VictoryAnimation`
+    // will compute these values.
+    if (!this.props.animate) {
+      this.getCalculatedValues(this.props);
     }
-    return (<VBar {...this.props}/>);
-  }
-}
-
-class VBar extends React.Component {
-  /* eslint-disable react/prop-types */
-  constructor(props) {
-    super(props);
-    this.getCalculatedValues(props);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -574,7 +557,10 @@ class VBar extends React.Component {
       let categoryLabel;
       const position = this.getBarPosition(data, index, barIndex);
       const path = position.independent ? this.getBarPath(position) : undefined;
-      const style = _.merge({}, this.style.data, dataset.attrs, data);
+      const styleData = _.omit(data, [
+        "xName", "yName", "x", "y", "label"
+        ]);
+      const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
       const {xPosition, yPosition} = this.getLabelPositions(this.props, position);
       if (this.props.categoryLabels && plotCategoryLabel) {
         categoryLabel = this.selectCategotyLabel(data.x);
@@ -617,17 +603,25 @@ class VBar extends React.Component {
   }
 
   render() {
-    if (this.props.standalone === true) {
+    // If animating, return a `VictoryAnimation` element that will create
+    // a new `VictoryBar` with nearly identical props, except (1) tweened
+    // and (2) `animate` set to null so we don't recurse forever.
+    if (this.props.animate) {
+      // Do less work by having `VictoryAnimation` tween only values that
+      // make sense to tween. In the future, allow customization of animated
+      // prop whitelist/blacklist?
+      const animateData = _.omit(this.props, [
+        "stacked", "scale", "animate", "standalone", "horizontal"
+      ]);
       return (
-        <svg style={this.style.parent}>
-          {this.plotDataPoints()}
-        </svg>
+        <VictoryAnimation {...this.props.animate} data={animateData}>
+          {props => <VictoryBar {...this.props} {...props} animate={null}/>}
+        </VictoryAnimation>
       );
     }
-    return (
-      <g style={this.style.parent}>
-        {this.plotDataPoints()}
-      </g>
-    );
+    const style = this.style.parent;
+    const group = <g style={style}>{this.plotDataPoints()}</g>;
+
+    return this.props.standalone ? <svg style={style}>{group}</svg> : group;
   }
 }
