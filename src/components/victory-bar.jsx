@@ -619,18 +619,9 @@ export default class VictoryBar extends React.Component {
         </VictoryAnimation>
       );
     }
+    const style = this.style.parent;
+    const group = <g style={style}>{this.plotDataPoints()}</g>;
 
-    if (this.props.standalone === true) {
-      return (
-        <svg style={this.style.parent}>
-          {this.plotDataPoints()}
-        </svg>
-      );
-    }
-    return (
-      <g style={this.style.parent}>
-        {this.plotDataPoints()}
-      </g>
-    );
+    return this.props.standalone ? <svg style={style}>{group}</svg> : group;
   }
 }
