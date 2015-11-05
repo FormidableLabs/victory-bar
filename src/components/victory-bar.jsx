@@ -504,7 +504,7 @@ export default class VictoryBar extends React.Component {
     });
   }
 
-  selectCategoryLabel(x) {
+  selectLabel(x) {
     let index;
     if (this.stringMap.x) {
       return this.props.labels[x - 1];
@@ -537,7 +537,7 @@ export default class VictoryBar extends React.Component {
     };
   }
 
-  getLabel(position, sign, label) {
+  _renderVictoryLabel(position, sign, labelText) {
     let verticalAnchor;
     let horizontalAnchor;
     let xPosition = this.props.horizontal ? position.dependent1 : position.independent;
@@ -564,7 +564,7 @@ export default class VictoryBar extends React.Component {
         textAnchor={horizontalAnchor}
         verticalAnchor={verticalAnchor}
         style={this.style.labels}>
-        {label}
+        {labelText}
       </VictoryLabel>
     );
   }
@@ -575,7 +575,7 @@ export default class VictoryBar extends React.Component {
     const stacked = this.props.stacked;
     const plotCategoryLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
-      let categoryLabel;
+      let label;
       const position = this.getBarPosition(data, index, barIndex);
       const path = position.independent ? this.getBarPath(position) : undefined;
       const styleData = _.omit(data, [
@@ -585,12 +585,10 @@ export default class VictoryBar extends React.Component {
       const sign = data.y >= 0 ? 1 : -1;
 
       if (this.props.labels && plotCategoryLabel) {
-        categoryLabel = this.selectCategoryLabel(data.x);
+        label = this.selectLabel(data.x);
       }
 
-      // const label = stacked ? categoryLabel : (data.label || categoryLabel);
-
-      if (categoryLabel) {
+      if (label) {
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -598,7 +596,7 @@ export default class VictoryBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            {this.getLabel(position, sign, categoryLabel)}
+            {this._renderVictoryLabel(position, sign, label)}
           </g>
         );
       }
