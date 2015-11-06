@@ -532,7 +532,7 @@ export default class VictoryBar extends React.Component {
     const labels = this.props.labelComponents ? this.props.labelComponents : this.props.labels;
 
     if (this.stringMap.x) {
-      return labels[x - 1];
+      return labels[(x - 1) % labels.length];
     } else if (this.props.categories) {
       index = _.findIndex(this.props.categories, (category) => {
         return _.isArray(category) ? (_.min(category) <= x && _.max(category) >= x) :
@@ -545,7 +545,7 @@ export default class VictoryBar extends React.Component {
       });
       const uniqueX = _.uniq(_.flatten(allX));
       index = (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
-      return labels[index];
+      return labels[index % labels.length];
     }
   }
 
@@ -592,22 +592,24 @@ _renderVictoryLabel(position, sign, label) {
     );
   }
 
-  _renderGivenLabel(position, label) {
+  _renderGivenLabel(position, label, index) {
+    debugger;
     const parentLabelStyles = (this.props.style && this.props.style.labels) ?
       this.props.style.labels : {};
     const style = _.merge({}, parentLabelStyles, label.props.style);
     const xPosition = this.props.horizontal ? position.dependent1 : position.independent;
     const yPosition = this.props.horizontal ? position.independent : position.dependent1;
+    const text = label.props.children || (this.props.labels[index % this.props.labels.length] || "");
 
     return React.cloneElement(label, {
       x: xPosition,
       y: yPosition
-    });
+    }, text);
   }
 
-  _renderLabel(position, sign, label) {
+  _renderLabel(position, sign, label, index) {
     return _.isString(label) ? this._renderVictoryLabel(position, sign, label) :
-      this._renderGivenLabel(position, label);
+      this._renderGivenLabel(position, label, index);
   }
 
   getBarElements(dataset, index) {
@@ -640,7 +642,7 @@ _renderVictoryLabel(position, sign, label) {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            {this._renderLabel(position, sign, label)}
+            {this._renderLabel(position, sign, label, index)}
           </g>
         );
       }
