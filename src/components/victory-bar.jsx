@@ -529,7 +529,7 @@ export default class VictoryBar extends React.Component {
 
   selectLabel(x, isText) {
     let index;
-    const labels = isText? this.props.labels : this.props.labelComponents || this.props.labels;
+    const labels = isText ? this.props.labels : this.props.labelComponents || this.props.labels;
 
     if (this.stringMap.x) {
       return labels[(x - 1) % labels.length];
@@ -571,7 +571,6 @@ _renderVictoryLabel(position, sign, label) {
       horizontalAnchor = "middle";
     } else {
       verticalAnchor = "middle";
-      position.x - sign * 2
       horizontalAnchor = sign >= 0 ? "start" : "end";
     }
     return (
@@ -594,13 +593,14 @@ _renderVictoryLabel(position, sign, label) {
 
     return React.cloneElement(label, {
       x: position.x,
-      y: position.y
+      y: position.y,
+      style
     }, text);
   }
 
   _renderLabel(position, data, label) {
     const sign = data.y >= 0 ? 1 : -1;
-    let adjustedPositions = {
+    const adjustedPositions = {
       x: this.props.horizontal ? position.dependent1 : position.independent,
       y: this.props.horizontal ? position.independent : position.dependent1
     };

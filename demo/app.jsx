@@ -4,7 +4,6 @@ import _ from "lodash";
 import React from "react";
 import ReactDOM from "react-dom";
 import {VictoryBar} from "../src/index";
-import {VictoryLabel} from "victory-label";
 
 class App extends React.Component {
   constructor(props) {
@@ -81,35 +80,14 @@ class App extends React.Component {
             categories={[[1, 3], [4, 7], [9, 11]]}
             animate={{velocity: 0.02}}/>
 
-          <VictoryBar
-            width={350}
+            <VictoryBar
             data={this.state.barData}
             colorScale={"yellowBlue"}
             labels={["one", "two", "three"]}
             stacked
             animate={{velocity: 0.02}}/>
 
-          <VictoryBar
-            width={350}
-            data={[
-              {x: 0, y: 1},
-              {x: 1, y: -1},
-              {x: 2, y: 2}
-            ]}
-            dataAttributes={{fill: "tomato"}}
-            labelComponents={[
-              <VictoryLabel textAnchor="middle" verticalAnchor="end">
-                {"TEST"}
-              </VictoryLabel>,
-              <VictoryLabel textAnchor="middle" verticalAnchor="start">
-                {"TEST"}
-              </VictoryLabel>,
-              <VictoryLabel textAnchor="middle" verticalAnchor="end">
-                {"TEST"}
-              </VictoryLabel>
-            ]}/>
-
-          <VictoryBar/>
+            <VictoryBar/>
 
         </p>
       </div>
