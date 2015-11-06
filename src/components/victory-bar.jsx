@@ -575,30 +575,16 @@ export default class VictoryBar extends React.Component {
     );
   }
 
-    /*
-    // the old ones were bad
-    getNewChildren() {
-      return _.map(this.childComponents, (child, index) => {
-        const style = _.merge({}, {parent: this.style.parent}, child.props.style);
-        const newProps = this.getNewProps(child);
-        return React.cloneElement(child, _.merge({}, newProps, {
-          ref: index,
-          key: index,
-          standalone: false,
-          style
-        }));
-      });
-    }
-    */
   _renderGivenLabel(position, label) {
-    const style = _.merge({}, this.props.style.labels, label.props.style);
+    const parentLabelStyles = (this.props.style && this.props.style.labels) ?
+      this.props.style.labels : {};
+    const style = _.merge({}, parentLabelStyles, label.props.style);
     const xPosition = this.props.horizontal ? position.dependent1 : position.independent;
     const yPosition = this.props.horizontal ? position.independent : position.dependent1;
 
     return React.cloneElement(label, {
       x: xPosition,
-      y: yPosition,
-      style
+      y: yPosition
     });
   }
 
@@ -622,7 +608,7 @@ export default class VictoryBar extends React.Component {
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
       const sign = data.y >= 0 ? 1 : -1;
 
-      if (this.props.labels && plotCategoryLabel) {
+      if ((this.props.labels || this.props.labelComponents) && plotCategoryLabel) {
         label = this.selectLabel(data.x);
       }
 
