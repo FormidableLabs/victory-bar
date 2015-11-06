@@ -588,7 +588,7 @@ _renderVictoryLabel(position, sign, label) {
   _renderGivenLabel(position, label, x) {
     const parentLabelStyles = (this.props.style && this.props.style.labels) ?
       this.props.style.labels : {};
-    const style = _.merge({}, parentLabelStyles, label.props.style);
+    const style = _.merge({}, defaultStyles.labels, parentLabelStyles);
     const text = label.props.children || this.selectLabel(x, true);
 
     return React.cloneElement(label, {
@@ -612,7 +612,7 @@ _renderVictoryLabel(position, sign, label) {
     const isCenter = Math.floor(this.datasets.length / 2) === index;
     const isLast = this.datasets.length === index + 1;
     const stacked = this.props.stacked;
-    const plotCategoryLabel = (stacked && isLast) || (!stacked && isCenter);
+    const plotGroupLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
       let label;
       const position = this.getBarPosition(data, index, barIndex);
@@ -622,7 +622,7 @@ _renderVictoryLabel(position, sign, label) {
         ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
 
-      if ((this.props.labels || this.props.labelComponents) && plotCategoryLabel) {
+      if ((this.props.labels || this.props.labelComponents) && plotGroupLabel) {
         label = this.selectLabel(data.x);
       }
 
