@@ -565,25 +565,19 @@ export default class VictoryBar extends React.Component {
 _renderVictoryLabel(position, sign, label) {
     let verticalAnchor;
     let horizontalAnchor;
-    let xPosition = this.props.horizontal ? position.dependent1 : position.independent;
-    const yPosition = this.props.horizontal ? position.independent : position.dependent1;
+
     if (!this.props.horizontal) {
       verticalAnchor = sign >= 0 ? "end" : "start";
       horizontalAnchor = "middle";
     } else {
       verticalAnchor = "middle";
-      if (sign >= 0) {
-        horizontalAnchor = "start";
-        xPosition += 2;
-      } else {
-        horizontalAnchor = "end";
-        xPosition -= 2;
-      }
+      position.x - sign * 2
+      horizontalAnchor = sign >= 0 ? "start" : "end";
     }
     return (
       <VictoryLabel
-        x={xPosition}
-        y={yPosition}
+        x={position.x}
+        y={position.y}
         textAnchor={horizontalAnchor}
         verticalAnchor={verticalAnchor}
         style={this.style.labels}>
@@ -592,24 +586,26 @@ _renderVictoryLabel(position, sign, label) {
     );
   }
 
-  _renderGivenLabel(position, label, index) {
+  _renderGivenLabel(position, label, x) {
     const parentLabelStyles = (this.props.style && this.props.style.labels) ?
       this.props.style.labels : {};
     const style = _.merge({}, parentLabelStyles, label.props.style);
-    const xPosition = this.props.horizontal ? position.dependent1 : position.independent;
-    const yPosition = this.props.horizontal ? position.independent : position.dependent1;
-    const text = label.props.children || selectLabel(index, true);
+    const text = label.props.children || this.selectLabel(x, true);
 
     return React.cloneElement(label, {
-      x: xPosition,
-      y: yPosition
+      x: position.x,
+      y: position.y
     }, text);
   }
 
-  _renderLabel(position, sign, label, index) {
-
-    return _.isString(label) ? this._renderVictoryLabel(position, sign, label) :
-      this._renderGivenLabel(position, label, index);
+  _renderLabel(position, data, label) {
+    const sign = data.y >= 0 ? 1 : -1;
+    let adjustedPositions = {
+      x: this.props.horizontal ? position.dependent1 : position.independent,
+      y: this.props.horizontal ? position.independent : position.dependent1
+    };
+    return _.isString(label) ? this._renderVictoryLabel(adjustedPositions, sign, label) :
+      this._renderGivenLabel(adjustedPositions, label, data.x);
   }
 
   getBarElements(dataset, index) {
@@ -625,16 +621,12 @@ _renderVictoryLabel(position, sign, label) {
         "xName", "yName", "x", "y", "label"
         ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
-      const sign = data.y >= 0 ? 1 : -1;
 
       if ((this.props.labels || this.props.labelComponents) && plotCategoryLabel) {
         label = this.selectLabel(data.x);
       }
 
       if (label) {
-        // the verticalAnchor will need to change based on positive/negative bars
-        // and textAnchor will need to change when horizontal, and same with positive/negative bars
-        const sign = data.y >= 0 ? 1 : -1;
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -642,7 +634,7 @@ _renderVictoryLabel(position, sign, label) {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            {this._renderLabel(position, sign, label, index)}
+            {this._renderLabel(position, data, label)}
           </g>
         );
       }
