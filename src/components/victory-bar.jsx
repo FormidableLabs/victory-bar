@@ -527,9 +527,9 @@ export default class VictoryBar extends React.Component {
     });
   }
 
-  selectLabel(x) {
+  selectLabel(x, isText) {
     let index;
-    const labels = this.props.labelComponents ? this.props.labelComponents : this.props.labels;
+    const labels = isText? this.props.labels : this.props.labelComponents || this.props.labels;
 
     if (this.stringMap.x) {
       return labels[(x - 1) % labels.length];
@@ -593,13 +593,12 @@ _renderVictoryLabel(position, sign, label) {
   }
 
   _renderGivenLabel(position, label, index) {
-    debugger;
     const parentLabelStyles = (this.props.style && this.props.style.labels) ?
       this.props.style.labels : {};
     const style = _.merge({}, parentLabelStyles, label.props.style);
     const xPosition = this.props.horizontal ? position.dependent1 : position.independent;
     const yPosition = this.props.horizontal ? position.independent : position.dependent1;
-    const text = label.props.children || (this.props.labels[index % this.props.labels.length] || "");
+    const text = label.props.children || selectLabel(index, true);
 
     return React.cloneElement(label, {
       x: xPosition,
@@ -608,6 +607,7 @@ _renderVictoryLabel(position, sign, label) {
   }
 
   _renderLabel(position, sign, label, index) {
+
     return _.isString(label) ? this._renderVictoryLabel(position, sign, label) :
       this._renderGivenLabel(position, label, index);
   }
