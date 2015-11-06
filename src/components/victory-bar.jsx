@@ -91,16 +91,6 @@ export default class VictoryBar extends React.Component {
      */
     categories: React.PropTypes.array,
     /**
-     * The labels prop defines labels that will appear above each bar or
-     * group of bars in your bar chart. This prop should be given as an array of values.
-     * The number of elements in the label array should be equal to number of elements in
-     * the categories array, or if categories is not defined, to the number of unique
-     * x values in your data. Use this prop to add labels to individual bars, stacked bars,
-     * and groups of bars.
-     * @examples: ["spring", "summer", "fall", "winter"]
-     */
-    labels: React.PropTypes.array,
-    /**
      * The colorScale prop is an optional prop that defines the color scale the chart's bars
      * will be created on. This prop should be given as a string, which will one of the five
      * baked-in color scales: "victory", "grayscale", "red", "bluePurple", and "yellowBlue".
@@ -140,6 +130,22 @@ export default class VictoryBar extends React.Component {
      * or horizontal if the prop is set to true.
      */
     horizontal: React.PropTypes.bool,
+    /**
+     * The labels prop defines labels that will appear above each bar or
+     * group of bars in your bar chart. This prop should be given as an array of values.
+     * The number of elements in the label array should be equal to number of elements in
+     * the categories array, or if categories is not defined, to the number of unique
+     * x values in your data. Use this prop to add labels to individual bars, stacked bars,
+     * and groups of bars.
+     * @examples: ["spring", "summer", "fall", "winter"]
+     */
+    labels: React.PropTypes.array,
+    /**
+     * The labelComponents prop takes in an array of entire, HTML-complete label components
+     * which will be used to create labels for individual bars, stacked bars, or groups of
+     * bars as appropriate.
+     */
+    labelComponents: React.PropTypes.array,
     /**
      * The range prop describes the range of pixels your bar chart will cover. This prop can be
      * given as a array of the minimum and maximum expected values for your bar chart,
@@ -506,21 +512,23 @@ export default class VictoryBar extends React.Component {
 
   selectLabel(x) {
     let index;
+    const labels = this.props.labelComponents ? this.props.labelComponents : this.props.labels;
+
     if (this.stringMap.x) {
-      return this.props.labels[x - 1];
+      return labels[x - 1];
     } else if (this.props.categories) {
       index = _.findIndex(this.props.categories, (category) => {
         return _.isArray(category) ? (_.min(category) <= x && _.max(category) >= x) :
           category === x;
       });
-      return this.props.labels[index];
+      return labels[index];
     } else {
       const allX = _.map(this.datasets, (dataset) => {
         return _.map(dataset.data, "x");
       });
       const uniqueX = _.uniq(_.flatten(allX));
       index = (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
-      return this.props.labels[index];
+      return labels[index];
     }
   }
 
@@ -537,12 +545,11 @@ export default class VictoryBar extends React.Component {
     };
   }
 
-  _renderVictoryLabel(position, sign, labelText) {
+  _renderVictoryLabel(position, sign, label) {
     let verticalAnchor;
     let horizontalAnchor;
     let xPosition = this.props.horizontal ? position.dependent1 : position.independent;
     const yPosition = this.props.horizontal ? position.independent : position.dependent1;
-
     if (!this.props.horizontal) {
       verticalAnchor = sign >= 0 ? "end" : "start";
       horizontalAnchor = "middle";
@@ -556,7 +563,6 @@ export default class VictoryBar extends React.Component {
         xPosition -= 2;
       }
     }
-
     return (
       <VictoryLabel
         x={xPosition}
@@ -564,9 +570,41 @@ export default class VictoryBar extends React.Component {
         textAnchor={horizontalAnchor}
         verticalAnchor={verticalAnchor}
         style={this.style.labels}>
-        {labelText}
+        {label}
       </VictoryLabel>
     );
+  }
+
+    /*
+    // the old ones were bad
+    getNewChildren() {
+      return _.map(this.childComponents, (child, index) => {
+        const style = _.merge({}, {parent: this.style.parent}, child.props.style);
+        const newProps = this.getNewProps(child);
+        return React.cloneElement(child, _.merge({}, newProps, {
+          ref: index,
+          key: index,
+          standalone: false,
+          style
+        }));
+      });
+    }
+    */
+  _renderGivenLabel(position, label) {
+    const style = _.merge({}, this.props.style.labels, label.props.style);
+    const xPosition = this.props.horizontal ? position.dependent1 : position.independent;
+    const yPosition = this.props.horizontal ? position.independent : position.dependent1;
+
+    return React.cloneElement(label, {
+      x: xPosition,
+      y: yPosition,
+      style
+    });
+  }
+
+  _renderLabel(position, sign, label) {
+    return _.isString(label) ? this._renderVictoryLabel(position, sign, label) :
+      this._renderGivenLabel(position, label);
   }
 
   getBarElements(dataset, index) {
@@ -596,7 +634,7 @@ export default class VictoryBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            {this._renderVictoryLabel(position, sign, label)}
+            {this._renderLabel(position, sign, label)}
           </g>
         );
       }
