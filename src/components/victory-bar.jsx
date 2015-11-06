@@ -279,10 +279,12 @@ export default class VictoryBar extends React.Component {
 
   getColor(props, index) {
     // check for styles first
-    const colorFill = props.styles && props.styles.data ? (props.styles.data.fill) : undefined;
+    if (props.styles && props.styles.data && props.styles.data.fill) {
+      return props.styles.data.fill;
+    }
     const colorScale = _.isArray(props.colorScale) ?
       props.colorScale : Util.style.getColorScale(props.colorScale);
-    return colorFill ? colorFill : colorScale[index % colorScale.length];
+    return colorScale[index % colorScale.length];
   }
 
   createStringMap(props, axis) {
