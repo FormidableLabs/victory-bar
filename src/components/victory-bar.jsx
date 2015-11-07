@@ -492,41 +492,6 @@ export default class VictoryBar extends React.Component {
     }, 0);
   }
 
-  getTextLines(text, position, sign) {
-    if (!text) {
-      return "";
-    }
-    // TODO: split text to new lines based on font size, number of characters and total width
-    const textString = "" + text;
-    const textLines = textString.split("\n");
-    const maxLength = _.max(textLines, line => { return line.length; }).length;
-    return _.map(textLines, (line, index) => {
-      const fontSize = this.style.labels.fontSize;
-      const order = sign === 1 ? (textLines.length - index) : (index + 1);
-      const offset = order * sign * -(fontSize);
-      if (this.props.horizontal) {
-        const offsetY = sign < 0 ?
-          order * fontSize - fontSize * textLines.length / 1.6 :
-          order * (-1) * fontSize +
-            fontSize * textLines.length / 1;
-        const offsetX = sign * (fontSize) / 3 * maxLength;
-        return (
-          <tspan x={position.dependent1} y={position.independent}
-            dx={offsetX} dy={offsetY} key={"text-line-" + index}>
-            {line}
-          </tspan>
-        );
-      } else {
-        return (
-          <tspan x={position.independent} y={position.dependent1}
-            dy={offset} key={"text-line-" + index}>
-            {line}
-          </tspan>
-        );
-      }
-    });
-  }
-
   getLabelIndex(x) {
     if (this.stringMap.x) {
       return (x - 1);
