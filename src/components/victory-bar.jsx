@@ -527,25 +527,20 @@ export default class VictoryBar extends React.Component {
     });
   }
 
-  selectLabel(x, isText) {
-    let index;
-    const labels = isText ? this.props.labels : this.props.labelComponents || this.props.labels;
-
+  getLabelIndex(x) {
     if (this.stringMap.x) {
-      return labels[(x - 1) % labels.length];
+      return (x - 1);
     } else if (this.props.categories) {
-      index = _.findIndex(this.props.categories, (category) => {
+      return _.findIndex(this.props.categories, (category) => {
         return _.isArray(category) ? (_.min(category) <= x && _.max(category) >= x) :
           category === x;
       });
-      return labels[index];
     } else {
       const allX = _.map(this.datasets, (dataset) => {
         return _.map(dataset.data, "x");
       });
       const uniqueX = _.uniq(_.flatten(allX));
-      index = (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
-      return labels[index % labels.length];
+      return (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
     }
   }
 
@@ -562,50 +557,46 @@ export default class VictoryBar extends React.Component {
     };
   }
 
-_renderVictoryLabel(position, sign, label) {
-    let verticalAnchor;
-    let horizontalAnchor;
-
+  _getAnchors(sign) {
     if (!this.props.horizontal) {
-      verticalAnchor = sign >= 0 ? "end" : "start";
-      horizontalAnchor = "middle";
+      return {
+        vertical: sign >= 0 ? "end" : "start",
+        text: "middle"
+      };
     } else {
-      verticalAnchor = "middle";
-      horizontalAnchor = sign >= 0 ? "start" : "end";
+      return {
+        vertical: "middle",
+        text: sign >= 0 ? "start" : "end"
+      };
     }
-    return (
-      <VictoryLabel
-        x={position.x}
-        y={position.y}
-        textAnchor={horizontalAnchor}
-        verticalAnchor={verticalAnchor}
-        style={this.style.labels}>
-        {label}
-      </VictoryLabel>
-    );
   }
 
-  _renderGivenLabel(position, label, x) {
-    const parentLabelStyles = (this.props.style && this.props.style.labels) ?
-      this.props.style.labels : {};
-    const style = _.merge({}, defaultStyles.labels, parentLabelStyles);
-    const text = label.props.children || this.selectLabel(x, true);
-
-    return React.cloneElement(label, {
-      x: position.x,
-      y: position.y,
-      style
-    }, text);
-  }
-
-  _renderLabel(position, data, label) {
+  renderLabel(labelData) {
+    const {labelPositions, data, index} = labelData;
+    const labelComponent = this.props.labelComponents ?
+      this.props.labelComponents[index] || this.props.labelComponents[0] :
+      undefined;
+    const labelText = this.props.labels ?
+      this.props.labels[index] || this.props.labels[0] : data.y;
     const sign = data.y >= 0 ? 1 : -1;
-    const adjustedPositions = {
-      x: this.props.horizontal ? position.dependent1 : position.independent,
-      y: this.props.horizontal ? position.independent : position.dependent1
+    const anchors = this._getAnchors(sign);
+    const componentStyle = labelComponent && labelComponent.props.style;
+    const style = _.merge({}, this.style.labels, componentStyle);
+    const children = labelComponent ? labelComponent.props.children || labelText : labelText;
+
+    const props = {
+      key: "label-" + index,
+      x: labelPositions.x,
+      y: labelPositions.y,
+      data, // Pass data for custom label component to access
+      textAnchor: anchors.text,
+      verticalAnchor: anchors.vertical,
+      style
     };
-    return _.isString(label) ? this._renderVictoryLabel(adjustedPositions, sign, label) :
-      this._renderGivenLabel(adjustedPositions, label, data.x);
+
+    return labelComponent ?
+      React.cloneElement(labelComponent, props, children) :
+      React.createElement(VictoryLabel, props, children);
   }
 
   getBarElements(dataset, index) {
@@ -614,19 +605,20 @@ _renderVictoryLabel(position, sign, label) {
     const stacked = this.props.stacked;
     const plotGroupLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
-      let label;
       const position = this.getBarPosition(data, index, barIndex);
       const path = position.independent ? this.getBarPath(position) : undefined;
       const styleData = _.omit(data, [
         "xName", "yName", "x", "y", "label"
         ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
+      const plotLabel = (plotGroupLabel && (this.props.labels || this.props.labelComponents));
 
-      if ((this.props.labels || this.props.labelComponents) && plotGroupLabel) {
-        label = this.selectLabel(data.x);
-      }
-
-      if (label) {
+      if (plotLabel) {
+        const labelPositions = {
+          x: this.props.horizontal ? position.dependent1 : position.independent,
+          y: this.props.horizontal ? position.independent : position.dependent1
+        };
+        const labelData = {labelPositions, data, index: this.getLabelIndex(data.x)};
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -634,7 +626,7 @@ _renderVictoryLabel(position, sign, label) {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            {this._renderLabel(position, data, label)}
+            {this.renderLabel(labelData)}
           </g>
         );
       }
@@ -648,7 +640,6 @@ _renderVictoryLabel(position, sign, label) {
       );
     });
   }
-
 
   plotDataPoints() {
     return _.map(this.datasets, (dataset, index) => {
