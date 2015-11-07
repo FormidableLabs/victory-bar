@@ -571,13 +571,10 @@ export default class VictoryBar extends React.Component {
     }
   }
 
-  renderLabel(labelData) {
+  renderLabel(labelData, labelText) {
     const {labelPositions, data, index} = labelData;
     const labelComponent = this.props.labelComponents ?
-      this.props.labelComponents[index] || this.props.labelComponents[0] :
-      undefined;
-    const labelText = this.props.labels ?
-      this.props.labels[index] || this.props.labels[0] : data.y;
+      this.props.labelComponents[index] || this.props.labelComponents[0] : undefined;
     const sign = data.y >= 0 ? 1 : -1;
     const anchors = this._getAnchors(sign);
     const componentStyle = labelComponent && labelComponent.props.style;
@@ -586,11 +583,11 @@ export default class VictoryBar extends React.Component {
 
     const props = {
       key: "label-" + index,
-      x: labelPositions.x,
-      y: labelPositions.y,
+      x: (labelComponent && labelComponent.props.x) || labelPositions.x,
+      y: (labelComponent && labelComponent.props.y) || labelPositions.y,
       data, // Pass data for custom label component to access
-      textAnchor: anchors.text,
-      verticalAnchor: anchors.vertical,
+      textAnchor: (labelComponent && labelComponent.props.textAnchor) || anchors.text,
+      verticalAnchor: (labelComponent && labelComponent.props.textAnchor) || anchors.vertical,
       style
     };
 
@@ -618,7 +615,10 @@ export default class VictoryBar extends React.Component {
           x: this.props.horizontal ? position.dependent1 : position.independent,
           y: this.props.horizontal ? position.independent : position.dependent1
         };
-        const labelData = {labelPositions, data, index: this.getLabelIndex(data.x)};
+        const labelIndex = this.getLabelIndex(data.x);
+        const labelData = {labelPositions, data, index: labelIndex};
+        const labelText = this.props.labels ?
+          this.props.labels[labelIndex] || this.props.labels[0] : "";
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -626,7 +626,7 @@ export default class VictoryBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            {this.renderLabel(labelData)}
+            {this.renderLabel(labelData, labelText)}
           </g>
         );
       }
