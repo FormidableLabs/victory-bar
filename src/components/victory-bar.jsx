@@ -4,6 +4,7 @@ import _ from "lodash";
 import d3 from "d3";
 import {VictoryAnimation} from "victory-animation";
 import Util from "victory-util";
+import {VictoryLabel} from "victory-label";
 
 const defaultStyles = {
   data: {
@@ -15,12 +16,7 @@ const defaultStyles = {
     opacity: 1
   },
   labels: {
-    padding: 5,
-    fontFamily: "Helvetica", //TODO fontstack? (can React styles do that?)
-    fontSize: 14,
-    strokeWidth: 0,
-    stroke: "transparent",
-    textAnchor: "middle"
+    fontSize: 12
   }
 };
 
@@ -143,6 +139,22 @@ export default class VictoryBar extends React.Component {
      * or horizontal if the prop is set to true.
      */
     horizontal: React.PropTypes.bool,
+    /**
+     * The labels prop defines labels that will appear above each bar or
+     * group of bars in your bar chart. This prop should be given as an array of values.
+     * The number of elements in the label array should be equal to number of elements in
+     * the categories array, or if categories is not defined, to the number of unique
+     * x values in your data. Use this prop to add labels to individual bars, stacked bars,
+     * and groups of bars.
+     * @examples: ["spring", "summer", "fall", "winter"]
+     */
+    labels: React.PropTypes.array,
+    /**
+     * The labelComponents prop takes in an array of entire, HTML-complete label components
+     * which will be used to create labels for individual bars, stacked bars, or groups of
+     * bars as appropriate.
+     */
+    labelComponents: React.PropTypes.array,
     /**
      * The padding props specifies the amount of padding in number of pixels between
      * the edge of the chart and any rendered child components. This prop can be given
@@ -480,58 +492,20 @@ export default class VictoryBar extends React.Component {
     }, 0);
   }
 
-  getTextLines(text, position, sign) {
-    if (!text) {
-      return "";
-    }
-    // TODO: split text to new lines based on font size, number of characters and total width
-    const textString = "" + text;
-    const textLines = textString.split("\n");
-    const maxLength = _.max(textLines, line => { return line.length; }).length;
-    return _.map(textLines, (line, index) => {
-      const fontSize = this.style.labels.fontSize;
-      const order = sign === 1 ? (textLines.length - index) : (index + 1);
-      const offset = order * sign * -(fontSize);
-      if (this.props.horizontal) {
-        const offsetY = sign < 0 ?
-          order * fontSize - fontSize * textLines.length / 1.6 :
-          order * (-1) * fontSize +
-            fontSize * textLines.length / 1;
-        const offsetX = sign * (fontSize) / 3 * maxLength;
-        return (
-          <tspan x={position.dependent1} y={position.independent}
-            dx={offsetX} dy={offsetY} key={"text-line-" + index}>
-            {line}
-          </tspan>
-        );
-      } else {
-        return (
-          <tspan x={position.independent} y={position.dependent1}
-            dy={offset} key={"text-line-" + index}>
-            {line}
-          </tspan>
-        );
-      }
-    });
-  }
-
-  selectCategotyLabel(x) {
-    let index;
+  getLabelIndex(x) {
     if (this.stringMap.x) {
-      return this.props.categoryLabels[x - 1];
+      return (x - 1);
     } else if (this.props.categories) {
-      index = _.findIndex(this.props.categories, (category) => {
+      return _.findIndex(this.props.categories, (category) => {
         return _.isArray(category) ? (_.min(category) <= x && _.max(category) >= x) :
           category === x;
       });
-      return this.props.categoryLabels[index];
     } else {
       const allX = _.map(this.datasets, (dataset) => {
         return _.map(dataset.data, "x");
       });
       const uniqueX = _.uniq(_.flatten(allX));
-      index = (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
-      return this.props.categoryLabels[index];
+      return (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
     }
   }
 
@@ -548,34 +522,68 @@ export default class VictoryBar extends React.Component {
     };
   }
 
-  getLabelPositions(props, position) {
-    return {
-      xPosition: props.horizontal ? position.dependent1 : position.independent,
-      yPosition: props.horizontal ? position.independent : position.dependent1
+  _getAnchors(sign) {
+    if (!this.props.horizontal) {
+      return {
+        vertical: sign >= 0 ? "end" : "start",
+        text: "middle"
+      };
+    } else {
+      return {
+        vertical: "middle",
+        text: sign >= 0 ? "start" : "end"
+      };
+    }
+  }
+
+  renderLabel(labelData, labelText) {
+    const {labelPositions, data, index} = labelData;
+    const labelComponent = this.props.labelComponents ?
+      this.props.labelComponents[index] || this.props.labelComponents[0] : undefined;
+    const sign = data.y >= 0 ? 1 : -1;
+    const anchors = this._getAnchors(sign);
+    const componentStyle = labelComponent && labelComponent.props.style;
+    const style = _.merge({}, this.style.labels, componentStyle);
+    const children = labelComponent ? labelComponent.props.children || labelText : labelText;
+
+    const props = {
+      key: "label-" + index,
+      x: (labelComponent && labelComponent.props.x) || labelPositions.x,
+      y: (labelComponent && labelComponent.props.y) || labelPositions.y,
+      data, // Pass data for custom label component to access
+      textAnchor: (labelComponent && labelComponent.props.textAnchor) || anchors.text,
+      verticalAnchor: (labelComponent && labelComponent.props.textAnchor) || anchors.vertical,
+      style
     };
+
+    return labelComponent ?
+      React.cloneElement(labelComponent, props, children) :
+      React.createElement(VictoryLabel, props, children);
   }
 
   getBarElements(dataset, index) {
     const isCenter = Math.floor(this.datasets.length / 2) === index;
     const isLast = this.datasets.length === index + 1;
     const stacked = this.props.stacked;
-    const plotCategoryLabel = (stacked && isLast) || (!stacked && isCenter);
+    const plotGroupLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
-      let categoryLabel;
       const position = this.getBarPosition(data, index, barIndex);
       const path = position.independent ? this.getBarPath(position) : undefined;
       const styleData = _.omit(data, [
         "xName", "yName", "x", "y", "label"
         ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
-      const {xPosition, yPosition} = this.getLabelPositions(this.props, position);
-      if (this.props.categoryLabels && plotCategoryLabel) {
-        categoryLabel = this.selectCategotyLabel(data.x);
-      }
-      const label = stacked ? categoryLabel : (data.label || categoryLabel);
+      const plotLabel = (plotGroupLabel && (this.props.labels || this.props.labelComponents));
 
-      if (label) {
-        const sign = data.y >= 0 ? 1 : -1;
+      if (plotLabel) {
+        const labelPositions = {
+          x: this.props.horizontal ? position.dependent1 : position.independent,
+          y: this.props.horizontal ? position.independent : position.dependent1
+        };
+        const labelIndex = this.getLabelIndex(data.x);
+        const labelData = {labelPositions, data, index: labelIndex};
+        const labelText = this.props.labels ?
+          this.props.labels[labelIndex] || this.props.labels[0] : "";
         return (
           <g key={"series-" + index + "-bar-" + barIndex}>
             <path
@@ -583,12 +591,7 @@ export default class VictoryBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            <text
-              x={xPosition}
-              y={yPosition}
-              style={this.style.labels}>
-              {this.getTextLines(label, position, sign)}
-            </text>
+            {this.renderLabel(labelData, labelText)}
           </g>
         );
       }

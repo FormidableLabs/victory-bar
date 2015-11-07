@@ -4,6 +4,7 @@ import _ from "lodash";
 import React from "react";
 import ReactDOM from "react-dom";
 import {VictoryBar} from "../src/index";
+import {VictoryLabel} from "victory-label";
 
 class App extends React.Component {
   constructor(props) {
@@ -69,6 +70,7 @@ class App extends React.Component {
           <VictoryBar
             height={500}
             data={this.state.numericBarData}
+            labelComponents={[<VictoryLabel>LABELLLL</VictoryLabel>]}
             dataAttributes={[
               {fill: "cornflowerblue"},
               {fill: "orange"},
@@ -83,7 +85,7 @@ class App extends React.Component {
             <VictoryBar
             data={this.state.barData}
             colorScale={"yellowBlue"}
-            categoryLabels={["one", "two", "three"]}
+            labels={["one", "two", "three"]}
             stacked
             animate={{velocity: 0.02}}/>
 
