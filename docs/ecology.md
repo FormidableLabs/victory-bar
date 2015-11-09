@@ -11,14 +11,20 @@ The plain component has baked-in sample data, style, and angle defaults, so even
 <VictoryBar/>
 ```
 
-Labels are placed above each positive-value bar and below each negative-value bar by default. Apply styles to the labels:
+Labels can be created either by passing in strings in an array to the prop `labels`, or by passing in entire components in an array to the prop `labelComponents`. Used together, the text in `labels` will be applied to components in `labelComponents`.
 
 ``` playground
-<VictoryBar style={{
-    labels: {
-      fontSize: 10
-    }
-  }}/>
+<VictoryBar
+  labels={[
+    "zero",
+    "one",
+    "two",
+    "three"
+  ]}
+  labelComponents={[
+    <VictoryLabel textAnchor={"middle"} verticalAnchor={"end"}>
+    </VictoryLabel>
+  ]}/>
 ```
 
 Styles of the data and the bar chart itself can also be specified:
