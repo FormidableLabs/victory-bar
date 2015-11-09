@@ -386,18 +386,38 @@ export default class VictoryBar extends React.Component {
       // this is only sensible for the y domain
       // TODO check assumption
       const cumulativeMax = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        _.reduce(this.datasets, (memo, dataset) => {
-          const localMax = (_.max(_.pluck(dataset.data, "y")));
-          return localMax > 0 ? memo + localMax : memo;
-        }, 0) : -Infinity;
+        this.getCumulativeMax(this.datasets, "y") : -Infinity;
       const cumulativeMin = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        _.reduce(this.datasets, (memo, dataset) => {
-          const localMin = (_.min(_.pluck(dataset.data, "y")));
-          return localMin < 0 ? memo + localMin : memo;
-        }, 0) : Infinity;
+        this.getCumulativeMin(this.datasets, "y") : Infinity;
       return [_.min([min, cumulativeMin]), _.max([max, cumulativeMax])];
     }
   }
+
+  getCumulativeMax(datasets, dependentAxis) {
+    return _.reduce(datasets, (memo, dataset) => {
+      debugger;
+      dataset = dataset.data || dataset;
+      const localMax = (_.max(_.pluck(dataset, dependentAxis)));
+      return localMax > 0 ? memo + localMax : memo;
+    });
+  }
+
+  getCumulativeMin(datasets, dependentAxis) {
+    return _.reduce(this.datasets, (memo, dataset) => {
+      dataset = dataset.data || dataset;
+      const localMin = (_.min(_.pluck(dataset, dependentAxis)));
+      return localMin < 0 ? memo + localMin : memo;
+    })
+  }
+
+  /*const cumulativeMax = _.reduce(formattedData, (memo, dataset) => {
+    const localMax = (_.max(_.pluck(dataset, this.dependentAxis)));
+    return localMax > 0 ? memo + localMax : memo;
+  }, 0);
+  const cumulativeMin = _.reduce(formattedData, (memo, dataset) => {
+    const localMin = (_.min(_.pluck(dataset, this.dependentAxis)));
+    return localMin < 0 ? memo + localMin : memo;
+  }, 0); */
 
   getBarWidth() {
     // todo calculate / enforce max width
@@ -444,6 +464,7 @@ export default class VictoryBar extends React.Component {
   }
 
   _adjustX(x, index, options) {
+    let bandCenter;
     if (this.stringMap.x === null && !this.props.categories) {
       // don't adjust x if the x axis is numeric
       return x;
@@ -455,15 +476,19 @@ export default class VictoryBar extends React.Component {
     const totalWidth = this._pixelsToValue(this.style.data.padding) +
       this._pixelsToValue(this.style.data.width);
     if (this.props.categories && _.isArray(this.props.categories[0])) {
-      // figure out which band this x value belongs to, and shift it to the
-      // center of that band before calculating the usual offset
-      const xBand = _.filter(this.props.categories, (band) => {
-        return (x >= _.min(band) && x <= _.max(band));
-      });
-      const bandCenter = _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
-      return stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
+      bandCenter = this.determineCategory(x, this.props);
     }
-    return stacked ? x : x + (centerOffset * totalWidth);
+    bandCenter = bandCenter || x;
+    return stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
+  }
+
+  determineCategory(x, props) {
+    // figure out which band this x value belongs to, and shift it to the
+    // center of that band before calculating the usual offset
+    const xBand = _.filter(props.categories, (band) => {
+      return (x >= _.min(band) && x <= _.max(band));
+    });
+    return _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
   }
 
   getYOffset(data, index, barIndex) {
