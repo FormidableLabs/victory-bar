@@ -385,38 +385,12 @@ export default class VictoryBar extends React.Component {
       // this is only sensible for the y domain
       // TODO check assumption
       const cumulativeMax = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        this.getCumulativeMax(this.datasets, "y") : -Infinity;
+        Util.collection.getCumulativeMax(this.datasets, "y") : -Infinity;
       const cumulativeMin = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        this.getCumulativeMin(this.datasets, "y") : Infinity;
+        Util.collection.getCumulativeMin(this.datasets, "y") : Infinity;
       return [_.min([min, cumulativeMin]), _.max([max, cumulativeMax])];
     }
   }
-
-  getCumulativeMax(datasets, dependentAxis) {
-    return _.reduce(datasets, (memo, dataset) => {
-      debugger;
-      dataset = dataset.data || dataset;
-      const localMax = (_.max(_.pluck(dataset, dependentAxis)));
-      return localMax > 0 ? memo + localMax : memo;
-    });
-  }
-
-  getCumulativeMin(datasets, dependentAxis) {
-    return _.reduce(this.datasets, (memo, dataset) => {
-      dataset = dataset.data || dataset;
-      const localMin = (_.min(_.pluck(dataset, dependentAxis)));
-      return localMin < 0 ? memo + localMin : memo;
-    })
-  }
-
-  /*const cumulativeMax = _.reduce(formattedData, (memo, dataset) => {
-    const localMax = (_.max(_.pluck(dataset, this.dependentAxis)));
-    return localMax > 0 ? memo + localMax : memo;
-  }, 0);
-  const cumulativeMin = _.reduce(formattedData, (memo, dataset) => {
-    const localMin = (_.min(_.pluck(dataset, this.dependentAxis)));
-    return localMin < 0 ? memo + localMin : memo;
-  }, 0); */
 
   getBarWidth() {
     // todo calculate / enforce max width
