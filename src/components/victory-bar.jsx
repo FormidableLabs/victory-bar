@@ -89,17 +89,6 @@ export default class VictoryBar extends React.Component {
      */
     categories: React.PropTypes.array,
     /**
-     * The categoryLabels prop defines labels that will appear above each bar or
-     * group of bars in your bar chart This prop should be given as an array of values.
-     * The number of elements in the label array should be equal to number of elements in
-     * the categories array, or if categories is not defined, to the number of unique
-     * x values in your data. Use this prop to add labels to stacked bars and groups of
-     * bars. Adding labels to individual bars can be accomplished by adding a label
-     * property directly to the data object.
-     * @examples: ["spring", "summer", "fall", "winter"]
-     */
-    categoryLabels: React.PropTypes.array,
-    /**
      * The colorScale prop is an optional prop that defines the color scale the chart's bars
      * will be created on. This prop should be given as a string, which will one of the five
      * baked-in color scales: "victory", "grayscale", "red", "bluePurple", and "yellowBlue".
