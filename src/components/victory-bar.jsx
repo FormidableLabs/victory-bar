@@ -296,8 +296,8 @@ export default class VictoryBar extends React.Component {
 
   getColor(props, index) {
     // check for styles first
-    if (this.props.style && this.props.style.data && this.props.style.data.fill) {
-      return this.props.style.data.fill;
+    if (props.style && props.style.data && props.style.data.fill) {
+      return props.style.data.fill;
     }
     const colorScale = _.isArray(props.colorScale) ?
       props.colorScale : Util.style.getColorScale(props.colorScale);
