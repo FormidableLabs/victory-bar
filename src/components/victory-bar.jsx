@@ -16,7 +16,8 @@ const defaultStyles = {
     opacity: 1
   },
   labels: {
-    fontSize: 12
+    fontSize: 12,
+    padding: 4
   }
 };
 
@@ -88,17 +89,6 @@ export default class VictoryBar extends React.Component {
      * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
      */
     categories: React.PropTypes.array,
-    /**
-     * The categoryLabels prop defines labels that will appear above each bar or
-     * group of bars in your bar chart This prop should be given as an array of values.
-     * The number of elements in the label array should be equal to number of elements in
-     * the categories array, or if categories is not defined, to the number of unique
-     * x values in your data. Use this prop to add labels to stacked bars and groups of
-     * bars. Adding labels to individual bars can be accomplished by adding a label
-     * property directly to the data object.
-     * @examples: ["spring", "summer", "fall", "winter"]
-     */
-    categoryLabels: React.PropTypes.array,
     /**
      * The colorScale prop is an optional prop that defines the color scale the chart's bars
      * will be created on. This prop should be given as a string, which will one of the five
@@ -306,8 +296,8 @@ export default class VictoryBar extends React.Component {
 
   getColor(props, index) {
     // check for styles first
-    if (props.styles && props.styles.data && props.styles.data.fill) {
-      return props.styles.data.fill;
+    if (props.style && props.style.data && props.style.data.fill) {
+      return props.style.data.fill;
     }
     const colorScale = _.isArray(props.colorScale) ?
       props.colorScale : Util.style.getColorScale(props.colorScale);
@@ -536,20 +526,28 @@ export default class VictoryBar extends React.Component {
     }
   }
 
-  renderLabel(labelData, labelText) {
-    const {labelPositions, data, index} = labelData;
+  getlabelPadding(style) {
+    return {
+      x: this.props.horizontal ? style.padding : 0,
+      y: this.props.horizontal ? 0 : style.padding
+    };
+  }
+
+  renderLabel(labelData, text, data) {
+    const {position, index} = labelData;
     const labelComponent = this.props.labelComponents ?
       this.props.labelComponents[index] || this.props.labelComponents[0] : undefined;
     const sign = data.y >= 0 ? 1 : -1;
     const anchors = this._getAnchors(sign);
     const componentStyle = labelComponent && labelComponent.props.style;
-    const style = _.merge({}, this.style.labels, componentStyle);
-    const children = labelComponent ? labelComponent.props.children || labelText : labelText;
+    const style = _.merge({padding: 0}, this.style.labels, componentStyle);
+    const padding = this.getlabelPadding(style);
+    const children = labelComponent ? labelComponent.props.children || text : text;
 
     const props = {
       key: "label-" + index,
-      x: (labelComponent && labelComponent.props.x) || labelPositions.x,
-      y: (labelComponent && labelComponent.props.y) || labelPositions.y,
+      x: (labelComponent && labelComponent.props.x) || position.x + padding.x,
+      y: (labelComponent && labelComponent.props.y) || position.y - padding.y,
       data, // Pass data for custom label component to access
       textAnchor: (labelComponent && labelComponent.props.textAnchor) || anchors.text,
       verticalAnchor: (labelComponent && labelComponent.props.textAnchor) || anchors.vertical,
@@ -581,7 +579,7 @@ export default class VictoryBar extends React.Component {
           y: this.props.horizontal ? position.independent : position.dependent1
         };
         const labelIndex = this.getLabelIndex(data.x);
-        const labelData = {labelPositions, data, index: labelIndex};
+        const labelData = {position: labelPositions, index: labelIndex};
         const labelText = this.props.labels ?
           this.props.labels[labelIndex] || this.props.labels[0] : "";
         return (
@@ -591,7 +589,7 @@ export default class VictoryBar extends React.Component {
               shapeRendering="optimizeSpeed"
               style={style}>
             </path>
-            {this.renderLabel(labelData, labelText)}
+            {this.renderLabel(labelData, labelText, data)}
           </g>
         );
       }
