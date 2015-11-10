@@ -30,6 +30,7 @@ const defaultData = [
 
 @Radium
 export default class VictoryBar extends React.Component {
+  static role = "bar";
   static propTypes = {
     /**
      * The animate prop specifies props for victory-animation to use. It this prop is
