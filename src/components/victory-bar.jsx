@@ -397,7 +397,11 @@ export default class VictoryBar extends React.Component {
     const organizedArray = [];
     _.forEach(allData, datum => {
       const category = this.determineCategory(datum.x, props) || datum.x;
-      organizedData[category] ? organizedData[category].push(datum) : organizedData[category] = [datum];
+      if (organizedData[category]) {
+        organizedData[category].push(datum);
+      } else {
+        organizedData[category] = [datum];
+      }
     });
     _.forEach(organizedData, category => {
       organizedArray.push(category);
