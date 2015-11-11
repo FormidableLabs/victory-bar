@@ -382,15 +382,27 @@ export default class VictoryBar extends React.Component {
       const allData = _.flatten(_.pluck(this.datasets, "data"));
       const min = _.min(_.pluck(allData, axis));
       const max = _.max(_.pluck(allData, axis));
-      // find the cumulative max for stacked chart types
-      // this is only sensible for the y domain
-      // TODO check assumption
+      const organizedData = this.organizeData(allData, props);
+      // find the largest height of all of the bars
       const cumulativeMax = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        Util.collection.getCumulativeMax(this.datasets, "y") : -Infinity;
+        Util.collection.getCumulativeMax(organizedData, "y") : -Infinity;
       const cumulativeMin = (props.stacked && axis === "y" && this.datasets.length > 1) ?
         Util.collection.getCumulativeMin(this.datasets, "y") : Infinity;
       return [_.min([min, cumulativeMin]), _.max([max, cumulativeMax])];
     }
+  }
+
+  organizeData(allData, props) {
+    const organizedData = {};
+    const organizedArray = [];
+    _.forEach(allData, datum => {
+      const category = this.determineCategory(datum.x, props) || datum.x;
+      organizedData[category] ? organizedData[category].push(datum) : organizedData[category] = [datum];
+    });
+    _.forEach(organizedData, category => {
+      organizedArray.push(category);
+    });
+    return organizedArray;
   }
 
   getBarWidth() {
