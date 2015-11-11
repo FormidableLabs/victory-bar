@@ -392,6 +392,8 @@ export default class VictoryBar extends React.Component {
     }
   }
 
+  // organize datasets into arrays of objects
+  // each array is a category or a stacked bar
   organizeData(allData, props) {
     const organizedData = {};
     const organizedArray = [];
