@@ -382,21 +382,33 @@ export default class VictoryBar extends React.Component {
       const allData = _.flatten(_.pluck(this.datasets, "data"));
       const min = _.min(_.pluck(allData, axis));
       const max = _.max(_.pluck(allData, axis));
-      // find the cumulative max for stacked chart types
-      // this is only sensible for the y domain
-      // TODO check assumption
+      const organizedData = this.organizeData(allData, props);
+      // find the largest height of all of the bars
       const cumulativeMax = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        _.reduce(this.datasets, (memo, dataset) => {
-          const localMax = (_.max(_.pluck(dataset.data, "y")));
-          return localMax > 0 ? memo + localMax : memo;
-        }, 0) : -Infinity;
+        Util.collection.getCumulativeMax(organizedData, "y") : -Infinity;
       const cumulativeMin = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        _.reduce(this.datasets, (memo, dataset) => {
-          const localMin = (_.min(_.pluck(dataset.data, "y")));
-          return localMin < 0 ? memo + localMin : memo;
-        }, 0) : Infinity;
+        Util.collection.getCumulativeMin(this.datasets, "y") : Infinity;
       return [_.min([min, cumulativeMin]), _.max([max, cumulativeMax])];
     }
+  }
+
+  // organize datasets into arrays of objects
+  // each array is a category or a stacked bar
+  organizeData(allData, props) {
+    const organizedData = {};
+    const organizedArray = [];
+    _.forEach(allData, datum => {
+      const category = this.determineCategory(datum.x, props) || datum.x;
+      if (organizedData[category]) {
+        organizedData[category].push(datum);
+      } else {
+        organizedData[category] = [datum];
+      }
+    });
+    _.forEach(organizedData, category => {
+      organizedArray.push(category);
+    });
+    return organizedArray;
   }
 
   getBarWidth() {
@@ -444,6 +456,7 @@ export default class VictoryBar extends React.Component {
   }
 
   _adjustX(x, index, options) {
+    let bandCenter;
     if (this.stringMap.x === null && !this.props.categories) {
       // don't adjust x if the x axis is numeric
       return x;
@@ -455,15 +468,19 @@ export default class VictoryBar extends React.Component {
     const totalWidth = this._pixelsToValue(this.style.data.padding) +
       this._pixelsToValue(this.style.data.width);
     if (this.props.categories && _.isArray(this.props.categories[0])) {
-      // figure out which band this x value belongs to, and shift it to the
-      // center of that band before calculating the usual offset
-      const xBand = _.filter(this.props.categories, (band) => {
-        return (x >= _.min(band) && x <= _.max(band));
-      });
-      const bandCenter = _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
-      return stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
+      bandCenter = this.determineCategory(x, this.props);
     }
-    return stacked ? x : x + (centerOffset * totalWidth);
+    bandCenter = bandCenter || x;
+    return stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
+  }
+
+  determineCategory(x, props) {
+    // figure out which band this x value belongs to, and shift it to the
+    // center of that band before calculating the usual offset
+    const xBand = _.filter(props.categories, (band) => {
+      return (x >= _.min(band) && x <= _.max(band));
+    });
+    return _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
   }
 
   getYOffset(data, index, barIndex) {

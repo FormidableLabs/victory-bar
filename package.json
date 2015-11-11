@@ -68,8 +68,8 @@
     "style-loader": "~0.8.0",
     "url-loader": "~0.5.5",
     "victory-animation": "^0.0.10",
-    "victory-util": "1.1.1",
     "victory-label": "0.1.1",
+    "victory-util": "git+https://github.com/formidablelabs/victory-util#cumulativeMaxMin",
     "webpack": "^1.10.0"
   },
   "devDependencies": {
@@ -111,3 +111,4 @@
     "webpack-stats-plugin": "^0.1.1"
   }
 }
+
