@@ -36,23 +36,15 @@ export default class VictoryBar extends React.Component {
      * The animate prop specifies props for victory-animation to use. It this prop is
      * not given, the bar chart will not tween between changing data / style props.
      * Large datasets might animate slowly due to the inherent limits of svg rendering.
-     * @examples {line: {delay: 5, velocity: 10, onEnd: () => alert("woo!")}}
+     * @examples {velocity: 0.02, onEnd: () => alert("done!")}
      */
     animate: React.PropTypes.object,
     /**
      * The data prop specifies the data to be plotted. Data should be in the form of an array
      * of data points, or an array of arrays of data points for multiple datasets.
      * Each data point should be an object with x and y properties.
-     * @exampes [
-     *   {x: new Date(1982, 1, 1), y: 125},
-     *   {x: new Date(1987, 1, 1), y: 257},
-     *   {x: new Date(1993, 1, 1), y: 345}
-     * ],
-     * [
-     *   [{x: 5, y: 3}, {x: 4, y: 2}, {x: 3, y: 1}],
-     *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}],
-     *   [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}]
-     * ]
+     * @examples [{x: 1, y:2}, {x: 2, y: 3}],
+     * [[{x: "a", y: 1}, {x: "b", y: 2}], [{x: "a", y: 2}, {x: "b", y: 3}]]
      */
     data: React.PropTypes.oneOfType([
       React.PropTypes.arrayOf(
@@ -75,8 +67,7 @@ export default class VictoryBar extends React.Component {
      * This prop can be given as an object, or an array of objects. If this prop is
      * given as an array of objects, the properties of each object in the array will
      * be applied to the data points in the corresponding array of the data prop.
-     * @exampes {fill: "blue", opacity: 0.6},
-     * [{fill: "red"}, {fill: "orange"}]
+     * @examples {fill: "blue", opacity: 0.6}, [{fill: "red"}, {fill: "orange"}]
      */
     dataAttributes: React.PropTypes.oneOfType([
       React.PropTypes.object,
@@ -87,7 +78,7 @@ export default class VictoryBar extends React.Component {
      * be given as an array of string values, numeric values, or arrays. When this prop is
      * given as an array of arrays, the minimum and maximum values of the arrays define range bands,
      * allowing numeric data to be grouped into segments.
-     * @example ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
+     * @examples ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
      */
     categories: React.PropTypes.array,
     /**
@@ -111,7 +102,7 @@ export default class VictoryBar extends React.Component {
      * or as an object that specifies separate arrays for x and y.
      * If this prop is not provided, a domain will be calculated from data, or other
      * available information.
-     * @exampes [-1, 1], {x: [0, 100], y: [0, 1]}
+     * @examples [-1, 1], {x: [0, 100], y: [0, 1]}
      */
     domain: React.PropTypes.oneOfType([
       React.PropTypes.array,
@@ -164,7 +155,7 @@ export default class VictoryBar extends React.Component {
     /**
      * The scale prop determines which scales your chart should use. This prop can be
      * given as a function, or as an object that specifies separate functions for x and y.
-     * @exampes d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
+     * @examples d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
      */
     scale: React.PropTypes.oneOfType([
       React.PropTypes.func,
@@ -188,7 +179,7 @@ export default class VictoryBar extends React.Component {
      * The style prop specifies styles for your chart. VictoryBar relies on Radium,
      * so valid Radium style objects should work for this prop, however height, width, and margin
      * are used to calculate range, and need to be expressed as a number of pixels
-     * @example {width: 500, height: 300, data: {fill: "red", opacity: 1, width: 8}}
+     * @examples {data: {fill: "red", width: 8}, labels: {fontSize: 12}}
      */
     style: React.PropTypes.object,
     /**
@@ -200,11 +191,11 @@ export default class VictoryBar extends React.Component {
   static defaultProps = {
     data: defaultData,
     height: 300,
-    padding: 30,
+    padding: 50,
     scale: d3.scale.linear(),
     stacked: false,
     standalone: true,
-    width: 500
+    width: 450
   };
 
   componentWillMount() {
@@ -354,8 +345,10 @@ export default class VictoryBar extends React.Component {
 
   getDomain(props, axis) {
     const categoryDomain = this._getDomainFromCategories(props, axis);
-    if (props.domain) {
-      return props.domain[axis] || props.domain;
+    if (props.domain && props.domain[axis]) {
+      return props.domain[axis];
+    } else if (props.domain && _.isArray(props.domain)) {
+      return props.domain;
     } else if (categoryDomain) {
       return categoryDomain;
     } else {
@@ -395,7 +388,13 @@ export default class VictoryBar extends React.Component {
           const localMin = (_.min(_.pluck(dataset.data, "y")));
           return localMin < 0 ? memo + localMin : memo;
         }, 0) : Infinity;
-      return [_.min([min, cumulativeMin]), _.max([max, cumulativeMax])];
+
+      // use greatest min / max
+      const domainMin = _.min([min, cumulativeMin]);
+      const domainMax = _.max([max, cumulativeMax]);
+      // add 1% padding so bars are always visible
+      const padding = 0.01 * Math.abs(domainMax - domainMin);
+      return [domainMin - padding, domainMax - padding];
     }
   }
 
@@ -444,10 +443,6 @@ export default class VictoryBar extends React.Component {
   }
 
   _adjustX(x, index, options) {
-    if (this.stringMap.x === null && !this.props.categories) {
-      // don't adjust x if the x axis is numeric
-      return x;
-    }
     const stacked = options && options.stacked;
     const center = this.datasets.length % 2 === 0 ?
       this.datasets.length / 2 : (this.datasets.length - 1) / 2;
