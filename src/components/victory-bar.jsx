@@ -1,4 +1,4 @@
-import React from "react";
+import React, { PropTypes } from "react";
 import Radium from "radium";
 import _ from "lodash";
 import d3 from "d3";
@@ -38,7 +38,7 @@ export default class VictoryBar extends React.Component {
      * Large datasets might animate slowly due to the inherent limits of svg rendering.
      * @examples {velocity: 0.02, onEnd: () => alert("done!")}
      */
-    animate: React.PropTypes.object,
+    animate: PropTypes.object,
     /**
      * The data prop specifies the data to be plotted. Data should be in the form of an array
      * of data points, or an array of arrays of data points for multiple datasets.
@@ -46,18 +46,18 @@ export default class VictoryBar extends React.Component {
      * @examples [{x: 1, y:2}, {x: 2, y: 3}],
      * [[{x: "a", y: 1}, {x: "b", y: 2}], [{x: "a", y: 2}, {x: "b", y: 3}]]
      */
-    data: React.PropTypes.oneOfType([
-      React.PropTypes.arrayOf(
-        React.PropTypes.shape({
-          x: React.PropTypes.any,
-          y: React.PropTypes.any
+    data: PropTypes.oneOfType([
+      PropTypes.arrayOf(
+        PropTypes.shape({
+          x: PropTypes.any,
+          y: PropTypes.any
         })
       ),
-      React.PropTypes.arrayOf(
-        React.PropTypes.arrayOf(
-          React.PropTypes.shape({
-            x: React.PropTypes.any,
-            y: React.PropTypes.any
+      PropTypes.arrayOf(
+        PropTypes.arrayOf(
+          PropTypes.shape({
+            x: PropTypes.any,
+            y: PropTypes.any
           })
         )
       )
@@ -69,9 +69,9 @@ export default class VictoryBar extends React.Component {
      * be applied to the data points in the corresponding array of the data prop.
      * @examples {fill: "blue", opacity: 0.6}, [{fill: "red"}, {fill: "orange"}]
      */
-    dataAttributes: React.PropTypes.oneOfType([
-      React.PropTypes.object,
-      React.PropTypes.arrayOf(React.PropTypes.object)
+    dataAttributes: PropTypes.oneOfType([
+      PropTypes.object,
+      PropTypes.arrayOf(PropTypes.object)
     ]),
     /**
      * The categories prop specifies the categories for a bar chart. This prop should
@@ -80,7 +80,7 @@ export default class VictoryBar extends React.Component {
      * allowing numeric data to be grouped into segments.
      * @examples ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
      */
-    categories: React.PropTypes.array,
+    categories: PropTypes.array,
     /**
      * The colorScale prop is an optional prop that defines the color scale the chart's bars
      * will be created on. This prop should be given as a string, which will one of the five
@@ -90,9 +90,9 @@ export default class VictoryBar extends React.Component {
      * The user can pass in an array of hex string values to use as their own scale, and
      * VictoryBar will automatically assign values from this color scale to the bars.
      */
-    colorScale: React.PropTypes.oneOfType([
-      React.PropTypes.arrayOf(React.PropTypes.string),
-      React.PropTypes.oneOf([
+    colorScale: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.string),
+      PropTypes.oneOf([
         "victory", "gray", "red", "bluePurple", "yellowBlue"
       ])
     ]),
@@ -104,23 +104,23 @@ export default class VictoryBar extends React.Component {
      * available information.
      * @examples [-1, 1], {x: [0, 100], y: [0, 1]}
      */
-    domain: React.PropTypes.oneOfType([
-      React.PropTypes.array,
-      React.PropTypes.shape({
-        x: React.PropTypes.array,
-        y: React.PropTypes.array
+    domain: PropTypes.oneOfType([
+      Util.PropTypes.minMaxArray,
+      PropTypes.shape({
+        x: Util.PropTypes.minMaxArray,
+        y: Util.PropTypes.minMaxArray
       })
     ]),
     /**
      * The height props specifies the height of the chart container element in pixels
      */
-    height: React.PropTypes.number,
+    height: Util.PropTypes.nonNegative,
     /**
      * The horizontal prop determines whether the bars will be laid vertically or
      * horizontally. The bars will be vertical if this prop is false or unspecified,
      * or horizontal if the prop is set to true.
      */
-    horizontal: React.PropTypes.bool,
+    horizontal: PropTypes.bool,
     /**
      * The labels prop defines labels that will appear above each bar or
      * group of bars in your bar chart. This prop should be given as an array of values.
@@ -130,26 +130,26 @@ export default class VictoryBar extends React.Component {
      * and groups of bars.
      * @examples: ["spring", "summer", "fall", "winter"]
      */
-    labels: React.PropTypes.array,
+    labels: PropTypes.array,
     /**
      * The labelComponents prop takes in an array of entire, HTML-complete label components
      * which will be used to create labels for individual bars, stacked bars, or groups of
      * bars as appropriate.
      */
-    labelComponents: React.PropTypes.array,
+    labelComponents: PropTypes.array,
     /**
      * The padding props specifies the amount of padding in number of pixels between
      * the edge of the chart and any rendered child components. This prop can be given
      * as a number or as an object with padding specified for top, bottom, left
      * and right.
      */
-    padding: React.PropTypes.oneOfType([
-      React.PropTypes.number,
-      React.PropTypes.shape({
-        top: React.PropTypes.number,
-        bottom: React.PropTypes.number,
-        left: React.PropTypes.number,
-        right: React.PropTypes.number
+    padding: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.shape({
+        top: PropTypes.number,
+        bottom: PropTypes.number,
+        left: PropTypes.number,
+        right: PropTypes.number
       })
     ]),
     /**
@@ -157,35 +157,39 @@ export default class VictoryBar extends React.Component {
      * given as a function, or as an object that specifies separate functions for x and y.
      * @examples d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
      */
-    scale: React.PropTypes.oneOfType([
-      React.PropTypes.func,
-      React.PropTypes.shape({
-        x: React.PropTypes.func,
-        y: React.PropTypes.func
+    scale: PropTypes.oneOfType([
+      Util.PropTypes.scale,
+      PropTypes.shape({
+        x: Util.PropTypes.scale,
+        y: Util.PropTypes.scale
       })
     ]),
     /**
      * The stacked prop determines whether the chart should consist of stacked bars.
      * When this prop is set to false, grouped bars will be rendered instead.
      */
-    stacked: React.PropTypes.bool,
+    stacked: PropTypes.bool,
     /**
      * The standalone prop determines whether the component will render a standalone svg
      * or a <g> tag that will be included in an external svg. Set standalone to false to
      * compose VictoryBar with other components within an enclosing <svg> tag.
      */
-    standalone: React.PropTypes.bool,
+    standalone: PropTypes.bool,
     /**
      * The style prop specifies styles for your chart. VictoryBar relies on Radium,
      * so valid Radium style objects should work for this prop, however height, width, and margin
      * are used to calculate range, and need to be expressed as a number of pixels
      * @examples {data: {fill: "red", width: 8}, labels: {fontSize: 12}}
      */
-    style: React.PropTypes.object,
+     style: PropTypes.shape({
+      parent: PropTypes.object,
+      data: PropTypes.object,
+      labels: PropTypes.object
+     }),
     /**
      * The width props specifies the width of the chart container element in pixels
      */
-    width: React.PropTypes.number
+    width: Util.PropTypes.nonNegative
   };
 
   static defaultProps = {
@@ -197,18 +201,6 @@ export default class VictoryBar extends React.Component {
     standalone: true,
     width: 450
   };
-
-  componentWillMount() {
-    // If animating, the `VictoryBar` instance wrapped in `VictoryAnimation`
-    // will compute these values.
-    if (!this.props.animate) {
-      this.getCalculatedValues(this.props);
-    }
-  }
-
-  componentWillReceiveProps(nextProps) {
-    this.getCalculatedValues(nextProps);
-  }
 
   getCalculatedValues(props) {
     this.style = this.getStyles(props);
@@ -258,7 +250,7 @@ export default class VictoryBar extends React.Component {
     const dataFromProps = _.isArray(props.data[0]) ? props.data : [props.data];
     return _.map(dataFromProps, (dataset, index) => {
       return {
-        attrs: this._getAttributes(props, index),
+        attrs: this.getAttributes(props, index),
         data: _.map(dataset, (data) => {
           return _.merge(data, {
             // map string data to numeric values, and add names
@@ -272,7 +264,7 @@ export default class VictoryBar extends React.Component {
     });
   }
 
-  _getAttributes(props, index) {
+  getAttributes(props, index) {
     let attributes = props.dataAttributes && props.dataAttributes[index] ?
       props.dataAttributes[index] : props.dataAttributes;
     if (attributes) {
@@ -292,14 +284,14 @@ export default class VictoryBar extends React.Component {
       return props.style.data.fill;
     }
     const colorScale = _.isArray(props.colorScale) ?
-      props.colorScale : Util.style.getColorScale(props.colorScale);
+      props.colorScale : Util.Style.getColorScale(props.colorScale);
     return colorScale[index % colorScale.length];
   }
 
   createStringMap(props, axis) {
     // if categories exist and are strings, create a map using only those strings
     // don't alter the order.
-    if (props.categories && Util.collection.containsStrings(props.categories)) {
+    if (props.categories && Util.Collection.containsStrings(props.categories)) {
       return _.zipObject(_.map(props.categories, (tick, index) => {
         return [`${tick}`, index + 1];
       }));
@@ -344,7 +336,7 @@ export default class VictoryBar extends React.Component {
   }
 
   getDomain(props, axis) {
-    const categoryDomain = this._getDomainFromCategories(props, axis);
+    const categoryDomain = this.getDomainFromCategories(props, axis);
     if (props.domain && props.domain[axis]) {
       return props.domain[axis];
     } else if (props.domain && _.isArray(props.domain)) {
@@ -352,19 +344,18 @@ export default class VictoryBar extends React.Component {
     } else if (categoryDomain) {
       return categoryDomain;
     } else {
-      return this._getDomainFromData(props, axis);
+      return this.getDomainFromData(props, axis);
     }
   }
 
-  _getDomainFromCategories(props, axis) {
-    if (axis !== "x" || !props.categories || Util.collection.containsStrings(props.categories)) {
+  getDomainFromCategories(props, axis) {
+    if (axis !== "x" || !props.categories || Util.Collection.containsStrings(props.categories)) {
       return undefined;
     }
     return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
   }
 
-  // helper method for getDomain
-  _getDomainFromData(props, axis) {
+  getDomainFromData(props, axis) {
     // if a sensible string map exists, return the minimum and maximum values
     // offset by the bar offset value
     if (this.stringMap[axis] !== null) {
@@ -407,7 +398,7 @@ export default class VictoryBar extends React.Component {
    * helper method for getBarPath
    * called when the bars will be vertical
    */
-  _getVerticalBarPath(position) {
+  getVerticalBarPath(position) {
     const {independent, dependent0, dependent1} = position;
     const size = this.barWidth / 2;
     return `M ${independent - size}, ${dependent0}
@@ -421,7 +412,7 @@ export default class VictoryBar extends React.Component {
    * helper method for getBarPath
    * called when the bars will be horizonal
    */
-  _getHorizontalBarPath(position) {
+  getHorizontalBarPath(position) {
     const {independent, dependent0, dependent1} = position;
     const size = this.barWidth / 2;
     return `M ${dependent0}, ${independent - size}
@@ -433,22 +424,22 @@ export default class VictoryBar extends React.Component {
 
   getBarPath(position) {
     return this.props.horizontal ?
-      this._getHorizontalBarPath(position) : this._getVerticalBarPath(position);
+      this.getHorizontalBarPath(position) : this.getVerticalBarPath(position);
   }
 
-  _pixelsToValue(pixels) {
+  pixelsToValue(pixels) {
     const xRange = this.range.x;
     const xDomain = this.domain.x;
     return (_.max(xDomain) - _.min(xDomain)) / (_.max(xRange) - _.min(xRange)) * pixels;
   }
 
-  _adjustX(x, index, options) {
+  adjustX(x, index, options) {
     const stacked = options && options.stacked;
     const center = this.datasets.length % 2 === 0 ?
       this.datasets.length / 2 : (this.datasets.length - 1) / 2;
     const centerOffset = index - center;
-    const totalWidth = this._pixelsToValue(this.style.data.padding) +
-      this._pixelsToValue(this.style.data.width);
+    const totalWidth = this.pixelsToValue(this.style.data.padding) +
+      this.pixelsToValue(this.style.data.width);
     if (this.props.categories && _.isArray(this.props.categories[0])) {
       // figure out which band this x value belongs to, and shift it to the
       // center of that band before calculating the usual offset
@@ -500,7 +491,7 @@ export default class VictoryBar extends React.Component {
     const yOffset = this.getYOffset(data, index, barIndex);
     const y0 = stacked ? yOffset : _.max([_.min(this.domain.y), 0]);
     const y1 = stacked ? yOffset + data.y : data.y;
-    const x = this._adjustX(data.x, index, {stacked});
+    const x = this.adjustX(data.x, index, {stacked});
     return {
       independent: this.scale.x.call(this, x),
       dependent0: this.scale.y.call(this, y0),
@@ -508,7 +499,7 @@ export default class VictoryBar extends React.Component {
     };
   }
 
-  _getAnchors(sign) {
+  getLabelAnchors(sign) {
     if (!this.props.horizontal) {
       return {
         vertical: sign >= 0 ? "end" : "start",
@@ -534,7 +525,7 @@ export default class VictoryBar extends React.Component {
     const labelComponent = this.props.labelComponents ?
       this.props.labelComponents[index] || this.props.labelComponents[0] : undefined;
     const sign = data.y >= 0 ? 1 : -1;
-    const anchors = this._getAnchors(sign);
+    const anchors = this.getLabelAnchors(sign);
     const componentStyle = labelComponent && labelComponent.props.style;
     const style = _.merge({padding: 0}, this.style.labels, componentStyle);
     const padding = this.getlabelPadding(style);
@@ -555,7 +546,7 @@ export default class VictoryBar extends React.Component {
       React.createElement(VictoryLabel, props, children);
   }
 
-  getBarElements(dataset, index) {
+  renderBars(dataset, index) {
     const isCenter = Math.floor(this.datasets.length / 2) === index;
     const isLast = this.datasets.length === index + 1;
     const stacked = this.props.stacked;
@@ -602,9 +593,9 @@ export default class VictoryBar extends React.Component {
     });
   }
 
-  plotDataPoints() {
+  renderData() {
     return _.map(this.datasets, (dataset, index) => {
-      return this.getBarElements(dataset, index);
+      return this.renderBars(dataset, index);
     });
   }
 
@@ -616,18 +607,20 @@ export default class VictoryBar extends React.Component {
       // Do less work by having `VictoryAnimation` tween only values that
       // make sense to tween. In the future, allow customization of animated
       // prop whitelist/blacklist?
-      const animateData = _.omit(this.props, [
-        "stacked", "scale", "animate", "standalone", "horizontal"
+      const animateData = _.pick(this.props, [
+        "data", "dataAttributes", "categories", "colorScale", "domain", "height",
+        "padding", "style", "width"
       ]);
       return (
         <VictoryAnimation {...this.props.animate} data={animateData}>
           {(props) => <VictoryBar {...this.props} {...props} animate={null}/>}
         </VictoryAnimation>
       );
+    } else {
+      this.getCalculatedValues(this.props);
     }
     const style = this.style.parent;
-    const group = <g style={style}>{this.plotDataPoints()}</g>;
-
+    const group = <g style={style}>{this.renderData()}</g>;
     return this.props.standalone ? <svg style={style}>{group}</svg> : group;
   }
 }
