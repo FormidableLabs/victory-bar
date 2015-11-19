@@ -181,11 +181,11 @@ export default class VictoryBar extends React.Component {
      * are used to calculate range, and need to be expressed as a number of pixels
      * @examples {data: {fill: "red", width: 8}, labels: {fontSize: 12}}
      */
-     style: PropTypes.shape({
+    style: PropTypes.shape({
       parent: PropTypes.object,
       data: PropTypes.object,
       labels: PropTypes.object
-     }),
+    }),
     /**
      * The width props specifies the width of the chart container element in pixels
      */
