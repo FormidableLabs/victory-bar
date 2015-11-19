@@ -281,7 +281,7 @@ export default class VictoryBar extends React.Component {
       attributes = {fill: this.getColor(props, index)};
     }
     const requiredAttributes = {
-      name: attributes && attributes.name ? attributes.name : "data-" + index
+      name: attributes && attributes.name ? attributes.name : `data-${index}`
     };
     return _.merge(requiredAttributes, attributes);
   }
@@ -301,7 +301,7 @@ export default class VictoryBar extends React.Component {
     // don't alter the order.
     if (props.categories && Util.collection.containsStrings(props.categories)) {
       return _.zipObject(_.map(props.categories, (tick, index) => {
-        return ["" + tick, index + 1];
+        return [`${tick}`, index + 1];
       }));
     }
     // collect strings from data
@@ -410,11 +410,11 @@ export default class VictoryBar extends React.Component {
   _getVerticalBarPath(position) {
     const {independent, dependent0, dependent1} = position;
     const size = this.barWidth / 2;
-    return "M " + (independent - size) + "," + dependent0 + " " +
-      "L " + (independent - size) + "," + dependent1 +
-      "L " + (independent + size) + "," + dependent1 +
-      "L " + (independent + size) + "," + dependent0 +
-      "L " + (independent - size) + "," + dependent0;
+    return `M ${independent - size}, ${dependent0}
+      L ${independent - size}, ${dependent1}
+      L ${independent + size}, ${dependent1}
+      L ${independent + size}, ${dependent0}
+      L ${independent - size}, ${dependent0}`;
   }
 
   /*
@@ -424,11 +424,11 @@ export default class VictoryBar extends React.Component {
   _getHorizontalBarPath(position) {
     const {independent, dependent0, dependent1} = position;
     const size = this.barWidth / 2;
-    return "M " + (dependent0) + "," + (independent - size) + " " +
-      "L " + (dependent0) + "," + (independent + size) +
-      "L " + (dependent1) + "," + (independent + size) +
-      "L " + (dependent1) + "," + (independent - size) +
-      "L " + (dependent0) + "," + (independent - size);
+    return `M ${dependent0}, ${independent - size}
+      L ${dependent0}, ${independent + size}
+      L ${dependent1}, ${independent + size}
+      L ${dependent1}, ${independent - size}
+      L ${dependent0}, ${independent - size}`;
   }
 
   getBarPath(position) {
@@ -541,7 +541,7 @@ export default class VictoryBar extends React.Component {
     const children = labelComponent ? labelComponent.props.children || text : text;
 
     const props = {
-      key: "label-" + index,
+      key: `label-${index}`,
       x: (labelComponent && labelComponent.props.x) || position.x + padding.x,
       y: (labelComponent && labelComponent.props.y) || position.y - padding.y,
       data, // Pass data for custom label component to access
@@ -565,7 +565,7 @@ export default class VictoryBar extends React.Component {
       const path = position.independent ? this.getBarPath(position) : undefined;
       const styleData = _.omit(data, [
         "xName", "yName", "x", "y", "label"
-        ]);
+      ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
       const plotLabel = (plotGroupLabel && (this.props.labels || this.props.labelComponents));
 
@@ -579,11 +579,12 @@ export default class VictoryBar extends React.Component {
         const labelText = this.props.labels ?
           this.props.labels[labelIndex] || this.props.labels[0] : "";
         return (
-          <g key={"series-" + index + "-bar-" + barIndex}>
+          <g key={`series-${index}-bar-${barIndex}`}>
             <path
               d={path}
               shapeRendering="optimizeSpeed"
-              style={style}>
+              style={style}
+            >
             </path>
             {this.renderLabel(labelData, labelText, data)}
           </g>
@@ -592,9 +593,10 @@ export default class VictoryBar extends React.Component {
       return (
         <path
           d={path}
-          key={"series-" + index + "-bar-" + barIndex}
+          key={`series-${index}-bar-${barIndex}`}
           shapeRendering="optimizeSpeed"
-          style={style}>
+          style={style}
+        >
         </path>
       );
     });
@@ -619,7 +621,7 @@ export default class VictoryBar extends React.Component {
       ]);
       return (
         <VictoryAnimation {...this.props.animate} data={animateData}>
-          {props => <VictoryBar {...this.props} {...props} animate={null}/>}
+          {(props) => <VictoryBar {...this.props} {...props} animate={null}/>}
         </VictoryAnimation>
       );
     }
