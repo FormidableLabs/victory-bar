@@ -5,8 +5,8 @@
 // Use `TestUtils` to inject into DOM, simulate events, etc.
 // See: https://facebook.github.io/react/docs/test-utils.html
 
-describe("components/victory-bar", function () {
-  it("has expected content with shallow render", function () {
+describe("components/victory-bar", () => {
+  it("has expected content with shallow render", () => {
     // This is a "shallow" render that renders only the current component
     // without using the actual DOM.
     //
