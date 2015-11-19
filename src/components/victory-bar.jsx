@@ -80,7 +80,7 @@ export default class VictoryBar extends React.Component {
      * allowing numeric data to be grouped into segments.
      * @examples ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
      */
-    categories: PropTypes.array,
+    categories: Util.PropTypes.homogenousArray,
     /**
      * The colorScale prop is an optional prop that defines the color scale the chart's bars
      * will be created on. This prop should be given as a string, which will one of the five
