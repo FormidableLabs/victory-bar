@@ -44,7 +44,7 @@
     "builder-react-component-dev": "0.1.0",
     "chai": "^3.2.0",
     "clean-webpack-plugin": "^0.1.4",
-    "ecology": "git+https://github.com/formidablelabs/ecology#master",
+    "ecology": "1.0.1",
     "file-loader": "^0.8.4",
     "json-loader": "^0.5.3",
     "mocha": "^2.2.5",
