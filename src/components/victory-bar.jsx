@@ -93,7 +93,7 @@ export default class VictoryBar extends React.Component {
     colorScale: PropTypes.oneOfType([
       PropTypes.arrayOf(PropTypes.string),
       PropTypes.oneOf([
-        "victory", "gray", "red", "bluePurple", "yellowBlue"
+        "greyscale", "qualitative", "heatmap", "warm", "cool", "red", "green", "blue"
       ])
     ]),
     /**
@@ -194,6 +194,7 @@ export default class VictoryBar extends React.Component {
 
   static defaultProps = {
     data: defaultData,
+    colorScale: "greyscale",
     height: 300,
     padding: 50,
     scale: d3.scale.linear(),
