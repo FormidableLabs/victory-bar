@@ -22,7 +22,7 @@
     "generate-docs": "node_modules/react-docgen/bin/react-docgen.js src/components/victory-bar.jsx -o docs/victory-bar.json",
     "hot-docs": "npm run generate-docs & webpack-dev-server --port 3000 --config docs/webpack.config.hot.js --hot --content-base docs",
     "build-static-docs": "webpack --config docs/webpack.config.static.js --progress",
-    "push-gh-pages": "git subtree push --prefix gh-pages origin gh-pages"
+    "push-gh-pages": "git subtree push --prefix docs/build origin gh-pages"
   },
   "dependencies": {
     "builder": "~2.1.3",
