@@ -35,19 +35,19 @@ Pass in an array of arrays of data objects to create a set of grouped bars. The 
   domain={{y: [0, 4]}}
   height={500}
   data={[
-    [ 
-      {x: 1, y: 1}, 
-      {x: 2, y: 2}, 
+    [
+      {x: 1, y: 1},
+      {x: 2, y: 2},
       {x: 3, y: 3}
     ],
-    [ 
-      {x: 1, y: 2}, 
-      {x: 2, y: 1}, 
+    [
+      {x: 1, y: 2},
+      {x: 2, y: 1},
       {x: 3, y: 1}
     ],
-    [ 
-      {x: 1, y: 3}, 
-      {x: 2, y: 4}, 
+    [
+      {x: 1, y: 3},
+      {x: 2, y: 4},
       {x: 3, y: 2}
     ],
   ]}
@@ -60,19 +60,19 @@ Add the `stacked` prop to create a stacked layout. The y domain is automatically
 <VictoryBar stacked
   height={500}
   data={[
-    [ 
-      {x: 1, y: 1}, 
-      {x: 2, y: 2}, 
+    [
+      {x: 1, y: 1},
+      {x: 2, y: 2},
       {x: 3, y: 3}
     ],
-    [ 
-      {x: 1, y: 2}, 
-      {x: 2, y: 1}, 
+    [
+      {x: 1, y: 2},
+      {x: 2, y: 1},
       {x: 3, y: 1}
     ],
-    [ 
-      {x: 1, y: 3}, 
-      {x: 2, y: 4}, 
+    [
+      {x: 1, y: 3},
+      {x: 2, y: 4},
       {x: 3, y: 2}
     ],
   ]}
@@ -92,19 +92,19 @@ The sensible defaults VictoryBar provides makes it easy to get started, but ever
     labels: {fontSize: 14}
   }}
   data={[
-    [ 
-      {x: 1, y: 1}, 
-      {x: 2, y: 2}, 
+    [
+      {x: 1, y: 1},
+      {x: 2, y: 2},
       {x: 3, y: 3}
     ],
-    [ 
-      {x: 1, y: 2}, 
-      {x: 2, y: 1}, 
+    [
+      {x: 1, y: 2},
+      {x: 2, y: 1},
       {x: 3, y: 1}
     ],
-    [ 
-      {x: 1, y: 3}, 
-      {x: 2, y: 4}, 
+    [
+      {x: 1, y: 3},
+      {x: 2, y: 4},
       {x: 3, y: 2}
     ],
   ]}
@@ -154,7 +154,10 @@ class App extends React.Component {
       <VictoryBar
         height={600}
         padding={75}
-        domain={{y: [0, 5]}}
+        domain={{
+          x: [1, 3],
+          y: [0, 5]
+        }}
         animate={{velocity: 0.02}}
         data={this.state.data}
         dataAttributes={[
@@ -170,6 +173,3 @@ class App extends React.Component {
 ReactDOM.render(<App/>, mountNode);
 
 ```
-
-
-

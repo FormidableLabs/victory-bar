@@ -29,19 +29,19 @@
   domain={{y: [0, 4]}}
   height={500}
   data={[
-    [ 
-      {x: 1, y: 1}, 
-      {x: 2, y: 2}, 
+    [
+      {x: 1, y: 1},
+      {x: 2, y: 2},
       {x: 3, y: 3}
     ],
-    [ 
-      {x: 1, y: 2}, 
-      {x: 2, y: 1}, 
+    [
+      {x: 1, y: 2},
+      {x: 2, y: 1},
       {x: 3, y: 1}
     ],
-    [ 
-      {x: 1, y: 3}, 
-      {x: 2, y: 4}, 
+    [
+      {x: 1, y: 3},
+      {x: 2, y: 4},
       {x: 3, y: 2}
     ],
   ]}
@@ -51,19 +51,19 @@
 <pre><code class="lang-playground">&lt;VictoryBar stacked
   height={500}
   data={[
-    [ 
-      {x: 1, y: 1}, 
-      {x: 2, y: 2}, 
+    [
+      {x: 1, y: 1},
+      {x: 2, y: 2},
       {x: 3, y: 3}
     ],
-    [ 
-      {x: 1, y: 2}, 
-      {x: 2, y: 1}, 
+    [
+      {x: 1, y: 2},
+      {x: 2, y: 1},
       {x: 3, y: 1}
     ],
-    [ 
-      {x: 1, y: 3}, 
-      {x: 2, y: 4}, 
+    [
+      {x: 1, y: 3},
+      {x: 2, y: 4},
       {x: 3, y: 2}
     ],
   ]}
@@ -79,19 +79,19 @@
     labels: {fontSize: 14}
   }}
   data={[
-    [ 
-      {x: 1, y: 1}, 
-      {x: 2, y: 2}, 
+    [
+      {x: 1, y: 1},
+      {x: 2, y: 2},
       {x: 3, y: 3}
     ],
-    [ 
-      {x: 1, y: 2}, 
-      {x: 2, y: 1}, 
+    [
+      {x: 1, y: 2},
+      {x: 2, y: 1},
       {x: 3, y: 1}
     ],
-    [ 
-      {x: 1, y: 3}, 
-      {x: 2, y: 4}, 
+    [
+      {x: 1, y: 3},
+      {x: 2, y: 4},
       {x: 3, y: 2}
     ],
   ]}
@@ -137,7 +137,10 @@
       &lt;VictoryBar
         height={600}
         padding={75}
-        domain={{y: [0, 5]}}
+        domain={{
+          x: [1, 3],
+          y: [0, 5]
+        }}
         animate={{velocity: 0.02}}
         data={this.state.data}
         dataAttributes={[
@@ -173,12 +176,10 @@ be given as an array of string values, numeric values, or arrays. When this prop
 given as an array of arrays, the minimum and maximum values of the arrays define range bands,
 allowing numeric data to be grouped into segments.
 </span><span class="Prop-examples"><span class="Prop-examples-title">Examples: </span><span class="Prop-examples-value"> [&quot;dogs&quot;, &quot;cats&quot;, &quot;mice&quot;], [[0, 5], [5, 10], [10, 15]]</span></span></td></tr><tr class="Prop"><td><span class="Prop-name">colorScale</span><span class="Prop-type">arrayOf, enum</span></td><td><span class="Prop-description">The colorScale prop is an optional prop that defines the color scale the chart&#x27;s bars
-will be created on. This prop should be given as a string, which will one of the five
-baked-in color scales: &quot;victory&quot;, &quot;grayscale&quot;, &quot;red&quot;, &quot;bluePurple&quot;, and &quot;yellowBlue&quot;.
-If it is not defined, the default Victory grayscale will be used, and if the fill
-property on the dataAttributes prop is defined, it will overwrite the colorScale prop.
-The user can pass in an array of hex string values to use as their own scale, and
-VictoryBar will automatically assign values from this color scale to the bars.</span></td></tr><tr class="Prop"><td><span class="Prop-name">domain</span><span class="Prop-type">custom, shape</span></td><td><span class="Prop-description">The domain prop describes the range of values your bar chart will cover. This prop can be
+will be created on. This prop should be given as an array of CSS colors, or as a string
+corresponding to one of the built in color scales. VictoryBar will automatically assign
+values from this color scale to the bars unless colors are explicitly provided in the
+`dataAttributes` prop.</span><span class="Prop-default"><span class="Prop-default-title">Default Value: </span><span class="Prop-default-value">&quot;greyscale&quot;</span></span></td></tr><tr class="Prop"><td><span class="Prop-name">domain</span><span class="Prop-type">custom, shape</span></td><td><span class="Prop-description">The domain prop describes the range of values your bar chart will cover. This prop can be
 given as a array of the minimum and maximum expected values for your bar chart,
 or as an object that specifies separate arrays for x and y.
 If this prop is not provided, a domain will be calculated from data, or other
@@ -328,4 +329,4 @@ font-style: italic;
 line-height: 1;}.cm-s-elegant span.cm-meta{color: #555;
 font-style: italic;
 line-height: 1;}.cm-s-elegant span.cm-variable{color: black;}.cm-s-elegant span.cm-variable-2{color: #b11;}.cm-s-elegant span.cm-qualifier{color: #555;}.cm-s-elegant span.cm-keyword{color: #730;}.cm-s-elegant span.cm-builtin{color: #30a;}.cm-s-elegant span.cm-link{color: #762;}.cm-s-elegant span.cm-error{background-color: #fdd;}.cm-s-elegant .CodeMirror-activeline-background{background:  #e8f2ff;}.cm-s-elegant .CodeMirror-matchingbracket{outline: 1px solid grey;
-color: black !important;}</style></div></div></div><script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/5.0.0/codemirror.min.js"></script><script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/5.0.0/mode/javascript/javascript.min.js"></script><script src="main.21546dd531b63beb67d5.js"></script></body></html>
+color: black !important;}</style></div></div></div><script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/5.0.0/codemirror.min.js"></script><script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/codemirror/5.0.0/mode/javascript/javascript.min.js"></script><script src="main.42e09f9f3348eaff53f6.js"></script></body></html>

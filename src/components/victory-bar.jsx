@@ -80,15 +80,13 @@ export default class VictoryBar extends React.Component {
      * allowing numeric data to be grouped into segments.
      * @examples ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
      */
-    categories: Util.PropTypes.homogenousArray,
+    categories: Util.PropTypes.homogeneousArray,
     /**
      * The colorScale prop is an optional prop that defines the color scale the chart's bars
-     * will be created on. This prop should be given as a string, which will one of the five
-     * baked-in color scales: "victory", "grayscale", "red", "bluePurple", and "yellowBlue".
-     * If it is not defined, the default Victory grayscale will be used, and if the fill
-     * property on the dataAttributes prop is defined, it will overwrite the colorScale prop.
-     * The user can pass in an array of hex string values to use as their own scale, and
-     * VictoryBar will automatically assign values from this color scale to the bars.
+     * will be created on. This prop should be given as an array of CSS colors, or as a string
+     * corresponding to one of the built in color scales. VictoryBar will automatically assign
+     * values from this color scale to the bars unless colors are explicitly provided in the
+     * `dataAttributes` prop.
      */
     colorScale: PropTypes.oneOfType([
       PropTypes.arrayOf(PropTypes.string),
@@ -105,10 +103,10 @@ export default class VictoryBar extends React.Component {
      * @examples [-1, 1], {x: [0, 100], y: [0, 1]}
      */
     domain: PropTypes.oneOfType([
-      Util.PropTypes.minMaxArray,
+      Util.PropTypes.domain,
       PropTypes.shape({
-        x: Util.PropTypes.minMaxArray,
-        y: Util.PropTypes.minMaxArray
+        x: Util.PropTypes.domain,
+        y: Util.PropTypes.domain
       })
     ]),
     /**
