@@ -4,25 +4,23 @@ import Ecology from 'ecology';
 import Radium, { Style } from 'radium';
 import {VictoryLabel} from 'victory-label';
 
-import theme from './theme';
+import { VictoryTheme } from 'formidable-landers';
 
 @Radium
 class Docs extends React.Component {
   render() {
     return (
-      <div className="Container">
-        <div className="Copy">
-          <Ecology
-            overview={require('!!raw!./ecology.md')}
-            source={require('json!./victory-bar.json')}
-            scope={{
-              React,
-              ReactDOM,
-              VictoryLabel,
-              VictoryBar: require('../src/components/victory-bar')}}
-            playgroundtheme='elegant' />
-          <Style rules={theme}/>
-        </div>
+      <div>
+        <Ecology
+          overview={require('!!raw!./ecology.md')}
+          source={require('json!./victory-bar.json')}
+          scope={{
+            React,
+            ReactDOM,
+            VictoryLabel,
+            VictoryBar: require('../src/components/victory-bar')}}
+          playgroundtheme='elegant' />
+        <Style rules={VictoryTheme}/>
       </div>
     )
   }
