@@ -2,10 +2,9 @@ import React, { PropTypes } from "react";
 import Radium from "radium";
 import _ from "lodash";
 import d3Scale from "d3-scale";
-import {VictoryAnimation} from "victory-animation";
 import Util from "victory-util";
-import {VictoryLabel} from "victory-label";
 import Bar from "./bar";
+import BarLabel from "./bar-label";
 
 
 const defaultStyles = {
@@ -461,53 +460,6 @@ export default class VictoryBar extends React.Component {
     };
   }
 
-  getLabelAnchors(sign) {
-    if (!this.props.horizontal) {
-      return {
-        vertical: sign >= 0 ? "end" : "start",
-        text: "middle"
-      };
-    } else {
-      return {
-        vertical: "middle",
-        text: sign >= 0 ? "start" : "end"
-      };
-    }
-  }
-
-  getlabelPadding(style) {
-    return {
-      x: this.props.horizontal ? style.padding : 0,
-      y: this.props.horizontal ? 0 : style.padding
-    };
-  }
-
-  renderLabel(labelData, text, data) {
-    const {position, index} = labelData;
-    const labelComponent = this.props.labelComponents ?
-      this.props.labelComponents[index] || this.props.labelComponents[0] : undefined;
-    const sign = data.y >= 0 ? 1 : -1;
-    const anchors = this.getLabelAnchors(sign);
-    const componentStyle = labelComponent && labelComponent.props.style;
-    const style = _.merge({padding: 0}, this.style.labels, componentStyle);
-    const padding = this.getlabelPadding(style);
-    const children = labelComponent ? labelComponent.props.children || text : text;
-
-    const props = {
-      key: `label-${index}`,
-      x: (labelComponent && labelComponent.props.x) || position.x + padding.x,
-      y: (labelComponent && labelComponent.props.y) || position.y - padding.y,
-      data, // Pass data for custom label component to access
-      textAnchor: (labelComponent && labelComponent.props.textAnchor) || anchors.text,
-      verticalAnchor: (labelComponent && labelComponent.props.textAnchor) || anchors.vertical,
-      style
-    };
-
-    return labelComponent ?
-      React.cloneElement(labelComponent, props, children) :
-      React.createElement(VictoryLabel, props, children);
-  }
-
   renderBars(dataset, index) {
     const isCenter = Math.floor(this.datasets.length / 2) === index;
     const isLast = this.datasets.length === index + 1;
@@ -519,39 +471,38 @@ export default class VictoryBar extends React.Component {
         "xName", "yName", "x", "y", "label"
       ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
-      const plotLabel = (plotGroupLabel && (this.props.labels || this.props.labelComponents));
-
-      if (plotLabel) {
-        const labelPositions = {
-          x: this.props.horizontal ? position.dependent1 : position.independent,
-          y: this.props.horizontal ? position.independent : position.dependent1
-        };
-        const labelIndex = this.getLabelIndex(data.x);
-        const labelData = {position: labelPositions, index: labelIndex};
-        const labelText = this.props.labels ?
-          this.props.labels[labelIndex] || this.props.labels[0] : "";
-        return (
-          <g key={`series-${index}-bar-${barIndex}`}>
-            <Bar
-              animate={this.props.animate}
-              horizontal={this.props.horizontal}
-              style={style}
-              position={position}
-              data={data}
-            />
-            {this.renderLabel(labelData, labelText, data)}
-          </g>
-        );
-      }
-      return (
+      const barComponent = (
         <Bar key={`series-${index}-bar-${barIndex}`}
           animate={this.props.animate}
           horizontal={this.props.horizontal}
-          style={this.style.data}
+          style={style}
           position={position}
           data={data}
         />
       );
+      const plotLabel = (plotGroupLabel && (this.props.labels || this.props.labelComponents));
+      if (plotLabel) {
+        const labelIndex = this.getLabelIndex(data.x);
+        const labelText = this.props.labels ?
+          this.props.labels[labelIndex] || this.props.labels[0] : "";
+        const labelComponent = this.props.labelComponents ?
+          this.props.labelComponents[index] || this.props.labelComponents[0] : undefined;
+        return (
+          <g key={`series-${index}-bar-${barIndex}`}>
+            {barComponent}
+            <BarLabel key={`label-series-${index}-bar-${barIndex}`}
+              animate={this.props.animate}
+              horizontal={this.props.horizontal}
+              style={this.style.labels}
+              position={position}
+              data={data}
+              labelText={labelText}
+              labelComponent={labelComponent}
+            />
+          </g>
+        );
+      }
+      return barComponent;
     });
   }
 
@@ -562,25 +513,7 @@ export default class VictoryBar extends React.Component {
   }
 
   render() {
-    // If animating, return a `VictoryAnimation` element that will create
-    // a new `VictoryBar` with nearly identical props, except (1) tweened
-    // and (2) `animate` set to null so we don't recurse forever.
-    if (this.props.animate) {
-      // Do less work by having `VictoryAnimation` tween only values that
-      // make sense to tween. In the future, allow customization of animated
-      // prop whitelist/blacklist?
-      const animateData = _.pick(this.props, [
-        "data", "dataAttributes", "categories", "colorScale", "domain", "height",
-        "padding", "style", "width"
-      ]);
-      return (
-        <VictoryAnimation {...this.props.animate} data={animateData}>
-          {(props) => <VictoryBar {...this.props} {...props} animate={null}/>}
-        </VictoryAnimation>
-      );
-    } else {
-      this.getCalculatedValues(this.props);
-    }
+    this.getCalculatedValues(this.props);
     const style = this.style.parent;
     const group = <g style={style}>{this.renderData()}</g>;
     return this.props.standalone ? <svg style={style}>{group}</svg> : group;
