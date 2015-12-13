@@ -1,10 +1,12 @@
 import React, { PropTypes } from "react";
 import Radium from "radium";
 import _ from "lodash";
-import d3 from "d3";
+import d3Scale from "d3-scale";
 import {VictoryAnimation} from "victory-animation";
 import Util from "victory-util";
 import {VictoryLabel} from "victory-label";
+import Bar from "./bar";
+
 
 const defaultStyles = {
   data: {
@@ -153,7 +155,7 @@ export default class VictoryBar extends React.Component {
     /**
      * The scale prop determines which scales your chart should use. This prop can be
      * given as a function, or as an object that specifies separate functions for x and y.
-     * @examples d3.time.scale(), {x: d3.scale.linear(), y: d3.scale.log()}
+     * @examples d3Scale.time(), {x: d3Scale.linear(), y: d3Scale.log()}
      */
     scale: PropTypes.oneOfType([
       Util.PropTypes.scale,
@@ -195,7 +197,7 @@ export default class VictoryBar extends React.Component {
     colorScale: "greyscale",
     height: 300,
     padding: 50,
-    scale: d3.scale.linear(),
+    scale: d3Scale.linear(),
     stacked: false,
     standalone: true,
     width: 450
@@ -221,7 +223,6 @@ export default class VictoryBar extends React.Component {
       x: this.getScale(props, "x"),
       y: this.getScale(props, "y")
     };
-    this.barWidth = this.getBarWidth();
   }
 
   getStyles(props) {
@@ -388,44 +389,6 @@ export default class VictoryBar extends React.Component {
     }
   }
 
-  getBarWidth() {
-    // todo calculate / enforce max width
-    return this.style.data.width;
-  }
-
-  /*
-   * helper method for getBarPath
-   * called when the bars will be vertical
-   */
-  getVerticalBarPath(position) {
-    const {independent, dependent0, dependent1} = position;
-    const size = this.barWidth / 2;
-    return `M ${independent - size}, ${dependent0}
-      L ${independent - size}, ${dependent1}
-      L ${independent + size}, ${dependent1}
-      L ${independent + size}, ${dependent0}
-      L ${independent - size}, ${dependent0}`;
-  }
-
-  /*
-   * helper method for getBarPath
-   * called when the bars will be horizonal
-   */
-  getHorizontalBarPath(position) {
-    const {independent, dependent0, dependent1} = position;
-    const size = this.barWidth / 2;
-    return `M ${dependent0}, ${independent - size}
-      L ${dependent0}, ${independent + size}
-      L ${dependent1}, ${independent + size}
-      L ${dependent1}, ${independent - size}
-      L ${dependent0}, ${independent - size}`;
-  }
-
-  getBarPath(position) {
-    return this.props.horizontal ?
-      this.getHorizontalBarPath(position) : this.getVerticalBarPath(position);
-  }
-
   pixelsToValue(pixels) {
     const xRange = this.range.x;
     const xDomain = this.domain.x;
@@ -552,7 +515,6 @@ export default class VictoryBar extends React.Component {
     const plotGroupLabel = (stacked && isLast) || (!stacked && isCenter);
     return _.map(dataset.data, (data, barIndex) => {
       const position = this.getBarPosition(data, index, barIndex);
-      const path = position.independent ? this.getBarPath(position) : undefined;
       const styleData = _.omit(data, [
         "xName", "yName", "x", "y", "label"
       ]);
@@ -570,24 +532,25 @@ export default class VictoryBar extends React.Component {
           this.props.labels[labelIndex] || this.props.labels[0] : "";
         return (
           <g key={`series-${index}-bar-${barIndex}`}>
-            <path
-              d={path}
-              shapeRendering="optimizeSpeed"
+            <Bar
+              animate={this.props.animate}
+              horizontal={this.props.horizontal}
               style={style}
-            >
-            </path>
+              position={position}
+              data={data}
+            />
             {this.renderLabel(labelData, labelText, data)}
           </g>
         );
       }
       return (
-        <path
-          d={path}
-          key={`series-${index}-bar-${barIndex}`}
-          shapeRendering="optimizeSpeed"
-          style={style}
-        >
-        </path>
+        <Bar key={`series-${index}-bar-${barIndex}`}
+          animate={this.props.animate}
+          horizontal={this.props.horizontal}
+          style={this.style.data}
+          position={position}
+          data={data}
+        />
       );
     });
   }

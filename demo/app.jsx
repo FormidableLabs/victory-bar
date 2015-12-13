@@ -72,7 +72,7 @@ class App extends React.Component {
             data={this.state.numericBarData}
             labelComponents={[<VictoryLabel>LABELLLL</VictoryLabel>]}
             dataAttributes={[
-              {fill: "cornflowerblue"},
+              {fill: "red"},
               {fill: "orange"},
               {fill: "greenyellow"},
               {fill: "gold"},
