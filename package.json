@@ -32,6 +32,7 @@
     "chai": "^3.2.0",
     "mocha": "^2.2.5",
     "react": "0.14.x",
+    "react-addons-test-utils":  "^0.14.0",
     "react-dom": "0.14.x",
     "react-hot-loader": "^1.2.8",
     "sinon": "^1.15.4",

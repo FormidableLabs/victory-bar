@@ -1,7 +1,6 @@
 import _ from "lodash";
 import React, { PropTypes } from "react";
 import Radium from "radium";
-import { VictoryLabel } from "victory-label";
 import { VictoryAnimation } from "victory-animation";
 
 @Radium
@@ -16,7 +15,7 @@ export default class Bar extends React.Component {
   };
 
   getCalculatedValues(props) {
-    this.style = this.evaluateStyle(props.style)
+    this.style = this.evaluateStyle(props.style);
     this.barWidth = this.style.width;
     this.path = props.position.independent ? this.getBarPath(props.position) : undefined;
   }
@@ -60,7 +59,7 @@ export default class Bar extends React.Component {
     });
   }
 
-  renderBar(props) {
+  renderBar() {
     return (
       <path
         d={this.path}
@@ -86,7 +85,7 @@ export default class Bar extends React.Component {
     }
     return (
       <g>
-        {this.renderBar(this.props)}
+        {this.renderBar()}
       </g>
     );
   }

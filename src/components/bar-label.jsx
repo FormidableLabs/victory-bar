@@ -14,7 +14,7 @@ export default class BarLabel extends React.Component {
     style: PropTypes.object,
     data: PropTypes.object,
     labelText: PropTypes.string,
-    labelComponent: PropTypes.any,
+    labelComponent: PropTypes.any
   };
 
   getCalculatedValues(props) {
@@ -61,12 +61,12 @@ export default class BarLabel extends React.Component {
     const newProps = {
       x: component.props.x || this.position.x + padding.x,
       y: component.props.y || this.position.y - padding.y,
-      data: props.data , // Pass data for custom label component to access
+      data: props.data, // Pass data for custom label component to access
       textAnchor: component.props.textAnchor || this.anchors.text,
       verticalAnchor: component.props.verticalAnchor || this.anchors.vertical,
       style
     };
-    return React.cloneElement(component, newProps, children)
+    return React.cloneElement(component, newProps, children);
   }
 
   renderVictoryLabel(props) {
