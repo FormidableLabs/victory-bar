@@ -29,7 +29,7 @@ class App extends React.Component {
         },
         {
           x: "dogs",
-          y: _.random(-15, 15)
+          y: _.random(0, 15)
         }
       ];
     });
@@ -48,7 +48,7 @@ class App extends React.Component {
         },
         {
           x: _.random(9, 11),
-          y: _.random(-15, 15)
+          y: _.random(0, 15)
         }
       ];
     });
