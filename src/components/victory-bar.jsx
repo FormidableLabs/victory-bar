@@ -316,8 +316,14 @@ export default class VictoryBar extends React.Component {
   }
 
   getScale(props, axis) {
-    const scale = props.scale[axis] ? props.scale[axis].copy() :
-      props.scale.copy();
+    let scale;
+    if (props.scale && props.scale[axis]) {
+      scale = props.scale[axis].copy();
+    } else if (props.scale && !_.isObject(props.scale)) {
+      scale = props.scale.copy();
+    } else {
+      scale = d3Scale.linear().copy();
+    }
     const range = this.range[axis];
     const domain = this.domain[axis];
     scale.range(range);
