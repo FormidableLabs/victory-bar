@@ -2,13 +2,11 @@ import _ from "lodash";
 import React, { PropTypes } from "react";
 import Radium from "radium";
 import { VictoryLabel } from "victory-label";
-import { VictoryAnimation } from "victory-animation";
 
 @Radium
 export default class BarLabel extends React.Component {
 
   static propTypes = {
-    animate: PropTypes.object,
     position: PropTypes.object,
     horizontal: PropTypes.bool,
     style: PropTypes.object,
@@ -92,19 +90,7 @@ export default class BarLabel extends React.Component {
   }
 
   render() {
-    if (this.props.animate) {
-      // Do less work by having `VictoryAnimation` tween only values that
-      // make sense to tween. In the future, allow customization of animated
-      // prop whitelist/blacklist?
-      const animateData = _.pick(this.props, ["position", "style", "data"]);
-      return (
-        <VictoryAnimation {...this.props.animate} data={animateData}>
-          {(props) => <BarLabel {...this.props} {...props} animate={null}/>}
-        </VictoryAnimation>
-      );
-    } else {
-      this.getCalculatedValues(this.props);
-    }
+    this.getCalculatedValues(this.props);
     return (
       <g>
         {this.renderLabel(this.props)}
