@@ -480,7 +480,6 @@ export default class VictoryBar extends React.Component {
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
       const barComponent = (
         <Bar key={`series-${index}-bar-${barIndex}`}
-          animate={this.props.animate}
           horizontal={this.props.horizontal}
           style={style}
           position={position}
@@ -498,7 +497,6 @@ export default class VictoryBar extends React.Component {
           <g key={`series-${index}-bar-${barIndex}`}>
             {barComponent}
             <BarLabel key={`label-series-${index}-bar-${barIndex}`}
-              animate={this.props.animate}
               horizontal={this.props.horizontal}
               style={this.style.labels}
               position={position}

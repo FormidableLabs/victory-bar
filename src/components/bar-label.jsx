@@ -7,7 +7,6 @@ import { VictoryLabel } from "victory-label";
 export default class BarLabel extends React.Component {
 
   static propTypes = {
-    animate: PropTypes.object,
     position: PropTypes.object,
     horizontal: PropTypes.bool,
     style: PropTypes.object,

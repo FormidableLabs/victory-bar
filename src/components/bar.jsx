@@ -1,13 +1,11 @@
 import _ from "lodash";
 import React, { PropTypes } from "react";
 import Radium from "radium";
-import { VictoryAnimation } from "victory-animation";
 
 @Radium
 export default class Bar extends React.Component {
 
   static propTypes = {
-    animate: PropTypes.object,
     position: PropTypes.object,
     horizontal: PropTypes.bool,
     style: PropTypes.object,
