@@ -30,7 +30,7 @@ $RECYCLE.BIN/
 coverage
 node_modules
 bower_components
-docs/dev
+docs/build
 .tmp
 lib
 npm-debug.log*
