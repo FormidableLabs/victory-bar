@@ -4,7 +4,6 @@ import _ from "lodash";
 import React from "react";
 import ReactDOM from "react-dom";
 import {VictoryBar} from "../src/index";
-import {VictoryLabel} from "victory-label";
 
 class App extends React.Component {
   constructor(props) {

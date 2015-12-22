@@ -264,7 +264,7 @@ export default class VictoryBar extends React.Component {
       return {
         attrs,
         data: _.isEmpty(categoryData) ? _.sortBy(dataArray, "x") : dataArray
-      }
+      };
     });
   }
 
@@ -423,7 +423,7 @@ export default class VictoryBar extends React.Component {
       return series.data.length > memo ? series.data.length : memo;
     }, 0);
 
-    const dataByCategory = (dataset, i, axis) => {
+    const dataByCategory = (dataset, i) => {
       const categoryData = dataset.filter((data) => data.category === i);
       return _.flatten(categoryData.map((data) => data[axis]));
     };
@@ -433,7 +433,7 @@ export default class VictoryBar extends React.Component {
     return _.times(longestDataSeries, (index) => {
       const category = datasets[0][index].category;
       const i = category || index;
-      return category ? dataByCategory(datasets, i, axis) :
+      return category ? dataByCategory(datasets, i) :
         datasets.map((data) => data[i][axis]);
     });
   }
