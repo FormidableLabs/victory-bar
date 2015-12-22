@@ -413,23 +413,32 @@ export default class VictoryBar extends React.Component {
   }
 
   getCumulativeData(datasets, axis) {
-    const longestDataSeries = this.datasets.reduce((memo, series) => {
-      return series.data.length > memo ? series.data.length : memo;
-    }, 0);
+    const categories = [];
+    const xValues = [];
+    datasets.forEach((dataset) => {
+      dataset.forEach((data) => {
+        if (data.category !== undefined && !categories.includes(data.category)) {
+          categories.push(data.category);
+        } else if (!xValues.includes(data.x)) {
+          xValues.push(data.x);
+        }
+      });
+    });
 
-    const dataByCategory = (dataset, i) => {
-      const categoryData = dataset.filter((data) => data.category === i);
-      return _.flatten(categoryData.map((data) => data[axis]));
+    const dataByCategory = () => {
+      return categories.map((value) => {
+        const categoryData = dataset.filter((data) => data.category === value);
+        return _.flatten(categoryData.map((data) => data[axis]));
+      });
     };
 
-    // for each data point in the longest dataset, add all the dependent values for every
-    // independent value or category value
-    return _.times(longestDataSeries, (index) => {
-      const category = datasets[0][index].category;
-      const i = category || index;
-      return category ? dataByCategory(datasets, i) :
-        datasets.map((data) => data[i] && data[i][axis]);
-    });
+    const dataByIndex = () => {
+      return xValues.map((value, index) => {
+        return datasets.map((data) => data[index] && data[index][axis]);
+      });
+    };
+
+    return _.isEmpty(categories) ? dataByIndex() : dataByCategory();
   }
 
   pixelsToValue(pixels, axis) {
