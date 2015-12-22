@@ -249,21 +249,19 @@ export default class VictoryBar extends React.Component {
   consolidateData(props) {
     const dataFromProps = _.isArray(props.data[0]) ? props.data : [props.data];
     return _.map(dataFromProps, (dataset, index) => {
-      const attrs = this.getAttributes(props, index);
-      const dataArray = _.map(dataset, (data) => {
-        return _.merge(data, {
-          // map string data to numeric values, and add names
-          category: this.determineCategoryIndex(data.x, props.categories),
-          x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
-          xName: _.isString(data.x) ? data.x : undefined,
-          y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
-          yName: _.isString(data.y) ? data.y : undefined
-        });
-      });
-      const categoryData = dataArray.map((val) => val.category);
       return {
-        attrs,
-        data: _.isEmpty(categoryData) ? _.sortBy(dataArray, "x") : dataArray
+        attrs: this.getAttributes(props, index),
+        data: _.map(dataset, (data) => {
+          return _.merge(data, {
+            // determine category if it exists
+            category: this.determineCategoryIndex(data.x, props.categories),
+            // map string data to numeric values, and add names
+            x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
+            xName: _.isString(data.x) ? data.x : undefined,
+            y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
+            yName: _.isString(data.y) ? data.y : undefined
+          });
+        })
       };
     });
   }
@@ -340,10 +338,8 @@ export default class VictoryBar extends React.Component {
     } else {
       scale = d3Scale.linear().copy();
     }
-    const range = this.range[axis];
-    const domain = this.domain[axis];
-    scale.range(range);
-    scale.domain(domain);
+    scale.range(this.range[axis]);
+    scale.domain(this.domain[axis]);
     return scale;
   }
 
@@ -378,7 +374,6 @@ export default class VictoryBar extends React.Component {
 
   getDomainFromData(props, axis) {
     // if a sensible string map exists, return the minimum and maximum values
-    // offset by the bar offset value
     if (this.stringMap[axis] !== null) {
       const mapValues = _.values(this.stringMap[axis]);
       return [Math.min(...mapValues), Math.max(...mapValues)];
@@ -392,7 +387,6 @@ export default class VictoryBar extends React.Component {
       // find the cumulative max for stacked chart types
       // this is only sensible for the y domain
       // TODO check assumption
-
       const cumulativeData = (props.stacked && axis === "y" && this.datasets.length > 1) ?
         this.getCumulativeData(datasets, "y") : [];
 
@@ -434,7 +428,7 @@ export default class VictoryBar extends React.Component {
       const category = datasets[0][index].category;
       const i = category || index;
       return category ? dataByCategory(datasets, i) :
-        datasets.map((data) => data[i][axis]);
+        datasets.map((data) => data[i] && data[i][axis]);
     });
   }
 
@@ -478,6 +472,20 @@ export default class VictoryBar extends React.Component {
     }, 0);
   }
 
+  getLabelIndex(data) {
+    if (data.category !== undefined) {
+      return data.category;
+    } else if (this.stringMap.x) {
+      return (data.x - 1);
+    } else {
+      const allX = this.datasets.map((dataset) => {
+        return dataset.data.map((datum) => datum.x);
+      });
+      const uniqueX = _.uniq(_.flatten(allX));
+      return (_.findIndex(_.sortBy(uniqueX), (n) => n === data.x));
+    }
+  }
+
   getBarPosition(data, index, barIndex) {
     const stacked = this.props.stacked;
     const yOffset = this.getYOffset(data, index, barIndex);
@@ -512,7 +520,7 @@ export default class VictoryBar extends React.Component {
       );
       const plotLabel = (plotGroupLabel && (this.props.labels || this.props.labelComponents));
       if (plotLabel) {
-        const labelIndex = data.category || barIndex;
+        const labelIndex = this.getLabelIndex(data);
         const labelText = this.props.labels ?
           this.props.labels[labelIndex] || this.props.labels[0] : "";
         const labelComponent = this.props.labelComponents ?
