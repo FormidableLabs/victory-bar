@@ -373,7 +373,7 @@ export default class VictoryBar extends React.Component {
     if (axis !== "x" || !props.categories || Util.Collection.containsStrings(props.categories)) {
       return undefined;
     }
-    return [_.min(_.flatten(props.categories)), _.max(_.flatten(props.categories))];
+    return [Math.min(..._.flatten(props.categories)), Math.max(..._.flatten(props.categories))];
   }
 
   getDomainFromData(props, axis) {
@@ -439,9 +439,9 @@ export default class VictoryBar extends React.Component {
   }
 
   pixelsToValue(pixels, axis) {
-    const range = this.range[axis];
-    const domain = this.domain[axis];
-    return (_.max(domain) - _.min(domain)) / (_.max(range) - _.min(range)) * pixels;
+    const domainExtent = Math.max(...this.domain[axis]) - Math.min(...this.domain[axis]);
+    const rangeExtent = Math.max(...this.range[axis]) - Math.min(...this.range[axis]);
+    return domainExtent / rangeExtent * pixels;
   }
 
   adjustX(data, index, options) {
@@ -462,9 +462,9 @@ export default class VictoryBar extends React.Component {
   }
 
   getYOffset(data, index, barIndex) {
-    const minY = _.min(this.domain.y);
+    const minY = Math.min(...this.domain.y);
     if (index === 0) {
-      return _.max([minY, 0]);
+      return Math.max(minY, 0);
     }
     const y = data.y;
     const previousDataSets = _.take(this.datasets, index);
@@ -481,7 +481,7 @@ export default class VictoryBar extends React.Component {
   getBarPosition(data, index, barIndex) {
     const stacked = this.props.stacked;
     const yOffset = this.getYOffset(data, index, barIndex);
-    const y0 = stacked ? yOffset : _.max([_.min(this.domain.y), 0]);
+    const y0 = stacked ? yOffset : Math.max(Math.min(...this.domain.y), 0);
     const y1 = stacked ? yOffset + data.y : data.y;
     const x = this.adjustX(data, index, {stacked});
     return {
