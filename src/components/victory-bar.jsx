@@ -452,23 +452,6 @@ export default class VictoryBar extends React.Component {
     }, 0);
   }
 
-  getLabelIndex(x) {
-    if (this.stringMap.x) {
-      return (x - 1);
-    } else if (this.props.categories) {
-      return _.findIndex(this.props.categories, (category) => {
-        return _.isArray(category) ? (_.min(category) <= x && _.max(category) >= x) :
-          category === x;
-      });
-    } else {
-      const allX = _.map(this.datasets, (dataset) => {
-        return _.map(dataset.data, "x");
-      });
-      const uniqueX = _.uniq(_.flatten(allX));
-      return (_.findIndex(_.sortBy(uniqueX), (n) => n === x));
-    }
-  }
-
   getBarPosition(data, index, barIndex) {
     const stacked = this.props.stacked;
     const yOffset = this.getYOffset(data, index, barIndex);
@@ -503,7 +486,7 @@ export default class VictoryBar extends React.Component {
       );
       const plotLabel = (plotGroupLabel && (this.props.labels || this.props.labelComponents));
       if (plotLabel) {
-        const labelIndex = this.getLabelIndex(data.x);
+        const labelIndex = data.category || barIndex;
         const labelText = this.props.labels ?
           this.props.labels[labelIndex] || this.props.labels[0] : "";
         const labelComponent = this.props.labelComponents ?
