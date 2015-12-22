@@ -381,39 +381,42 @@ export default class VictoryBar extends React.Component {
     // offset by the bar offset value
     if (this.stringMap[axis] !== null) {
       const mapValues = _.values(this.stringMap[axis]);
-      return [_.min(mapValues), _.max(mapValues)];
+      return [Math.min(...mapValues), Math.max(...mapValues)];
     } else {
       // find the global min and max
-      const allData = _.flatten(_.pluck(this.datasets, "data"));
-      const min = _.min(_.pluck(allData, axis));
-      const max = _.max(_.pluck(allData, axis));
+      const allData = _.flatten(_.map(this.datasets, "data"));
+      const axisData = _.map(allData, axis);
+      const min = Math.min(...axisData);
+      const max = Math.max(...axisData);
       // find the cumulative max for stacked chart types
       // this is only sensible for the y domain
       // TODO check assumption
-      const cumulativeMax = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        _.reduce(this.datasets, (memo, dataset) => {
-          const localMax = (_.max(_.pluck(dataset.data, "y")));
-          return localMax > 0 ? memo + localMax : memo;
-        }, 0) : -Infinity;
-      const cumulativeMin = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        _.reduce(this.datasets, (memo, dataset) => {
-          const localMin = (_.min(_.pluck(dataset.data, "y")));
-          return localMin < 0 ? memo + localMin : memo;
-        }, 0) : Infinity;
-
+      const dataByIndex = (dataset, i, axis) => dataset[i][axis];
+      const dataByCategory = (dataset, i, axis) => {
+        const categoryData = dataset.filter((element) => element.category === i);
+        return categoryData.reduce((memo, val, index) => {
+          return memo + val[axis];
+        }, 0);
+      };
+      const cumulativeData = (props.stacked && axis === "y" && this.datasets[0].data.length > 1) ?
+        this.datasets[0].data.map((data, index, datasets) => {
+          const addVal = data.category ? dataByCategory(datasets, index, "y") :
+            dataByIndex(datasets, index, "y");
+          return datasets.reduce((memo) => {return memo + addVal}, 0);
+        }) : [];
       // use greatest min / max
-      const domainMin = _.min([min, cumulativeMin]);
-      const domainMax = _.max([max, cumulativeMax]);
+      const domainMin = Math.min(min, Math.min(...cumulativeData));
+      const domainMax = Math.max(max, Math.max(...cumulativeData));
       // add 1% padding so bars are always visible
       const padding = 0.01 * Math.abs(domainMax - domainMin);
       return [domainMin - padding, domainMax - padding];
     }
   }
 
-  pixelsToValue(pixels) {
-    const xRange = this.range.x;
-    const xDomain = this.domain.x;
-    return (_.max(xDomain) - _.min(xDomain)) / (_.max(xRange) - _.min(xRange)) * pixels;
+  pixelsToValue(pixels, axis) {
+    const range = this.range[axis];
+    const domain = this.domain[axis];
+    return (_.max(domain) - _.min(domain)) / (_.max(range) - _.min(range)) * pixels;
   }
 
   adjustX(data, index, options) {
@@ -422,8 +425,8 @@ export default class VictoryBar extends React.Component {
     const center = this.datasets.length % 2 === 0 ?
       this.datasets.length / 2 : (this.datasets.length - 1) / 2;
     const centerOffset = index - center;
-    const totalWidth = this.pixelsToValue(this.style.data.padding) +
-      this.pixelsToValue(this.style.data.width);
+    const totalWidth = this.pixelsToValue(this.style.data.padding, "x") +
+      this.pixelsToValue(this.style.data.width, "x");
     if (data.category !== undefined) {
       // if this is category data, shift x to the center of its category
       const rangeBand = this.props.categories[data.category];
