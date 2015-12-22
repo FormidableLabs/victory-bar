@@ -427,7 +427,7 @@ export default class VictoryBar extends React.Component {
 
     const dataByCategory = () => {
       return categories.map((value) => {
-        const categoryData = dataset.filter((data) => data.category === value);
+        const categoryData = datasets.filter((data) => data.category === value);
         return _.flatten(categoryData.map((data) => data[axis]));
       });
     };
