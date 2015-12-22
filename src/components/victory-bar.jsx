@@ -386,39 +386,56 @@ export default class VictoryBar extends React.Component {
       // find the global min and max
       const datasets = this.datasets.map((dataset) => dataset.data);
       const axisData = _.flatten(datasets).map((data) => data[axis]);
-      const min = Math.min(...axisData);
-      const max = Math.max(...axisData);
-      
+      const globalMin = Math.min(...axisData);
+      const globalMax = Math.max(...axisData);
+
       // find the cumulative max for stacked chart types
       // this is only sensible for the y domain
       // TODO check assumption
-      const longestDataSeries = this.datasets.reduce((memo, series) => {
-        return series.data.length > memo ? series.data.length : memo;
-      }, 0);
+
       const cumulativeData = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        // for each data point in the longest dataset, add all the y values for every
-        // x value or category value
-        _.times(longestDataSeries, (index) => {
-          const category = datasets[0][index].category;
-          const i = category || index;
-          const addVal = category ? this.dataByCategory(datasets, i, "y") :
-            datasets.map((data) => data[i].y);
-          return addVal.reduce((memo, val) => {return memo + val}, 0);
-        }) : [];
+        this.getCumulativeData(datasets, "y") : [];
+
+      const cumulativeMaxArray = cumulativeData.map((dataset) => {
+        return dataset.reduce((memo, val) => {
+          return val > 0 ? memo + val : memo;
+        }, 0);
+      });
+
+      const cumulativeMinArray = cumulativeData.map((dataset) => {
+        return dataset.reduce((memo, val) => {
+          return val < 0 ? memo + val : memo;
+        }, 0);
+      });
+
+      const cumulativeMin = Math.min(...cumulativeMinArray);
       // use greatest min / max
-      const domainMin = Math.min(min, Math.min(...cumulativeData));
-      const domainMax = Math.max(max, Math.max(...cumulativeData));
+      const domainMin = cumulativeMin < 0 ? cumulativeMin : globalMin;
+      const domainMax = Math.max(globalMax, Math.max(...cumulativeMaxArray));
       // add 1% padding so bars are always visible
       const padding = 0.01 * Math.abs(domainMax - domainMin);
       return [domainMin - padding, domainMax - padding];
     }
   }
 
-  dataByCategory(dataset, i, axis) {
-    const categoryData = dataset.filter((data) => data.category === i);
-    return categoryData.reduce((memo, val, index) => {
-      return memo + val[axis];
+  getCumulativeData(datasets, axis) {
+    const longestDataSeries = this.datasets.reduce((memo, series) => {
+      return series.data.length > memo ? series.data.length : memo;
     }, 0);
+
+    const dataByCategory = (dataset, i, axis) => {
+      const categoryData = dataset.filter((data) => data.category === i);
+      return _.flatten(categoryData.map((data) => data[axis]));
+    };
+
+    // for each data point in the longest dataset, add all the dependent values for every
+    // independent value or category value
+    return _.times(longestDataSeries, (index) => {
+      const category = datasets[0][index].category;
+      const i = category || index;
+      return category ? dataByCategory(datasets, i, axis) :
+        datasets.map((data) => data[i][axis]);
+    });
   }
 
   pixelsToValue(pixels, axis) {
