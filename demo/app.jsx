@@ -69,7 +69,6 @@ class App extends React.Component {
         <p>
           <VictoryBar
             style={{parent: {border: "1px solid", margin: 10}}}
-            padding={0}
             height={500}
             data={this.state.numericBarData}
             dataAttributes={[
@@ -86,8 +85,7 @@ class App extends React.Component {
           />
 
           <VictoryBar
-            style={{parent: {border: "1px solid", margin: 10}}}
-            padding={10}
+            style={{parent: {border: "1px solid", margin: 10, overflow: "visible"}}}
             data={this.state.barData}
             colorScale={"greyscale"}
             labels={["one", "two", "three"]}

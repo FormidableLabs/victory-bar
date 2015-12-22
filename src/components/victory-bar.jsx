@@ -384,25 +384,26 @@ export default class VictoryBar extends React.Component {
       return [Math.min(...mapValues), Math.max(...mapValues)];
     } else {
       // find the global min and max
-      const allData = _.flatten(_.map(this.datasets, "data"));
-      const axisData = _.map(allData, axis);
+      const datasets = this.datasets.map((dataset) => dataset.data);
+      const axisData = _.flatten(datasets).map((data) => data[axis]);
       const min = Math.min(...axisData);
       const max = Math.max(...axisData);
+      
       // find the cumulative max for stacked chart types
       // this is only sensible for the y domain
       // TODO check assumption
-      const dataByIndex = (dataset, i, axis) => dataset[i][axis];
-      const dataByCategory = (dataset, i, axis) => {
-        const categoryData = dataset.filter((element) => element.category === i);
-        return categoryData.reduce((memo, val, index) => {
-          return memo + val[axis];
-        }, 0);
-      };
-      const cumulativeData = (props.stacked && axis === "y" && this.datasets[0].data.length > 1) ?
-        this.datasets[0].data.map((data, index, datasets) => {
-          const addVal = data.category ? dataByCategory(datasets, index, "y") :
-            dataByIndex(datasets, index, "y");
-          return datasets.reduce((memo) => {return memo + addVal}, 0);
+      const longestDataSeries = this.datasets.reduce((memo, series) => {
+        return series.data.length > memo ? series.data.length : memo;
+      }, 0);
+      const cumulativeData = (props.stacked && axis === "y" && this.datasets.length > 1) ?
+        // for each data point in the longest dataset, add all the y values for every
+        // x value or category value
+        _.times(longestDataSeries, (index) => {
+          const category = datasets[0][index].category;
+          const i = category || index;
+          const addVal = category ? this.dataByCategory(datasets, i, "y") :
+            datasets.map((data) => data[i].y);
+          return addVal.reduce((memo, val) => {return memo + val}, 0);
         }) : [];
       // use greatest min / max
       const domainMin = Math.min(min, Math.min(...cumulativeData));
@@ -411,6 +412,13 @@ export default class VictoryBar extends React.Component {
       const padding = 0.01 * Math.abs(domainMax - domainMin);
       return [domainMin - padding, domainMax - padding];
     }
+  }
+
+  dataByCategory(dataset, i, axis) {
+    const categoryData = dataset.filter((data) => data.category === i);
+    return categoryData.reduce((memo, val, index) => {
+      return memo + val[axis];
+    }, 0);
   }
 
   pixelsToValue(pixels, axis) {
