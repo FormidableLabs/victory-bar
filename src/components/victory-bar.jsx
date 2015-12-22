@@ -249,18 +249,33 @@ export default class VictoryBar extends React.Component {
   consolidateData(props) {
     const dataFromProps = _.isArray(props.data[0]) ? props.data : [props.data];
     return _.map(dataFromProps, (dataset, index) => {
+      const attrs = this.getAttributes(props, index);
+      const dataArray = _.map(dataset, (data) => {
+        return _.merge(data, {
+          // map string data to numeric values, and add names
+          category: this.determineCategoryIndex(data.x, props.categories),
+          x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
+          xName: _.isString(data.x) ? data.x : undefined,
+          y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
+          yName: _.isString(data.y) ? data.y : undefined
+        });
+      });
+      const categoryData = dataArray.map((val) => val.category);
       return {
-        attrs: this.getAttributes(props, index),
-        data: _.map(dataset, (data) => {
-          return _.merge(data, {
-            // map string data to numeric values, and add names
-            x: _.isString(data.x) ? this.stringMap.x[data.x] : data.x,
-            xName: _.isString(data.x) ? data.x : undefined,
-            y: _.isString(data.y) ? this.stringMap.y[data.y] : data.y,
-            yName: _.isString(data.y) ? data.y : undefined
-          });
-        })
-      };
+        attrs,
+        data: _.isEmpty(categoryData) ? _.sortBy(dataArray, "x") : dataArray
+      }
+    });
+  }
+
+  determineCategoryIndex(x, categories) {
+    // if categories don't exist or are not given as an array of arrays, return undefined;
+    if (!categories || !_.isArray(categories[0])) {
+      return undefined;
+    }
+    // determine which range band this x value belongs to, and return the index of that range band.
+    return categories.findIndex((category) => {
+      return (x >= Math.min(...category) && x <= Math.max(...category));
     });
   }
 
@@ -475,7 +490,7 @@ export default class VictoryBar extends React.Component {
     return _.map(dataset.data, (data, barIndex) => {
       const position = this.getBarPosition(data, index, barIndex);
       const styleData = _.omit(data, [
-        "xName", "yName", "x", "y", "label"
+        "xName", "yName", "x", "y", "label", "category"
       ]);
       const style = _.merge({}, this.style.data, _.omit(dataset.attrs, "name"), styleData);
       const barComponent = (
