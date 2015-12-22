@@ -369,7 +369,8 @@ export default class VictoryBar extends React.Component {
     if (axis !== "x" || !props.categories || Util.Collection.containsStrings(props.categories)) {
       return undefined;
     }
-    return [Math.min(..._.flatten(props.categories)), Math.max(..._.flatten(props.categories))];
+    const categories = _.flatten(props.categories);
+    return [Math.min(...categories), Math.max(...categories)];
   }
 
   getDomainFromData(props, axis) {
