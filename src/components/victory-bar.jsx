@@ -416,20 +416,18 @@ export default class VictoryBar extends React.Component {
     return (_.max(xDomain) - _.min(xDomain)) / (_.max(xRange) - _.min(xRange)) * pixels;
   }
 
-  adjustX(x, index, options) {
+  adjustX(data, index, options) {
+    const x = data.x;
     const stacked = options && options.stacked;
     const center = this.datasets.length % 2 === 0 ?
       this.datasets.length / 2 : (this.datasets.length - 1) / 2;
     const centerOffset = index - center;
     const totalWidth = this.pixelsToValue(this.style.data.padding) +
       this.pixelsToValue(this.style.data.width);
-    if (this.props.categories && _.isArray(this.props.categories[0])) {
-      // figure out which band this x value belongs to, and shift it to the
-      // center of that band before calculating the usual offset
-      const xBand = _.filter(this.props.categories, (band) => {
-        return (x >= _.min(band) && x <= _.max(band));
-      });
-      const bandCenter = _.isArray(xBand[0]) && (_.max(xBand[0]) + _.min(xBand[0])) / 2;
+    if (data.category !== undefined) {
+      // if this is category data, shift x to the center of its category
+      const rangeBand = this.props.categories[data.category];
+      const bandCenter = (Math.max(...rangeBand) + Math.min(...rangeBand)) / 2;
       return stacked ? bandCenter : bandCenter + (centerOffset * totalWidth);
     }
     return stacked ? x : x + (centerOffset * totalWidth);
@@ -457,7 +455,7 @@ export default class VictoryBar extends React.Component {
     const yOffset = this.getYOffset(data, index, barIndex);
     const y0 = stacked ? yOffset : _.max([_.min(this.domain.y), 0]);
     const y1 = stacked ? yOffset + data.y : data.y;
-    const x = this.adjustX(data.x, index, {stacked});
+    const x = this.adjustX(data, index, {stacked});
     return {
       independent: this.scale.x.call(this, x),
       dependent0: this.scale.y.call(this, y0),
