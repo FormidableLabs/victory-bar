@@ -112,6 +112,18 @@ export default class VictoryBar extends React.Component {
       })
     ]),
     /**
+     * The domainPadding prop specifies a number of pixels of padding to add to the
+     * beginning and end of a domain. This prop is useful for preventing 0 pixel bars,
+     * and taking bar width into account.
+     */
+    domainPadding: PropTypes.oneOfType([
+      React.PropTypes.shape({
+        x: Util.PropTypes.nonNegative,
+        y: Util.PropTypes.nonNegative
+      }),
+      Util.PropTypes.nonNegative
+    ]),
+    /**
      * The height props specifies the height of the chart container element in pixels
      */
     height: Util.PropTypes.nonNegative,
@@ -194,6 +206,7 @@ export default class VictoryBar extends React.Component {
 
   static defaultProps = {
     data: defaultData,
+    domainPadding: 1,
     colorScale: "greyscale",
     height: 300,
     padding: 50,
@@ -353,16 +366,41 @@ export default class VictoryBar extends React.Component {
   }
 
   getDomain(props, axis) {
+    let domain;
     const categoryDomain = this.getDomainFromCategories(props, axis);
     if (props.domain && props.domain[axis]) {
-      return props.domain[axis];
+      domain = props.domain[axis];
     } else if (props.domain && _.isArray(props.domain)) {
-      return props.domain;
+      domain = props.domain;
     } else if (categoryDomain) {
-      return categoryDomain;
+      domain = categoryDomain;
     } else {
-      return this.getDomainFromData(props, axis);
+      domain = this.getDomainFromData(props, axis);
     }
+    return this.padDomain(domain, axis);
+  }
+
+  padDomain(domain, axis) {
+    let domainPadding;
+    if (this.props.domainPadding[axis]) {
+      domainPadding = this.props.domainPadding[axis];
+    } else {
+      domainPadding = _.isNumber(this.props.domainPadding) ? this.props.domainPadding : 0;
+    }
+    if (domainPadding === 0) {
+      return domain;
+    }
+    const domainMin = Math.min(...domain);
+    const domainMax = Math.max(...domain);
+    const rangeExtent = Math.abs(Math.max(...this.range[axis]) - Math.min(...this.range[axis]));
+    const extent = Math.abs(domainMax - domainMin);
+    const percentPadding = domainPadding / rangeExtent;
+    const padding = extent * percentPadding;
+    // don't make the axes cross if they aren't already
+    const adjustedMin = (domainMin >= 0 && (domainMin - padding) <= 0) ? 0 : domainMin - padding;
+    const adjustedMax = (domainMax <= 0 && (domainMax + padding) >= 0) ? 0 : domainMax + padding;
+    return _.isDate(domainMin) || _.isDate(domainMax) ?
+      [new Date(adjustedMin), new Date(adjustedMax)] : [adjustedMin, adjustedMax];
   }
 
   getDomainFromCategories(props, axis) {
@@ -407,9 +445,7 @@ export default class VictoryBar extends React.Component {
       // use greatest min / max
       const domainMin = cumulativeMin < 0 ? cumulativeMin : globalMin;
       const domainMax = Math.max(globalMax, Math.max(...cumulativeMaxArray));
-      // add 1% padding so bars are always visible
-      const padding = 0.01 * Math.abs(domainMax - domainMin);
-      return [domainMin - padding, domainMax - padding];
+      return [domainMin, domainMax];
     }
   }
 
@@ -418,9 +454,9 @@ export default class VictoryBar extends React.Component {
     const xValues = [];
     datasets.forEach((dataset) => {
       dataset.forEach((data) => {
-        if (data.category !== undefined && !categories.includes(data.category)) {
+        if (data.category !== undefined && !_.includes(categories, data.category)) {
           categories.push(data.category);
-        } else if (!xValues.includes(data.x)) {
+        } else if (!_.includes(xValues, data.x)) {
           xValues.push(data.x);
         }
       });
