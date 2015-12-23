@@ -412,41 +412,35 @@ export default class VictoryBar extends React.Component {
   }
 
   getDomainFromData(props, axis) {
-    // if a sensible string map exists, return the minimum and maximum values
-    if (this.stringMap[axis] !== null) {
-      const mapValues = _.values(this.stringMap[axis]);
-      return [Math.min(...mapValues), Math.max(...mapValues)];
-    } else {
-      // find the global min and max
-      const datasets = this.datasets.map((dataset) => dataset.data);
-      const axisData = _.flatten(datasets).map((data) => data[axis]);
-      const globalMin = Math.min(...axisData);
-      const globalMax = Math.max(...axisData);
+    // find the global min and max
+    const datasets = this.datasets.map((dataset) => dataset.data);
+    const axisData = _.flatten(datasets).map((data) => data[axis]);
+    const globalMin = Math.min(...axisData);
+    const globalMax = Math.max(...axisData);
 
-      // find the cumulative max for stacked chart types
-      // this is only sensible for the y domain
-      // TODO check assumption
-      const cumulativeData = (props.stacked && axis === "y" && this.datasets.length > 1) ?
-        this.getCumulativeData(datasets, "y") : [];
+    // find the cumulative max for stacked chart types
+    // this is only sensible for the y domain
+    // TODO check assumption
+    const cumulativeData = (props.stacked && axis === "y" && this.datasets.length > 1) ?
+      this.getCumulativeData(datasets, "y") : [];
 
-      const cumulativeMaxArray = cumulativeData.map((dataset) => {
-        return dataset.reduce((memo, val) => {
-          return val > 0 ? memo + val : memo;
-        }, 0);
-      });
+    const cumulativeMaxArray = cumulativeData.map((dataset) => {
+      return dataset.reduce((memo, val) => {
+        return val > 0 ? memo + val : memo;
+      }, 0);
+    });
 
-      const cumulativeMinArray = cumulativeData.map((dataset) => {
-        return dataset.reduce((memo, val) => {
-          return val < 0 ? memo + val : memo;
-        }, 0);
-      });
+    const cumulativeMinArray = cumulativeData.map((dataset) => {
+      return dataset.reduce((memo, val) => {
+        return val < 0 ? memo + val : memo;
+      }, 0);
+    });
 
-      const cumulativeMin = Math.min(...cumulativeMinArray);
-      // use greatest min / max
-      const domainMin = cumulativeMin < 0 ? cumulativeMin : globalMin;
-      const domainMax = Math.max(globalMax, Math.max(...cumulativeMaxArray));
-      return [domainMin, domainMax];
-    }
+    const cumulativeMin = Math.min(...cumulativeMinArray);
+    // use greatest min / max
+    const domainMin = cumulativeMin < 0 ? cumulativeMin : globalMin;
+    const domainMax = Math.max(globalMax, Math.max(...cumulativeMaxArray));
+    return [domainMin, domainMax];
   }
 
   getCumulativeData(datasets, axis) {
