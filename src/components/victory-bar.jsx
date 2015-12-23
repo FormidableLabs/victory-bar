@@ -397,8 +397,10 @@ export default class VictoryBar extends React.Component {
     const percentPadding = domainPadding / rangeExtent;
     const padding = extent * percentPadding;
     // don't make the axes cross if they aren't already
-    const adjustedMin = (domainMin >= 0 && (domainMin - padding) <= 0) ? 0 : domainMin - padding;
-    const adjustedMax = (domainMax <= 0 && (domainMax + padding) >= 0) ? 0 : domainMax + padding;
+    const adjustedMin = (domainMin >= 0 && (domainMin - padding) <= 0) ?
+      0 : domainMin.valueOf() - padding;
+    const adjustedMax = (domainMax <= 0 && (domainMax + padding) >= 0) ?
+      0 : domainMax.valueOf() + padding;
     return _.isDate(domainMin) || _.isDate(domainMax) ?
       [new Date(adjustedMin), new Date(adjustedMax)] : [adjustedMin, adjustedMax];
   }
