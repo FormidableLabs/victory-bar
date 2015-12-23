@@ -44,6 +44,7 @@ describe("components/victory-bar", () => {
       expect(component.domain.y).to.deep.equal([0, 2]);
       expect(component.domain.x).to.deep.equal([1, 3]);
     });
+
     it("calculates the correct domain with negative data", () => {
       const data = [
         [{x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}],
@@ -56,6 +57,7 @@ describe("components/victory-bar", () => {
       expect(component.domain.y).to.deep.equal([-2, 2]);
       expect(component.domain.x).to.deep.equal([1, 3]);
     });
+
     it("calculates a cumulative domain for stacked data", () => {
       const data = [
         [{x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}],
