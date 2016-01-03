@@ -358,11 +358,13 @@ export default class VictoryBar extends React.Component {
 
   getRange(props, axis) {
     // determine how to lay the axis and what direction positive and negative are
-    const isVertical =
-      !this.props.horizontal && axis === "x" || this.props.horizontal && axis !== "x";
+    const {horizontal} = props;
+    const isVertical = (horizontal && axis === "x") || (!horizontal && axis !== "x");
+    const isDependent = (horizontal && !isVertical) || (!horizontal && isVertical);
 
-    return isVertical ? [this.padding.left, props.width - this.padding.right] :
-      [props.height - this.padding.bottom, this.padding.top];
+    return isVertical && isDependent ? [props.height - this.padding.bottom, this.padding.top] :
+      isVertical && !isDependent ? [this.padding.top, props.height - this.padding.bottom] :
+      [this.padding.left, props.width - this.padding.right];
   }
 
   getDomain(props, axis) {

@@ -32,7 +32,7 @@ describe("components/victory-bar", () => {
   });
 
   describe("domain calculation", () => {
-    it("calculates the correct domain", () => {
+    it("calculates the correct domain & range", () => {
       const data = [
         [{x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}],
         [{x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}],
@@ -43,9 +43,11 @@ describe("components/victory-bar", () => {
       );
       expect(component.domain.y).to.deep.equal([0, 2]);
       expect(component.domain.x).to.deep.equal([1, 3]);
+      expect(component.range.x[0]).to.be.lessThan(component.range.x[1]);
+      expect(component.range.y[0]).to.be.greaterThan(component.range.y[1]);
     });
 
-    it("calculates the correct domain with negative data", () => {
+    it("calculates the correct domain & range with negative data", () => {
       const data = [
         [{x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}],
         [{x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}],
@@ -56,6 +58,23 @@ describe("components/victory-bar", () => {
       );
       expect(component.domain.y).to.deep.equal([-2, 2]);
       expect(component.domain.x).to.deep.equal([1, 3]);
+      expect(component.range.x[0]).to.be.lessThan(component.range.x[1]);
+      expect(component.range.y[0]).to.be.greaterThan(component.range.y[1]);
+    });
+
+    it("calculates the correct domain & range for horizontal bars", () => {
+      const data = [
+        [{x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}],
+        [{x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}],
+        [{x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: -2}]
+      ];
+      const component = TestUtils.renderIntoDocument(
+        <VictoryBar horizontal data={data} domainPadding={0}/>
+      );
+      expect(component.domain.y).to.deep.equal([-2, 2]);
+      expect(component.domain.x).to.deep.equal([1, 3]);
+      expect(component.range.x[0]).to.be.lessThan(component.range.x[1]);
+      expect(component.range.y[0]).to.be.lessThan(component.range.y[1]);
     });
 
     it("calculates a cumulative domain for stacked data", () => {
