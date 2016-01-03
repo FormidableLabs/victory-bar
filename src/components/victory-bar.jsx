@@ -362,9 +362,11 @@ export default class VictoryBar extends React.Component {
     const isVertical = (horizontal && axis === "x") || (!horizontal && axis !== "x");
     const isDependent = (horizontal && !isVertical) || (!horizontal && isVertical);
 
-    return isVertical && isDependent ? [props.height - this.padding.bottom, this.padding.top] :
-      isVertical && !isDependent ? [this.padding.top, props.height - this.padding.bottom] :
-      [this.padding.left, props.width - this.padding.right];
+    if(isVertical) {
+      const bottomToTop = [props.height - this.padding.bottom, this.padding.top];
+      return isDependent ? bottomToTop : bottomToTop.reverse();
+    }
+    return [this.padding.left, props.width - this.padding.right];
   }
 
   getDomain(props, axis) {
