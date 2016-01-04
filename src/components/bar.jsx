@@ -52,6 +52,9 @@ export default class Bar extends React.Component {
   }
 
   evaluateStyle(style) {
+    if (!_.some(style, _.isFunction)) {
+      return style;
+    }
     return _.transform(style, (result, value, key) => {
       result[key] = _.isFunction(value) ? value.call(this, this.props.data) : value;
     });
