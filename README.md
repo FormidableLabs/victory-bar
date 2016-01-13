@@ -8,7 +8,7 @@ VictoryBar creates a set of bars from data. Bar is a composable component, so it
 API Documentation
 -----------------
 
-See https://victory.formidable.com/victory-bar
+Detailed documentation and interactive examples can be found at http://victory.formidable.com/victory-bar
 
 IMPORTANT
 =========
