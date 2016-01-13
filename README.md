@@ -2,9 +2,13 @@
 
 VictoryBar
 =============
-[Interactive documentation for VictoryBar]("https://victory.formidable.com/victory-bar")
 
 VictoryBar creates a set of bars from data. Bar is a composable component, so it does not include an axis.  Check out VictoryChart for easy to use bar charts and more.
+
+API Documentation
+-----------------
+
+Detailed documentation and interactive examples can be found at http://victory.formidable.com/victory-bar
 
 IMPORTANT
 =========
