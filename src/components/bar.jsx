@@ -1,6 +1,6 @@
-import _ from "lodash";
 import React, { PropTypes } from "react";
 import Radium from "radium";
+import { Chart } from "victory-util";
 
 @Radium
 export default class Bar extends React.Component {
@@ -38,7 +38,7 @@ export default class Bar extends React.Component {
   }
 
   renderBar(props) {
-    const style = this.evaluateStyle(props.style, props.data);
+    const style = Chart.evaluateStyle(props.style, props.data);
     // TODO better bar width calculation
     const barWidth = style.width;
     const path = props.position.independent ?
