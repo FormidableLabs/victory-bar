@@ -5,7 +5,8 @@ import { PropTypes as CustomPropTypes, Chart, Data, Scale } from "victory-util";
 import { VictoryAnimation } from "victory-animation";
 import Bar from "./bar";
 import BarLabel from "./bar-label";
-
+import DomainHelpers from "../domain-helpers";
+import LayoutHelpers from "../layout-helpers";
 
 const defaultStyles = {
   data: {
