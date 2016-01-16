@@ -1,6 +1,7 @@
+import pick from "lodash/object/pick";
+
 import React, { PropTypes } from "react";
 import Radium from "radium";
-import _ from "lodash";
 import { PropTypes as CustomPropTypes, Chart, Data, Scale } from "victory-util";
 import { VictoryAnimation } from "victory-animation";
 import Bar from "./bar";
@@ -292,7 +293,7 @@ export default class VictoryBar extends React.Component {
       // Do less work by having `VictoryAnimation` tween only values that
       // make sense to tween. In the future, allow customization of animated
       // prop whitelist/blacklist?
-      const animateData = _.pick(this.props, [
+      const animateData = pick(this.props, [
         "data", "dataAttributes", "categories", "colorScale", "domain", "height",
         "padding", "style", "width"
       ]);
