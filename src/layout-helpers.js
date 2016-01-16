@@ -76,7 +76,8 @@ module.exports = {
     const isLast = datasets.length === index + 1;
     const stacked = props.stacked;
     const plotGroupLabel = (stacked && isLast) || (!stacked && isCenter);
-    return (plotGroupLabel && (props.labels || props.labelComponents));
+    const labelExists = (props.labels || props.labelComponents) ? true : false;
+    return (plotGroupLabel && labelExists);
   },
 
   getLabelIndex(data, calculatedProps) {
