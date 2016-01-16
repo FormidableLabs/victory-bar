@@ -1,8 +1,7 @@
 import React, { PropTypes } from "react";
 import Radium from "radium";
 import _ from "lodash";
-import d3Scale from "d3-scale";
-import Util from "victory-util";
+import { PropTypes as CustomPropTypes, Chart, Data, Scale } from "victory-util";
 import { VictoryAnimation } from "victory-animation";
 import Bar from "./bar";
 import BarLabel from "./bar-label";
@@ -82,7 +81,7 @@ export default class VictoryBar extends React.Component {
      * allowing numeric data to be grouped into segments.
      * @examples ["dogs", "cats", "mice"], [[0, 5], [5, 10], [10, 15]]
      */
-    categories: Util.PropTypes.homogeneousArray,
+    categories: CustomPropTypes.homogeneousArray,
     /**
      * The colorScale prop is an optional prop that defines the color scale the chart's bars
      * will be created on. This prop should be given as an array of CSS colors, or as a string
@@ -105,10 +104,10 @@ export default class VictoryBar extends React.Component {
      * @examples [-1, 1], {x: [0, 100], y: [0, 1]}
      */
     domain: PropTypes.oneOfType([
-      Util.PropTypes.domain,
+      CustomPropTypes.domain,
       PropTypes.shape({
-        x: Util.PropTypes.domain,
-        y: Util.PropTypes.domain
+        x: CustomPropTypes.domain,
+        y: CustomPropTypes.domain
       })
     ]),
     /**
@@ -117,16 +116,16 @@ export default class VictoryBar extends React.Component {
      * and taking bar width into account.
      */
     domainPadding: PropTypes.oneOfType([
-      React.PropTypes.shape({
-        x: Util.PropTypes.nonNegative,
-        y: Util.PropTypes.nonNegative
+      PropTypes.shape({
+        x: CustomPropTypes.nonNegative,
+        y: CustomPropTypes.nonNegative
       }),
-      Util.PropTypes.nonNegative
+      CustomPropTypes.nonNegative
     ]),
     /**
      * The height props specifies the height of the chart container element in pixels
      */
-    height: Util.PropTypes.nonNegative,
+    height: CustomPropTypes.nonNegative,
     /**
      * The horizontal prop determines whether the bars will be laid vertically or
      * horizontally. The bars will be vertical if this prop is false or unspecified,
@@ -166,14 +165,15 @@ export default class VictoryBar extends React.Component {
     ]),
     /**
      * The scale prop determines which scales your chart should use. This prop can be
-     * given as a function, or as an object that specifies separate functions for x and y.
-     * @examples d3Scale.time(), {x: d3Scale.linear(), y: d3Scale.log()}
+     * given as a string specifying a supported scale ("linear", "time", "log", "sqrt"),
+     * as a d3 scale function, or as an object with scales specified for x and y
+     * @exampes d3Scale.time(), {x: "linear", y: "log"}
      */
     scale: PropTypes.oneOfType([
-      Util.PropTypes.scale,
+      CustomPropTypes.scale,
       PropTypes.shape({
-        x: Util.PropTypes.scale,
-        y: Util.PropTypes.scale
+        x: CustomPropTypes.scale,
+        y: CustomPropTypes.scale
       })
     ]),
     /**
@@ -201,7 +201,7 @@ export default class VictoryBar extends React.Component {
     /**
      * The width props specifies the width of the chart container element in pixels
      */
-    width: Util.PropTypes.nonNegative
+    width: CustomPropTypes.nonNegative
   };
 
   static defaultProps = {
@@ -209,7 +209,7 @@ export default class VictoryBar extends React.Component {
     colorScale: "greyscale",
     height: 300,
     padding: 50,
-    scale: d3Scale.linear(),
+    scale: "linear",
     stacked: false,
     standalone: true,
     width: 450
