@@ -13,7 +13,7 @@ VictoryBar is written to be highly configurable, but it also includes a set of s
 <VictoryBar/>
 ```
 
-To display your own data, just pass in an array of data objects, or an array of arrays via the data prop. Here, the x domain is automatically set to contain the data. The y domain is explicity set here to make the smallest bars mre visible.
+To display your own data, just pass in an array of data objects, or an array of arrays via the data prop. Here, the x domain is automatically set to contain the data. The y domain is explicity set here to make the smallest bars more visible.
 
 ```playground
 <VictoryBar
