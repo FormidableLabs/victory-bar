@@ -217,7 +217,7 @@ export default class VictoryBar extends React.Component {
     width: 450
   };
 
-  static getDomain = DomainHelpers.getDomain;
+  static getDomain = DomainHelpers.getDomain.bind(DomainHelpers);
 
   renderBars(dataset, seriesIndex, calculatedProps) {
     return dataset.data.map((data, barIndex) => {
