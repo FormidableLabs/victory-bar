@@ -566,7 +566,7 @@ export default class VictoryBar extends React.Component {
         const labelText = this.props.labels ?
           this.props.labels[labelIndex] || this.props.labels[0] : "";
         const labelComponent = this.props.labelComponents ?
-          this.props.labelComponents[index] || this.props.labelComponents[0] : undefined;
+          this.props.labelComponents[labelIndex] || this.props.labelComponents[0] : undefined;
         return (
           <g key={`series-${index}-bar-${barIndex}`}>
             {barComponent}
