@@ -1,6 +1,6 @@
-import _ from "lodash";
 import React, { PropTypes } from "react";
 import Radium from "radium";
+import { Chart } from "victory-util";
 
 @Radium
 export default class Bar extends React.Component {
@@ -12,19 +12,9 @@ export default class Bar extends React.Component {
     data: PropTypes.object
   };
 
-  getCalculatedValues(props) {
-    this.style = this.evaluateStyle(props.style);
-    this.barWidth = this.style.width;
-    this.path = props.position.independent ? this.getBarPath(props.position) : undefined;
-  }
-
-  /*
-   * helper method for getBarPath
-   * called when the bars will be vertical
-   */
-  getVerticalBarPath(position) {
+  getVerticalBarPath(position, width) {
     const {independent, dependent0, dependent1} = position;
-    const size = this.barWidth / 2;
+    const size = width / 2;
     return `M ${independent - size}, ${dependent0}
       L ${independent - size}, ${dependent1}
       L ${independent + size}, ${dependent1}
@@ -32,13 +22,9 @@ export default class Bar extends React.Component {
       L ${independent - size}, ${dependent0}`;
   }
 
-  /*
-   * helper method for getBarPath
-   * called when the bars will be horizonal
-   */
-  getHorizontalBarPath(position) {
+  getHorizontalBarPath(position, width) {
     const {independent, dependent0, dependent1} = position;
-    const size = this.barWidth / 2;
+    const size = width / 2;
     return `M ${dependent0}, ${independent - size}
       L ${dependent0}, ${independent + size}
       L ${dependent1}, ${independent + size}
@@ -46,35 +32,30 @@ export default class Bar extends React.Component {
       L ${dependent0}, ${independent - size}`;
   }
 
-  getBarPath(position) {
+  getBarPath(position, width) {
     return this.props.horizontal ?
-      this.getHorizontalBarPath(position) : this.getVerticalBarPath(position);
+      this.getHorizontalBarPath(position, width) : this.getVerticalBarPath(position, width);
   }
 
-  evaluateStyle(style) {
-    if (!_.some(style, _.isFunction)) {
-      return style;
-    }
-    return _.transform(style, (result, value, key) => {
-      result[key] = _.isFunction(value) ? value.call(this, this.props.data) : value;
-    });
-  }
-
-  renderBar() {
+  renderBar(props) {
+    const style = Chart.evaluateStyle(props.style, props.data);
+    // TODO better bar width calculation
+    const barWidth = style.width;
+    const path = props.position.independent ?
+      this.getBarPath(props.position, barWidth) : undefined;
     return (
       <path
-        d={this.path}
-        style={this.style}
+        d={path}
+        style={style}
         shapeRendering="optimizeSpeed"
       />
     );
   }
 
   render() {
-    this.getCalculatedValues(this.props);
     return (
       <g>
-        {this.renderBar()}
+        {this.renderBar(this.props)}
       </g>
     );
   }

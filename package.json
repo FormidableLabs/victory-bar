@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/FormidableLabs/victory-bar.git"
   },
-  "author": "Colin Megill",
+  "author": "Lauren Eastridge",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/FormidableLabs/victory-bar/issues"
@@ -22,9 +22,8 @@
   "dependencies": {
     "builder": "~2.2.2",
     "builder-victory-component": "~0.1.2",
-    "d3-scale": "^0.2.0",
     "victory-animation": "^0.0.13",
-    "victory-util": "^2.0.3",
+    "victory-util": "^2.1.0",
     "victory-label": "^0.1.8"
   },
   "devDependencies": {
