@@ -45,26 +45,12 @@ export default class VictoryBar extends React.Component {
     /**
      * The data prop specifies the data to be plotted. Data should be in the form of an array
      * of data points, or an array of arrays of data points for multiple datasets.
-     * Each data point should be an object with x and y properties.
-     * @examples [{x: 1, y:2}, {x: 2, y: 3}],
+     * Each data point may be any format you wish (depending on the `x` and `y` accessor props passed),
+     * but by default, an object with x and y properties is expected.
+     * @examples [{x: 1, y: 2}, {x: 2, y: 3}], [[1, 2], [2, 3]],
      * [[{x: "a", y: 1}, {x: "b", y: 2}], [{x: "a", y: 2}, {x: "b", y: 3}]]
      */
-    data: PropTypes.oneOfType([
-      PropTypes.arrayOf(
-        PropTypes.shape({
-          x: PropTypes.any,
-          y: PropTypes.any
-        })
-      ),
-      PropTypes.arrayOf(
-        PropTypes.arrayOf(
-          PropTypes.shape({
-            x: PropTypes.any,
-            y: PropTypes.any
-          })
-        )
-      )
-    ]),
+    data: PropTypes.array,
     /**
      * The dataAttributes prop describes how a data set should be styled.
      * This prop can be given as an object, or an array of objects. If this prop is
@@ -125,6 +111,12 @@ export default class VictoryBar extends React.Component {
       CustomPropTypes.nonNegative
     ]),
     /**
+     * The grouped prop determines whether the chart should consist of sets of grouped bars.
+     * When this prop is set to true, the data prop *must* be an array of multiple data series
+     * ie. not an array of data points, but an array of arrays of data points
+     */
+    grouped: PropTypes.bool,
+    /**
      * The height props specifies the height of the chart container element in pixels
      */
     height: CustomPropTypes.nonNegative,
@@ -180,7 +172,8 @@ export default class VictoryBar extends React.Component {
     ]),
     /**
      * The stacked prop determines whether the chart should consist of stacked bars.
-     * When this prop is set to false, grouped bars will be rendered instead.
+     * When this prop is set to true, the data prop *must* be an array of multiple data series
+     * ie. not an array of data points, but an array of arrays of data points
      */
     stacked: PropTypes.bool,
     /**
@@ -201,20 +194,55 @@ export default class VictoryBar extends React.Component {
       labels: PropTypes.object
     }),
     /**
-     * The width props specifies the width of the chart container element in pixels
+     * The width prop specifies the width of the chart container element in pixels
      */
-    width: CustomPropTypes.nonNegative
+    width: CustomPropTypes.nonNegative,
+    /**
+     * The x prop specifies how to access the X value of each data point.
+     * If given as a function, it will be run on each data point, and the returned value will be used.
+     * If given as an integer, it will be used as an array index for array-type data points.
+     * If given as a string, it will be used as a property key for object-type data points.
+     * If given as an array of strings, or a string containing dots or brackets,
+     * it will be used as a nested object property path (for details see Lodash docs for _.get).
+     * If `null` or `undefined`, the data value will be used as is (identity function/pass-through).
+     */
+    x: PropTypes.oneOfType([
+      PropTypes.func,
+      // TODO: ensure *non-negative* integer - write CustomPropTypes.all method?
+      CustomPropTypes.integer,
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.string)
+    ]),
+    /**
+     * The y prop specifies how to access the Y value of each data point.
+     * If given as a function, it will be run on each data point, and the returned value will be used.
+     * If given as an integer, it will be used as an array index for array-type data points.
+     * If given as a string, it will be used as a property key for object-type data points.
+     * If given as an array of strings, or a string containing dots or brackets,
+     * it will be used as a nested object property path (for details see Lodash docs for _.get).
+     * If `null` or `undefined`, the data value will be used as is (identity function/pass-through).
+     */
+    y: PropTypes.oneOfType([
+      PropTypes.func,
+      // TODO: ensure *non-negative* integer - write CustomPropTypes.all method?
+      CustomPropTypes.integer,
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.string)
+    ])
   };
 
   static defaultProps = {
     data: defaultData,
     colorScale: "greyscale",
+    grouped: false,
     height: 300,
     padding: 50,
     scale: "linear",
     stacked: false,
     standalone: true,
-    width: 450
+    width: 450,
+    x: 'x',
+    y: 'y'
   };
 
   static getDomain = DomainHelpers.getDomain.bind(DomainHelpers);
