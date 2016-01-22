@@ -205,6 +205,7 @@ export default class VictoryBar extends React.Component {
      * If given as an array of strings, or a string containing dots or brackets,
      * it will be used as a nested object property path (for details see Lodash docs for _.get).
      * If `null` or `undefined`, the data value will be used as is (identity function/pass-through).
+     * @examples 0, 'x', 'x.value.nested.1.thing', 'x[2].also.nested', null, d => Math.sin(d)
      */
     x: PropTypes.oneOfType([
       PropTypes.func,
@@ -221,6 +222,7 @@ export default class VictoryBar extends React.Component {
      * If given as an array of strings, or a string containing dots or brackets,
      * it will be used as a nested object property path (for details see Lodash docs for _.get).
      * If `null` or `undefined`, the data value will be used as is (identity function/pass-through).
+     * @examples 0, 'y', 'y.value.nested.1.thing', 'y[2].also.nested', null, d => Math.sin(d)
      */
     y: PropTypes.oneOfType([
       PropTypes.func,
@@ -248,21 +250,21 @@ export default class VictoryBar extends React.Component {
   static getDomain = DomainHelpers.getDomain.bind(DomainHelpers);
 
   renderBars(dataset, seriesIndex, calculatedProps) {
-    return dataset.data.map((data, barIndex) => {
+    return dataset.data.map((datum, barIndex) => {
       const index = {seriesIndex, barIndex};
-      const position = LayoutHelpers.getBarPosition(data, index, calculatedProps);
+      const position = LayoutHelpers.getBarPosition(datum, index, calculatedProps);
       const baseStyle = calculatedProps.style;
-      const style = LayoutHelpers.getBarStyle(data, dataset, baseStyle);
+      const style = LayoutHelpers.getBarStyle(datum, dataset, baseStyle);
       const barComponent = (
         <Bar key={`series-${index}-bar-${barIndex}`}
           horizontal={this.props.horizontal}
           style={style}
           position={position}
-          data={data}
+          datum={datum}
         />
       );
       if (LayoutHelpers.shouldPlotLabel(seriesIndex, this.props, calculatedProps.datasets)) {
-        const labelIndex = LayoutHelpers.getLabelIndex(data, calculatedProps);
+        const labelIndex = LayoutHelpers.getLabelIndex(datum, calculatedProps);
         const labelText = this.props.labels ?
           this.props.labels[labelIndex] || this.props.labels[0] : "";
         const labelComponent = this.props.labelComponents ?
@@ -274,7 +276,8 @@ export default class VictoryBar extends React.Component {
               horizontal={this.props.horizontal}
               style={baseStyle.labels}
               position={position}
-              data={data}
+              data={datum}
+              accessor={calculatedProps.accessor}
               labelText={labelText}
               labelComponent={labelComponent}
             />
@@ -286,7 +289,13 @@ export default class VictoryBar extends React.Component {
   }
 
   renderData(props, style) {
-    const datasets = Data.consolidateData(props);
+    const {grouped, stacked, categories} = props;
+    const rawDatasets = (grouped || stacked) ? props.data : [props.data];
+    const datasets = Data.formatDatasets(rawDatasets, props);
+    const accessor = {
+      x: Data.createAccessor(props.x),
+      y: Data.createAccessor(props.y)
+    };
     const stringMap = {
       x: Data.createStringMap(props, "x"),
       y: Data.createStringMap(props, "y")
@@ -304,10 +313,8 @@ export default class VictoryBar extends React.Component {
       x: Scale.getBaseScale(props, "x").domain(domain.x).range(range.x),
       y: Scale.getBaseScale(props, "y").domain(domain.y).range(range.y)
     };
-    const stacked = props.stacked;
-    const categories = props.categories;
     const calculatedProps = {
-      categories, datasets, domain, padding, range, scale, stacked, stringMap, style
+      categories, datasets, accessor, domain, padding, range, scale, grouped, stacked, stringMap, style
     };
     return datasets.map((dataset, index) => {
       return this.renderBars(dataset, index, calculatedProps);

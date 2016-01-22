@@ -44,8 +44,9 @@ module.exports = {
       return this.getDomainFromCategories(props, axis);
     }
     // find the global min and max
-    const allData = Data.consolidateData(props);
-    const datasets = allData.map((dataset) => dataset.data);
+    const rawDatasets = (props.grouped || props.stacked) ? props.data : [props.data];
+    const datasets = Data.formatDatasets(rawDatasets, props)
+      .map((dataset) => dataset.data);
     const globalDomain = this.getDomainFromData(datasets, axis);
 
     // find the cumulative max for stacked chart types
