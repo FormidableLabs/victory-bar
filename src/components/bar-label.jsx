@@ -12,13 +12,12 @@ export default class BarLabel extends React.Component {
     horizontal: PropTypes.bool,
     style: PropTypes.object,
     datum: PropTypes.object,
-    accessor: PropTypes.object,
     labelText: PropTypes.string,
     labelComponent: PropTypes.any
   };
 
   getLabelAnchors(props) {
-    const sign = props.accessor.y(props.datum) >= 0 ? 1 : -1;
+    const sign = props.datum.y >= 0 ? 1 : -1;
     if (!props.horizontal) {
       return {
         vertical: sign >= 0 ? "end" : "start",

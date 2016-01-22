@@ -276,8 +276,7 @@ export default class VictoryBar extends React.Component {
               horizontal={this.props.horizontal}
               style={baseStyle.labels}
               position={position}
-              data={datum}
-              accessor={calculatedProps.accessor}
+              datum={datum}
               labelText={labelText}
               labelComponent={labelComponent}
             />
@@ -292,10 +291,6 @@ export default class VictoryBar extends React.Component {
     const {grouped, stacked, categories} = props;
     const rawDatasets = (grouped || stacked) ? props.data : [props.data];
     const datasets = Data.formatDatasets(rawDatasets, props);
-    const accessor = {
-      x: Data.createAccessor(props.x),
-      y: Data.createAccessor(props.y)
-    };
     const stringMap = {
       x: Data.createStringMap(props, "x"),
       y: Data.createStringMap(props, "y")
@@ -314,7 +309,7 @@ export default class VictoryBar extends React.Component {
       y: Scale.getBaseScale(props, "y").domain(domain.y).range(range.y)
     };
     const calculatedProps = {
-      categories, datasets, accessor, domain, padding, range, scale, grouped, stacked, stringMap, style
+      categories, datasets, domain, padding, range, scale, grouped, stacked, stringMap, style
     };
     return datasets.map((dataset, index) => {
       return this.renderBars(dataset, index, calculatedProps);

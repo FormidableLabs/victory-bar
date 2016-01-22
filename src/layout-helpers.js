@@ -8,14 +8,14 @@ import omit from "lodash/object/omit";
 module.exports = {
   // Layout Helpers
   getBarPosition(datum, index, calculatedProps) {
-    const { scale, stacked, categories, accessor } = calculatedProps;
+    const { scale, stacked, categories } = calculatedProps;
     const yOffset = stacked ? this.getYOffset(datum, index, calculatedProps) : 0;
     const y0 = yOffset;
-    const y1 = yOffset + accessor.y(datum);
-    const x = (stacked && !categories) ? accessor.x(datum):
+    const y1 = yOffset + datum.y;
+    const x = (stacked && !categories) ? datum.x:
       this.adjustX(datum, index.seriesIndex, calculatedProps);
     const formatValue = (value, axis) => {
-      return isDate(accessor[axis](datum[axis])) ? new Date(value) : value;
+      return isDate(datum[axis]) ? new Date(value) : value;
     };
     return {
       independent: scale.x(formatValue(x, "x")),
@@ -25,14 +25,14 @@ module.exports = {
   },
 
   getYOffset(datum, index, calculatedProps) {
-    const { datasets, accessor } = calculatedProps;
+    const { datasets } = calculatedProps;
     if (index.seriesIndex === 0) {
       return 0;
     }
-    const y = accessor.y(datum);
+    const y = datum.y;
     const previousDataSets = take(datasets, index.seriesIndex);
     const previousBars = previousDataSets.map((dataset) => {
-      return dataset.data.map((previousDatum) => accessor.y(previousDatum));
+      return dataset.data.map((previousDatum) => datum.y);
     });
     return previousBars.reduce((memo, bar) => {
       const barValue = bar[index.barIndex];
@@ -42,9 +42,9 @@ module.exports = {
   },
 
   adjustX(datum, index, calculatedProps) {
-    const {stacked, categories, accessor} = calculatedProps;
+    const {stacked, categories} = calculatedProps;
     const style = calculatedProps.style.data;
-    const x = accessor.x(datum);
+    const x = datum.x;
     const datasets = calculatedProps.datasets;
     const center = datasets.length % 2 === 0 ?
       datasets.length / 2 : (datasets.length - 1) / 2;
@@ -82,17 +82,17 @@ module.exports = {
   },
 
   getLabelIndex(datum, calculatedProps) {
-    const { datasets, stringMap, accessor } = calculatedProps;
+    const { datasets, stringMap } = calculatedProps;
     if (datum.category !== undefined) {
       return datum.category;
     } else if (stringMap.x) {
-      return (accessor.x(datum) - 1);
+      return (datum.x - 1);
     } else {
       const allX = datasets.map((dataset) => {
-        return dataset.data.map(accessor.x);
+        return dataset.data.map(d => d.x);
       });
       const uniqueX = uniq(flatten(allX));
-      return (uniqueX.sort()).findIndex((x) => x === accessor.x(datum));
+      return (uniqueX.sort()).findIndex((x) => x === datum.x);
     }
   },
 
