@@ -14,7 +14,7 @@ const defaultStyles = {
   data: {
     width: 8,
     padding: 6,
-    strokeWidth: 0,
+    stroke: "transparent",
     fill: "#756f6a",
     opacity: 1
   },
