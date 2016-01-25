@@ -289,11 +289,12 @@ export default class VictoryBar extends React.Component {
 
   renderData(props, style) {
     const {grouped, stacked, categories} = props;
-    const rawDatasets = (grouped || stacked) ? props.data : [props.data];
+    const hasMultipleDatasets = (grouped || stacked);
+    const rawDatasets = hasMultipleDatasets ? props.data : [props.data];
     const datasets = Data.formatDatasets(rawDatasets, props);
     const stringMap = {
-      x: Data.createStringMap(props, "x"),
-      y: Data.createStringMap(props, "y")
+      x: Data.createStringMap(props, "x", hasMultipleDatasets),
+      y: Data.createStringMap(props, "y", hasMultipleDatasets)
     };
     const padding = Chart.getPadding(props);
     const range = {
