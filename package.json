@@ -24,8 +24,8 @@
     "builder-victory-component": "~0.1.2",
     "react-art": "git+https://github.com/boygirl/react-art#supportBrowserColors",
     "victory-animation": "^0.0.13",
-    "victory-util": "^2.1.0",
-    "victory-label": "^0.1.8"
+    "victory-label":  "^0.1.8",
+    "victory-util": "^2.1.1"
   },
   "devDependencies": {
     "builder-victory-component-dev": "~0.1.2",
