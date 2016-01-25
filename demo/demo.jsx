@@ -2,7 +2,7 @@
 import _ from "lodash";
 import React from "react";
 import {VictoryBar} from "../src/index";
-import {VictoryChart} from 'victory-chart';
+import {VictoryChart} from "victory-chart";
 
 export default class App extends React.Component {
   constructor() {
@@ -70,14 +70,14 @@ export default class App extends React.Component {
             stacked
             data={_.times(5, () => _.range(32))}
             x={null}
-            y={d => Math.sin(d * 0.2)}
+            y={(d) => Math.sin(d * 0.2)}
             colorScale="warm"
           />
         </ChartWrap>
 
         <ChartWrap>
           <VictoryBar
-            colorScale={'cool'}
+            colorScale={"cool"}
             stacked
             height={250}
             data={this.getBarData()}
@@ -87,7 +87,7 @@ export default class App extends React.Component {
         <ChartWrap>
           <VictoryBar
             grouped
-            colorScale={'qualitative'}
+            colorScale={"qualitative"}
             height={250}
             data={this.getBarData()}
           />
@@ -96,7 +96,7 @@ export default class App extends React.Component {
         <ChartWrap>
           <VictoryBar
             stacked
-            colorScale={'qualitative'}
+            colorScale={"qualitative"}
             height={250}
             data={this.getNumericBarData()}
           />
@@ -113,7 +113,7 @@ export default class App extends React.Component {
         <ChartWrap>
           <VictoryBar
             height={250}
-            data={[['a', 1], ['b', 3], ['c', 5]]}
+            data={[["a", 1], ["b", 3], ["c", 5]]}
             x={0}
             y={1}
           />
@@ -122,16 +122,16 @@ export default class App extends React.Component {
         <ChartWrap>
           <VictoryBar
             height={250}
-            data={[{a:{b:{c: 1, d: 1}}}, {a:{b:{c: 2, d: 3}}}]}
-            x={'a.b.c'}
-            y={'a.b.d'}
+            data={[{a: {b: {c: 1, d: 1}}}, {a: {b: {c: 2, d: 3}}}]}
+            x={"a.b.c"}
+            y={"a.b.d"}
           />
         </ChartWrap>
 
         <ChartWrap>
           <VictoryBar
             stacked
-            data={[[['a', 1], ['b', 2], ['c', 3]], [['b', 1], ['c', 2], ['d', 3]]]}
+            data={[[["a", 1], ["b", 2], ["c", 3]], [["b", 1], ["c", 2], ["d", 3]]]}
             x={0}
             y={1}
             colorScale="qualitative"
@@ -143,15 +143,23 @@ export default class App extends React.Component {
 }
 
 class ChartWrap extends React.Component {
+  static propTypes = {
+    width: React.PropTypes.number,
+    height: React.PropTypes.number,
+    children: React.PropTypes.any
+  };
   static defaultProps = {
     width: 350,
     height: 250
   };
-  // renders both a standalone chart, and a version wrapped in VictoryChart, to test both cases at once
+  // renders both a standalone chart, and a version wrapped in VictoryChart,
+  // to test both cases at once
   render() {
-    return <div>
-      {React.cloneElement(this.props.children, this.props)}
-      <VictoryChart {...this.props}>{this.props.children}</VictoryChart>
-    </div>
+    return (
+      <div>
+        {React.cloneElement(this.props.children, this.props)}
+        <VictoryChart {...this.props}>{this.props.children}</VictoryChart>
+      </div>
+    );
   }
 }

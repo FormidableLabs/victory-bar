@@ -41,8 +41,7 @@ describe("domain-helpers", () => {
     });
 
     it("calculates a domain from data", () => {
-      const props = {data, grouped: true, x: 'x', y: 'y'};
-      console.log(props);
+      const props = {data, grouped: true, x: "x", y: "y"};
       const domainResultX = DomainHelpers.getDomain(props, "x");
       expect(DomainHelpers.getDomainFromGroupedData).calledWith(props, "x")
         .and.returned([1, 3]);
@@ -54,7 +53,7 @@ describe("domain-helpers", () => {
     });
 
     it("calculates a domain from data with negative and positive values", () => {
-      const props = {data: mixedData, grouped: true, x: 'x', y: 'y'};
+      const props = {data: mixedData, grouped: true, x: "x", y: "y"};
       const domainResultX = DomainHelpers.getDomain(props, "x");
       expect(domainResultX).to.eql([1, 3]);
       const domainResultY = DomainHelpers.getDomain(props, "y");
@@ -62,7 +61,7 @@ describe("domain-helpers", () => {
     });
 
     it("the domain of the dependent axis should always contain zero", () => {
-      const props = {data: noZero, grouped: true, x: 'x', y: 'y'};
+      const props = {data: noZero, grouped: true, x: "x", y: "y"};
       const domainResultX = DomainHelpers.getDomain(props, "x");
       expect(domainResultX).to.eql([1, 3]);
       const domainResultY = DomainHelpers.getDomain(props, "y");
@@ -70,7 +69,7 @@ describe("domain-helpers", () => {
     });
 
     it("calculates a stacked domain", () => {
-      const props = {data, stacked: true, x: 'x', y: 'y'};
+      const props = {data, stacked: true, x: "x", y: "y"};
       const domainResultX = DomainHelpers.getDomain(props, "x");
       expect(domainResultX).to.eql([1, 3]);
       const domainResultY = DomainHelpers.getDomain(props, "y");
@@ -78,7 +77,7 @@ describe("domain-helpers", () => {
     });
 
     it("calculates a stacked domain from data with negative and positive values", () => {
-      const props = {data: mixedData, stacked: true, x: 'x', y: 'y'};
+      const props = {data: mixedData, stacked: true, x: "x", y: "y"};
       const domainResultX = DomainHelpers.getDomain(props, "x");
       expect(domainResultX).to.eql([1, 3]);
       const domainResultY = DomainHelpers.getDomain(props, "y");
@@ -107,7 +106,7 @@ describe("domain-helpers", () => {
     ];
 
     it("calculates a domain from categories for the independent axis", () => {
-      const props = {categories: [1, 2, 3], data, grouped: true, x: 'x', y: 'y'};
+      const props = {categories: [1, 2, 3], data, grouped: true, x: "x", y: "y"};
       const domainResultX = DomainHelpers.getDomainFromGroupedData(props, "x");
       expect(DomainHelpers.getDomainFromCategories).calledWith(props, "x").and.returned([1, 3]);
       expect(DomainHelpers.getDomainFromData).not.called;
@@ -117,14 +116,14 @@ describe("domain-helpers", () => {
     });
 
     it("does not calculate a domain from categories the dependent axis", () => {
-      const props = {categories: [1, 2, 3], data, grouped: true, x: 'x', y: 'y'};
+      const props = {categories: [1, 2, 3], data, grouped: true, x: "x", y: "y"};
       const domainResultY = DomainHelpers.getDomainFromGroupedData(props, "y");
       expect(DomainHelpers.getDomainFromData).calledOnce.and.returned([0, 2]);
       expect(domainResultY).to.eql([0, 2]);
     });
 
     it("does not calculate cumulative data if the bars are not stacked", () => {
-      const props = {data, grouped: true, x: 'x', y: 'y'};
+      const props = {data, grouped: true, x: "x", y: "y"};
       const domainResultY = DomainHelpers.getDomainFromGroupedData(props, "y");
       expect(DomainHelpers.getDomainFromData).calledOnce.and.returned([0, 2]);
       expect(DomainHelpers.isStacked).calledWith(props, "y").and.returned(false);
@@ -133,7 +132,7 @@ describe("domain-helpers", () => {
     });
 
     it("does not calculate cumulative data for a single data set", () => {
-      const props = {data: data[1], x: 'x', y: 'y'};
+      const props = {data: data[1], x: "x", y: "y"};
       const domainResultY = DomainHelpers.getDomainFromGroupedData(props, "y");
       expect(DomainHelpers.getDomainFromData).calledOnce.and.returned([0, 1]);
       expect(DomainHelpers.isStacked).calledWith(props, "y").and.returned(false);

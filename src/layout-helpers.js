@@ -12,7 +12,7 @@ module.exports = {
     const yOffset = stacked ? this.getYOffset(datum, index, calculatedProps) : 0;
     const y0 = yOffset;
     const y1 = yOffset + datum.y;
-    const x = (stacked && !categories) ? datum.x:
+    const x = (stacked && !categories) ? datum.x :
       this.adjustX(datum, index.seriesIndex, calculatedProps);
     const formatValue = (value, axis) => {
       return isDate(datum[axis]) ? new Date(value) : value;
@@ -31,9 +31,9 @@ module.exports = {
     }
     const y = datum.y;
     const previousDataSets = take(datasets, index.seriesIndex);
-    const previousBars = _.flatten(previousDataSets.map((dataset) => {
+    const previousBars = flatten(previousDataSets.map((dataset) => {
       return dataset.data
-        .filter(previousDatum => previousDatum.x === datum.x)
+        .filter((previousDatum) => previousDatum.x === datum.x)
         .map((previousDatum) => previousDatum.y || 0);
     }));
     return previousBars.reduce((memo, barValue) => {
@@ -90,7 +90,7 @@ module.exports = {
       return (datum.x - 1);
     } else {
       const allX = datasets.map((dataset) => {
-        return dataset.data.map(d => d.x);
+        return dataset.data.map((d) => d.x);
       });
       const uniqueX = uniq(flatten(allX));
       return (uniqueX.sort()).findIndex((x) => x === datum.x);

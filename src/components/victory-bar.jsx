@@ -45,7 +45,7 @@ export default class VictoryBar extends React.Component {
     /**
      * The data prop specifies the data to be plotted. Data should be in the form of an array
      * of data points, or an array of arrays of data points for multiple datasets.
-     * Each data point may be any format you wish (depending on the `x` and `y` accessor props passed),
+     * Each data point may be any format you wish (depending on the `x` and `y` accessor props),
      * but by default, an object with x and y properties is expected.
      * @examples [{x: 1, y: 2}, {x: 2, y: 3}], [[1, 2], [2, 3]],
      * [[{x: "a", y: 1}, {x: "b", y: 2}], [{x: "a", y: 2}, {x: "b", y: 3}]]
@@ -199,7 +199,7 @@ export default class VictoryBar extends React.Component {
     width: CustomPropTypes.nonNegative,
     /**
      * The x prop specifies how to access the X value of each data point.
-     * If given as a function, it will be run on each data point, and the returned value will be used.
+     * If given as a function, it will be run on each data point, and returned value will be used.
      * If given as an integer, it will be used as an array index for array-type data points.
      * If given as a string, it will be used as a property key for object-type data points.
      * If given as an array of strings, or a string containing dots or brackets,
@@ -216,7 +216,7 @@ export default class VictoryBar extends React.Component {
     ]),
     /**
      * The y prop specifies how to access the Y value of each data point.
-     * If given as a function, it will be run on each data point, and the returned value will be used.
+     * If given as a function, it will be run on each data point, and returned value will be used.
      * If given as an integer, it will be used as an array index for array-type data points.
      * If given as a string, it will be used as a property key for object-type data points.
      * If given as an array of strings, or a string containing dots or brackets,
@@ -243,8 +243,8 @@ export default class VictoryBar extends React.Component {
     stacked: false,
     standalone: true,
     width: 450,
-    x: 'x',
-    y: 'y'
+    x: "x",
+    y: "y"
   };
 
   static getDomain = DomainHelpers.getDomain.bind(DomainHelpers);
