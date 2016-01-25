@@ -31,11 +31,12 @@ module.exports = {
     }
     const y = datum.y;
     const previousDataSets = take(datasets, index.seriesIndex);
-    const previousBars = previousDataSets.map((dataset) => {
-      return dataset.data.map((previousDatum) => datum.y);
-    });
-    return previousBars.reduce((memo, bar) => {
-      const barValue = bar[index.barIndex];
+    const previousBars = _.flatten(previousDataSets.map((dataset) => {
+      return dataset.data
+        .filter(previousDatum => previousDatum.x === datum.x)
+        .map((previousDatum) => previousDatum.y || 0);
+    }));
+    return previousBars.reduce((memo, barValue) => {
       const sameSign = (y < 0 && barValue < 0) || (y >= 0 && barValue >= 0);
       return sameSign ? memo + barValue : memo;
     }, 0);
