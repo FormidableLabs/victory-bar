@@ -143,14 +143,14 @@ export default class App extends React.Component {
             stacked
             data={[
               [
-                {x: 'a', y: 2},
-                {x: 'b', y: 3},
-                {x: 'c', y: 4}
+                {x: "a", y: 2},
+                {x: "b", y: 3},
+                {x: "c", y: 4}
               ],
               [
-                {x: 'c', y: 2},
-                {x: 'd', y: 3},
-                {x: 'e', y: 4}
+                {x: "c", y: 2},
+                {x: "d", y: 3},
+                {x: "e", y: 4}
               ]
             ]}
             colorScale="warm"
