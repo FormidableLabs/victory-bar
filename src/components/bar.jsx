@@ -1,7 +1,7 @@
 import React, { PropTypes } from "react";
 import Radium from "radium";
 import { Chart } from "victory-util";
-import { Group, Shape, Path } from "react-art";
+import { Group, Shape } from "react-art";
 
 @Radium
 export default class Bar extends React.Component {

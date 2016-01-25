@@ -2,7 +2,6 @@
  * Client tests
  */
 import React from "react";
-import ReactDOM from "react-dom";
 import VictoryBar from "src/components/victory-bar";
 // Use `TestUtils` to inject into DOM, simulate events, etc.
 // See: https://facebook.github.io/react/docs/test-utils.html
