@@ -209,8 +209,7 @@ export default class VictoryBar extends React.Component {
      */
     x: PropTypes.oneOfType([
       PropTypes.func,
-      // TODO: ensure *non-negative* integer - write CustomPropTypes.all method?
-      CustomPropTypes.integer,
+      CustomPropTypes.allOfType([CustomPropTypes.integer, CustomPropTypes.nonNegative]),
       PropTypes.string,
       PropTypes.arrayOf(PropTypes.string)
     ]),
@@ -226,8 +225,7 @@ export default class VictoryBar extends React.Component {
      */
     y: PropTypes.oneOfType([
       PropTypes.func,
-      // TODO: ensure *non-negative* integer - write CustomPropTypes.all method?
-      CustomPropTypes.integer,
+      CustomPropTypes.allOfType([CustomPropTypes.integer, CustomPropTypes.nonNegative]),
       PropTypes.string,
       PropTypes.arrayOf(PropTypes.string)
     ])
