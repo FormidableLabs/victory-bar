@@ -10,7 +10,7 @@ export default class Bar extends React.Component {
     position: PropTypes.object,
     horizontal: PropTypes.bool,
     style: PropTypes.object,
-    data: PropTypes.object
+    datum: PropTypes.object
   };
 
   getVerticalBarPath(position, width) {
@@ -39,7 +39,7 @@ export default class Bar extends React.Component {
   }
 
   renderBar(props) {
-    const style = Chart.evaluateStyle(props.style, props.data);
+    const style = Chart.evaluateStyle(props.style, props.datum);
     // TODO better bar width calculation
     const barWidth = style.width;
     const path = props.position.independent ?

@@ -12,13 +12,13 @@ export default class BarLabel extends React.Component {
     position: PropTypes.object,
     horizontal: PropTypes.bool,
     style: PropTypes.object,
-    data: PropTypes.object,
+    datum: PropTypes.object,
     labelText: PropTypes.string,
     labelComponent: PropTypes.any
   };
 
   getLabelAnchors(props) {
-    const sign = props.data.y >= 0 ? 1 : -1;
+    const sign = props.datum.y >= 0 ? 1 : -1;
     if (!props.horizontal) {
       return {
         vertical: sign >= 0 ? "end" : "start",
@@ -42,13 +42,13 @@ export default class BarLabel extends React.Component {
   renderLabelComponent(props, position, anchors) {
     const component = props.labelComponent;
     const baseStyle = merge({padding: 0}, props.style, component.props.style);
-    const style = Chart.evaluateStyle(baseStyle, props.data);
+    const style = Chart.evaluateStyle(baseStyle, props.datum);
     const padding = this.getlabelPadding(props, style);
     const children = component.props.children || props.labelText;
     const newProps = {
       x: component.props.x || position.x + padding.x,
       y: component.props.y || position.y - padding.y,
-      data: props.data, // Pass data for custom label component to access
+      data: props.datum, // Pass data for custom label component to access - todo: rename to datum
       textAnchor: component.props.textAnchor || anchors.text,
       verticalAnchor: component.props.verticalAnchor || anchors.vertical,
       style
@@ -58,13 +58,13 @@ export default class BarLabel extends React.Component {
 
   renderVictoryLabel(props, position, anchors) {
     const baseStyle = merge({padding: 0}, props.style);
-    const style = Chart.evaluateStyle(baseStyle, props.data);
+    const style = Chart.evaluateStyle(baseStyle, props.datum);
     const padding = this.getlabelPadding(props, style);
     return (
       <VictoryLabel
         x={position.x + padding.x}
         y={position.y - padding.y}
-        data={props.data}
+        data={props.datum} // todo: rename to datum
         textAnchor={anchors.text}
         verticalAnchor={anchors.vertical}
         style={style}
