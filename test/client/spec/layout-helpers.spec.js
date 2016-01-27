@@ -47,7 +47,7 @@ describe("layout-helpers", () => {
       const index = {seriesIndex: 2, barIndex: 0};
       const barPosition = LayoutHelpers.getBarPosition(data, index, calculatedProps);
       expect(LayoutHelpers.adjustX).notCalled;
-      expect(LayoutHelpers.getYOffset).calledWith(data, index, datasets)
+      expect(LayoutHelpers.getYOffset).calledWith(data, index, calculatedProps)
         .and.returned(1);
       expect(barPosition).to.eql({independent: 10, dependent0: 10, dependent1: 30});
     });
