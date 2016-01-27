@@ -20,13 +20,13 @@
     "test": "builder run npm:test"
   },
   "dependencies": {
-    "builder": "~2.2.2",
-    "builder-victory-component": "~0.1.2",
+    "builder": "~2.4.0",
+    "builder-victory-component": "~0.2.1",
     "lodash": "^3.10.1",
     "radium": "^0.16.2",
     "react-art": "git+https://github.com/formidablelabs/react-art#supportBrowserColors",
     "victory-animation": "^0.0.13",
-    "victory-label":  "^0.1.8",
+    "victory-label":  "^0.3.0",
     "victory-util": "^2.1.1"
   },
   "devDependencies": {
