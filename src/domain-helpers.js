@@ -1,6 +1,7 @@
 import flatten from "lodash/array/flatten";
 import includes from "lodash/collection/includes";
 import isEmpty from "lodash/lang/isEmpty";
+import isUndefined from "lodash/lang/isUndefined";
 import zipObject from "lodash/array/zipObject";
 
 import { Collection, Data, Domain } from "victory-util";
@@ -44,7 +45,7 @@ module.exports = {
       return this.getDomainFromCategories(props, axis);
     }
     // find the global min and max
-    const rawDatasets = (props.grouped || props.stacked) ? props.data : [props.data];
+    const rawDatasets = (props.stacked || this.shouldGroup(props)) ? props.data : [props.data];
     const datasets = Data.formatDatasets(rawDatasets, props)
       .map((dataset) => dataset.data);
     const globalDomain = this.getDomainFromData(datasets, axis);
@@ -76,6 +77,15 @@ module.exports = {
       return [0, adjustedMax];
     }
     return [domainMin, domainMax];
+  },
+
+  shouldGroup(props) {
+    // automatically create grouped bars if data is array of arrays
+    // and x/y accessors are the default "x" and "y" keys,
+    return !props.stacked && (props.grouped || (
+      isUndefined(props.grouped) && Collection.isArrayOfArrays(props.data) &&
+      props.x === "x" && props.y === "y"
+    ));
   },
 
   isStacked(props, axis) {

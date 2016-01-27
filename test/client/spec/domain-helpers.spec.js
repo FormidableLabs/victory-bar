@@ -184,4 +184,19 @@ describe("domain-helpers", () => {
       expect(domainResult).to.eql([0, 3]);
     });
   });
+
+  describe("shouldGroup", () => {
+    it("true if grouped prop is true", () => {
+      expect(DomainHelpers.shouldGroup({grouped: true})).to.eql(true);
+    });
+    it("false if grouped prop is false", () => {
+      expect(DomainHelpers.shouldGroup({grouped: false})).to.eql(false);
+    });
+    it("true if grouped is undefined, data is array-of-arrays, & accessors are default", () => {
+      const grouped = DomainHelpers.shouldGroup(
+        {data: [[{x: 0, y: 1}], [{x: 3, y: 4}]], x: "x", y: "y"}
+      );
+      expect(grouped).to.eql(true);
+    });
+  });
 });

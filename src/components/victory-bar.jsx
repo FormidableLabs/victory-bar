@@ -234,7 +234,7 @@ export default class VictoryBar extends React.Component {
   static defaultProps = {
     data: defaultData,
     colorScale: "greyscale",
-    grouped: false,
+    grouped: undefined,
     height: 300,
     padding: 50,
     scale: "linear",
@@ -286,7 +286,8 @@ export default class VictoryBar extends React.Component {
   }
 
   renderData(props, style) {
-    const {grouped, stacked, categories} = props;
+    const {stacked, categories} = props;
+    const grouped = DomainHelpers.shouldGroup(props);
     const hasMultipleDatasets = (grouped || stacked);
     const rawDatasets = hasMultipleDatasets ? props.data : [props.data];
     const datasets = Data.formatDatasets(rawDatasets, props);
