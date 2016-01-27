@@ -234,7 +234,6 @@ export default class VictoryBar extends React.Component {
   static defaultProps = {
     data: defaultData,
     colorScale: "greyscale",
-    grouped: undefined,
     height: 300,
     padding: 50,
     scale: "linear",
