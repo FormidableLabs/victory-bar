@@ -1,6 +1,7 @@
 import React, { PropTypes } from "react";
 import Radium from "radium";
 import { Chart } from "victory-util";
+import { Group, Shape } from "react-art";
 
 @Radium
 export default class Bar extends React.Component {
@@ -9,7 +10,7 @@ export default class Bar extends React.Component {
     position: PropTypes.object,
     horizontal: PropTypes.bool,
     style: PropTypes.object,
-    data: PropTypes.object
+    datum: PropTypes.object
   };
 
   getVerticalBarPath(position, width) {
@@ -38,25 +39,21 @@ export default class Bar extends React.Component {
   }
 
   renderBar(props) {
-    const style = Chart.evaluateStyle(props.style, props.data);
+    const style = Chart.evaluateStyle(props.style, props.datum);
     // TODO better bar width calculation
     const barWidth = style.width;
     const path = props.position.independent ?
       this.getBarPath(props.position, barWidth) : undefined;
     return (
-      <path
-        d={path}
-        style={style}
-        shapeRendering="optimizeSpeed"
-      />
+      <Shape d={path} {...style}/>
     );
   }
 
   render() {
     return (
-      <g>
+      <Group>
         {this.renderBar(this.props)}
-      </g>
+      </Group>
     );
   }
 }

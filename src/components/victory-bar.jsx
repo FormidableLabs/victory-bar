@@ -8,13 +8,13 @@ import Bar from "./bar";
 import BarLabel from "./bar-label";
 import DomainHelpers from "../domain-helpers";
 import LayoutHelpers from "../layout-helpers";
+import { Surface, Group} from "react-art";
 
 const defaultStyles = {
   data: {
     width: 8,
     padding: 6,
     stroke: "transparent",
-    strokeWidth: 0,
     fill: "#756f6a",
     opacity: 1
   },
@@ -45,26 +45,12 @@ export default class VictoryBar extends React.Component {
     /**
      * The data prop specifies the data to be plotted. Data should be in the form of an array
      * of data points, or an array of arrays of data points for multiple datasets.
-     * Each data point should be an object with x and y properties.
-     * @examples [{x: 1, y:2}, {x: 2, y: 3}],
+     * Each data point may be any format you wish (depending on the `x` and `y` accessor props),
+     * but by default, an object with x and y properties is expected.
+     * @examples [{x: 1, y: 2}, {x: 2, y: 3}], [[1, 2], [2, 3]],
      * [[{x: "a", y: 1}, {x: "b", y: 2}], [{x: "a", y: 2}, {x: "b", y: 3}]]
      */
-    data: PropTypes.oneOfType([
-      PropTypes.arrayOf(
-        PropTypes.shape({
-          x: PropTypes.any,
-          y: PropTypes.any
-        })
-      ),
-      PropTypes.arrayOf(
-        PropTypes.arrayOf(
-          PropTypes.shape({
-            x: PropTypes.any,
-            y: PropTypes.any
-          })
-        )
-      )
-    ]),
+    data: PropTypes.array,
     /**
      * The dataAttributes prop describes how a data set should be styled.
      * This prop can be given as an object, or an array of objects. If this prop is
@@ -125,6 +111,12 @@ export default class VictoryBar extends React.Component {
       CustomPropTypes.nonNegative
     ]),
     /**
+     * The grouped prop determines whether the chart should consist of sets of grouped bars.
+     * When this prop is set to true, the data prop *must* be an array of multiple data series
+     * ie. not an array of data points, but an array of arrays of data points
+     */
+    grouped: PropTypes.bool,
+    /**
      * The height props specifies the height of the chart container element in pixels
      */
     height: CustomPropTypes.nonNegative,
@@ -180,7 +172,8 @@ export default class VictoryBar extends React.Component {
     ]),
     /**
      * The stacked prop determines whether the chart should consist of stacked bars.
-     * When this prop is set to false, grouped bars will be rendered instead.
+     * When this prop is set to true, the data prop *must* be an array of multiple data series
+     * ie. not an array of data points, but an array of arrays of data points
      */
     stacked: PropTypes.bool,
     /**
@@ -201,9 +194,41 @@ export default class VictoryBar extends React.Component {
       labels: PropTypes.object
     }),
     /**
-     * The width props specifies the width of the chart container element in pixels
+     * The width prop specifies the width of the chart container element in pixels
      */
-    width: CustomPropTypes.nonNegative
+    width: CustomPropTypes.nonNegative,
+    /**
+     * The x prop specifies how to access the X value of each data point.
+     * If given as a function, it will be run on each data point, and returned value will be used.
+     * If given as an integer, it will be used as an array index for array-type data points.
+     * If given as a string, it will be used as a property key for object-type data points.
+     * If given as an array of strings, or a string containing dots or brackets,
+     * it will be used as a nested object property path (for details see Lodash docs for _.get).
+     * If `null` or `undefined`, the data value will be used as is (identity function/pass-through).
+     * @examples 0, 'x', 'x.value.nested.1.thing', 'x[2].also.nested', null, d => Math.sin(d)
+     */
+    x: PropTypes.oneOfType([
+      PropTypes.func,
+      CustomPropTypes.allOfType([CustomPropTypes.integer, CustomPropTypes.nonNegative]),
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.string)
+    ]),
+    /**
+     * The y prop specifies how to access the Y value of each data point.
+     * If given as a function, it will be run on each data point, and returned value will be used.
+     * If given as an integer, it will be used as an array index for array-type data points.
+     * If given as a string, it will be used as a property key for object-type data points.
+     * If given as an array of strings, or a string containing dots or brackets,
+     * it will be used as a nested object property path (for details see Lodash docs for _.get).
+     * If `null` or `undefined`, the data value will be used as is (identity function/pass-through).
+     * @examples 0, 'y', 'y.value.nested.1.thing', 'y[2].also.nested', null, d => Math.sin(d)
+     */
+    y: PropTypes.oneOfType([
+      PropTypes.func,
+      CustomPropTypes.allOfType([CustomPropTypes.integer, CustomPropTypes.nonNegative]),
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.string)
+    ])
   };
 
   static defaultProps = {
@@ -214,43 +239,45 @@ export default class VictoryBar extends React.Component {
     scale: "linear",
     stacked: false,
     standalone: true,
-    width: 450
+    width: 450,
+    x: "x",
+    y: "y"
   };
 
   static getDomain = DomainHelpers.getDomain.bind(DomainHelpers);
 
   renderBars(dataset, seriesIndex, calculatedProps) {
-    return dataset.data.map((data, barIndex) => {
+    return dataset.data.map((datum, barIndex) => {
       const index = {seriesIndex, barIndex};
-      const position = LayoutHelpers.getBarPosition(data, index, calculatedProps);
+      const position = LayoutHelpers.getBarPosition(datum, index, calculatedProps);
       const baseStyle = calculatedProps.style;
-      const style = LayoutHelpers.getBarStyle(data, dataset, baseStyle);
+      const style = LayoutHelpers.getBarStyle(datum, dataset, baseStyle);
       const barComponent = (
         <Bar key={`series-${index}-bar-${barIndex}`}
           horizontal={this.props.horizontal}
           style={style}
           position={position}
-          data={data}
+          datum={datum}
         />
       );
       if (LayoutHelpers.shouldPlotLabel(seriesIndex, this.props, calculatedProps.datasets)) {
-        const labelIndex = LayoutHelpers.getLabelIndex(data, calculatedProps);
+        const labelIndex = LayoutHelpers.getLabelIndex(datum, calculatedProps);
         const labelText = this.props.labels ?
           this.props.labels[labelIndex] || this.props.labels[0] : "";
         const labelComponent = this.props.labelComponents ?
           this.props.labelComponents[labelIndex] || this.props.labelComponents[0] : undefined;
         return (
-          <g key={`series-${index}-bar-${barIndex}`}>
+          <Group key={`series-${index}-bar-${barIndex}`}>
             {barComponent}
             <BarLabel key={`label-series-${index}-bar-${barIndex}`}
               horizontal={this.props.horizontal}
               style={baseStyle.labels}
               position={position}
-              data={data}
+              datum={datum}
               labelText={labelText}
               labelComponent={labelComponent}
             />
-          </g>
+        </Group>
         );
       }
       return barComponent;
@@ -258,10 +285,14 @@ export default class VictoryBar extends React.Component {
   }
 
   renderData(props, style) {
-    const datasets = Data.consolidateData(props);
+    const {stacked, categories} = props;
+    const grouped = DomainHelpers.shouldGroup(props);
+    const hasMultipleDatasets = (grouped || stacked);
+    const rawDatasets = hasMultipleDatasets ? props.data : [props.data];
+    const datasets = Data.formatDatasets(rawDatasets, props);
     const stringMap = {
-      x: Data.createStringMap(props, "x"),
-      y: Data.createStringMap(props, "y")
+      x: Data.createStringMap(props, "x", hasMultipleDatasets),
+      y: Data.createStringMap(props, "y", hasMultipleDatasets)
     };
     const padding = Chart.getPadding(props);
     const range = {
@@ -276,10 +307,8 @@ export default class VictoryBar extends React.Component {
       x: Scale.getBaseScale(props, "x").domain(domain.x).range(range.x),
       y: Scale.getBaseScale(props, "y").domain(domain.y).range(range.y)
     };
-    const stacked = props.stacked;
-    const categories = props.categories;
     const calculatedProps = {
-      categories, datasets, domain, padding, range, scale, stacked, stringMap, style
+      categories, datasets, domain, padding, range, scale, grouped, stacked, stringMap, style
     };
     return datasets.map((dataset, index) => {
       return this.renderBars(dataset, index, calculatedProps);
@@ -305,7 +334,7 @@ export default class VictoryBar extends React.Component {
       );
     }
     const style = Chart.getStyles(this.props, defaultStyles);
-    const group = <g style={style.parent}>{this.renderData(this.props, style)}</g>;
-    return this.props.standalone ? <svg style={style.parent}>{group}</svg> : group;
+    const group = <Group {...style.parent}>{this.renderData(this.props, style)}</Group>;
+    return this.props.standalone ? <Surface {...style.parent}>{group}</Surface> : group;
   }
 }

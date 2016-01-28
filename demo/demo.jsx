@@ -2,6 +2,7 @@
 import _ from "lodash";
 import React from "react";
 import {VictoryBar} from "../src/index";
+// import {VictoryChart} from "victory-chart";
 
 export default class App extends React.Component {
   constructor() {
@@ -11,7 +12,6 @@ export default class App extends React.Component {
       numericBarData: this.getNumericBarData()
     };
   }
-
 
   getBarData() {
     return _.map(_.range(5), () => {
@@ -63,35 +63,148 @@ export default class App extends React.Component {
   render() {
     return (
       <div className="demo">
-        <p>
-          <VictoryBar
-            style={{parent: {border: "1px solid", margin: 10}}}
-            height={500}
-            data={this.state.numericBarData}
-            dataAttributes={[
-              {fill: "cornflowerblue"},
-              {fill: "orange"},
-              {fill: "greenyellow"},
-              {fill: "gold"},
-              {fill: "tomato"}
-            ]}
-            labels={["low", "medium", "high"]}
-            horizontal
-            categories={[[1, 3], [4, 7], [9, 11]]}
-            animate={{velocity: 0.02}}
-          />
+        <h1>Victory Bar</h1>
+        <VictoryBar
+          style={{parent: {border: "1px solid", margin: 10}}}
+          height={500}
+          data={this.state.numericBarData}
+          dataAttributes={[
+            {fill: "cornflowerblue"},
+            {fill: "orange"},
+            {fill: "greenyellow"},
+            {fill: "gold"},
+            {fill: "tomato"}
+          ]}
+          labels={["low", "medium", "high"]}
+          horizontal
+          categories={[[1, 3], [4, 7], [9, 11]]}
+          animate={{velocity: 0.02}}
+        />
 
+        <VictoryBar
+          style={{parent: {border: "1px solid", margin: 10, overflow: "visible"}}}
+          data={this.state.barData}
+          colorScale={"greyscale"}
+          labels={["one", "two", "three"]}
+          stacked
+          animate={{velocity: 0.02}}
+        />
+
+        <ChartWrap>
           <VictoryBar
-            style={{parent: {border: "1px solid", margin: 10, overflow: "visible"}}}
-            data={this.state.barData}
-            colorScale={"greyscale"}
-            labels={["one", "two", "three"]}
             stacked
-            animate={{velocity: 0.02}}
+            data={_.times(5, () => _.range(32))}
+            x={null}
+            y={(d) => Math.sin(d * 0.2)}
+            colorScale="warm"
           />
+        </ChartWrap>
 
-            <VictoryBar/>
-        </p>
+        <ChartWrap>
+          <VictoryBar
+            colorScale={"cool"}
+            stacked
+            height={250}
+            data={this.getBarData()}
+          />
+        </ChartWrap>
+
+        <ChartWrap>
+          <VictoryBar
+            grouped
+            colorScale={"qualitative"}
+            height={250}
+            data={this.getBarData()}
+          />
+        </ChartWrap>
+
+        <ChartWrap>
+          <VictoryBar
+            stacked
+            colorScale={"qualitative"}
+            height={250}
+            data={this.getNumericBarData()}
+          />
+        </ChartWrap>
+
+        <ChartWrap>
+          <VictoryBar
+            data={[[0, 1], [2, 3], [4, 5]]}
+            x={0}
+            y={1}
+          />
+        </ChartWrap>
+
+        <ChartWrap>
+          <VictoryBar
+            height={250}
+            data={[["a", 1], ["b", 3], ["c", 5]]}
+            x={0}
+            y={1}
+          />
+        </ChartWrap>
+
+        <ChartWrap>
+          <VictoryBar
+            height={250}
+            data={[{a: {b: {c: 1, d: 1}}}, {a: {b: {c: 2, d: 3}}}]}
+            x={"a.b.c"}
+            y={"a.b.d"}
+          />
+        </ChartWrap>
+
+        <ChartWrap>
+          <VictoryBar
+            stacked
+            data={[[["a", 1], ["b", 2], ["c", 3]], [["b", 1], ["c", 2], ["d", 3]]]}
+            x={0}
+            y={1}
+            colorScale="qualitative"
+          />
+        </ChartWrap>
+
+        <ChartWrap>
+          <VictoryBar
+            stacked
+            data={[
+              [
+                {x: "a", y: 2},
+                {x: "b", y: 3},
+                {x: "c", y: 4}
+              ],
+              [
+                {x: "c", y: 2},
+                {x: "d", y: 3},
+                {x: "e", y: 4}
+              ]
+            ]}
+            colorScale="warm"
+          />
+        </ChartWrap>
+      </div>
+    );
+  }
+}
+
+class ChartWrap extends React.Component {
+  static propTypes = {
+    width: React.PropTypes.number,
+    height: React.PropTypes.number,
+    children: React.PropTypes.any
+  };
+  static defaultProps = {
+    width: 350,
+    height: 250
+  };
+  // renders both a standalone chart, and a version wrapped in VictoryChart,
+  // to test both cases at once
+  render() {
+    return (
+      <div>
+        {React.cloneElement(this.props.children, this.props)}
+        {/* turn off chart wrapper until converted to react-art
+        <VictoryChart {...this.props}>{this.props.children}</VictoryChart>
+        */}
       </div>
     );
   }
