@@ -2,7 +2,7 @@
 import _ from "lodash";
 import React from "react";
 import {VictoryBar} from "../src/index";
-import {VictoryChart} from "victory-chart";
+// import {VictoryChart} from "victory-chart";
 
 export default class App extends React.Component {
   constructor() {
