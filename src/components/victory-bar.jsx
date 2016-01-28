@@ -8,13 +8,13 @@ import Bar from "./bar";
 import BarLabel from "./bar-label";
 import DomainHelpers from "../domain-helpers";
 import LayoutHelpers from "../layout-helpers";
+import { Surface, Group} from "react-art";
 
 const defaultStyles = {
   data: {
     width: 8,
     padding: 6,
     stroke: "transparent",
-    strokeWidth: 0,
     fill: "#756f6a",
     opacity: 1
   },
@@ -267,7 +267,7 @@ export default class VictoryBar extends React.Component {
         const labelComponent = this.props.labelComponents ?
           this.props.labelComponents[labelIndex] || this.props.labelComponents[0] : undefined;
         return (
-          <g key={`series-${index}-bar-${barIndex}`}>
+          <Group key={`series-${index}-bar-${barIndex}`}>
             {barComponent}
             <BarLabel key={`label-series-${index}-bar-${barIndex}`}
               horizontal={this.props.horizontal}
@@ -277,7 +277,7 @@ export default class VictoryBar extends React.Component {
               labelText={labelText}
               labelComponent={labelComponent}
             />
-          </g>
+        </Group>
         );
       }
       return barComponent;
@@ -334,7 +334,7 @@ export default class VictoryBar extends React.Component {
       );
     }
     const style = Chart.getStyles(this.props, defaultStyles);
-    const group = <g style={style.parent}>{this.renderData(this.props, style)}</g>;
-    return this.props.standalone ? <svg style={style.parent}>{group}</svg> : group;
+    const group = <Group {...style.parent}>{this.renderData(this.props, style)}</Group>;
+    return this.props.standalone ? <Surface {...style.parent}>{group}</Surface> : group;
   }
 }

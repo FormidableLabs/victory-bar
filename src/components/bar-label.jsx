@@ -3,6 +3,7 @@ import React, { PropTypes } from "react";
 import Radium from "radium";
 import { VictoryLabel } from "victory-label";
 import { Chart } from "victory-util";
+import { Group } from "react-art";
 
 @Radium
 export default class BarLabel extends React.Component {
@@ -86,9 +87,9 @@ export default class BarLabel extends React.Component {
 
   render() {
     return (
-      <g>
+      <Group>
         {this.renderLabel(this.props)}
-      </g>
+      </Group>
     );
   }
 }

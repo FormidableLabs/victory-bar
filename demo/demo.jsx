@@ -2,7 +2,7 @@
 import _ from "lodash";
 import React from "react";
 import {VictoryBar} from "../src/index";
-import {VictoryChart} from "victory-chart";
+// import {VictoryChart} from "victory-chart";
 
 export default class App extends React.Component {
   constructor() {
@@ -64,6 +64,31 @@ export default class App extends React.Component {
     return (
       <div className="demo">
         <h1>Victory Bar</h1>
+        <VictoryBar
+          style={{parent: {border: "1px solid", margin: 10}}}
+          height={500}
+          data={this.state.numericBarData}
+          dataAttributes={[
+            {fill: "cornflowerblue"},
+            {fill: "orange"},
+            {fill: "greenyellow"},
+            {fill: "gold"},
+            {fill: "tomato"}
+          ]}
+          labels={["low", "medium", "high"]}
+          horizontal
+          categories={[[1, 3], [4, 7], [9, 11]]}
+          animate={{velocity: 0.02}}
+        />
+
+        <VictoryBar
+          style={{parent: {border: "1px solid", margin: 10, overflow: "visible"}}}
+          data={this.state.barData}
+          colorScale={"greyscale"}
+          labels={["one", "two", "three"]}
+          stacked
+          animate={{velocity: 0.02}}
+        />
 
         <ChartWrap>
           <VictoryBar
@@ -177,7 +202,9 @@ class ChartWrap extends React.Component {
     return (
       <div>
         {React.cloneElement(this.props.children, this.props)}
+        {/* turn off chart wrapper until converted to react-art
         <VictoryChart {...this.props}>{this.props.children}</VictoryChart>
+        */}
       </div>
     );
   }
