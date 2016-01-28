@@ -2,16 +2,15 @@
  * Client tests
  */
 /*eslint-disable max-nested-callbacks */
-/* global sinon */
 
 import React from "react";
-import _ from "lodash";
+// import _ from "lodash";
 import VictoryBar from "src/components/victory-bar";
-import DomainHelpers from "src/domain-helpers";
+// import DomainHelpers from "src/domain-helpers";
 // Use `TestUtils` to inject into DOM, simulate events, etc.
 // See: https://facebook.github.io/react/docs/test-utils.html
 import TestUtils from "react-addons-test-utils";
-import { Surface, Shape } from "react-art";
+import { Surface } from "react-art";
 
 describe("components/victory-bar", () => {
   describe("default component rendering", () => {
