@@ -64,7 +64,7 @@ export default class App extends React.Component {
     return (
       <div className="demo">
         <h1>Victory Bar</h1>
-          <VictoryBar
+        <VictoryBar
           style={{parent: {border: "1px solid", margin: 10}}}
           height={500}
           data={this.state.numericBarData}
