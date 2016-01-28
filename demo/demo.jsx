@@ -202,7 +202,9 @@ class ChartWrap extends React.Component {
     return (
       <div>
         {React.cloneElement(this.props.children, this.props)}
+        {/* turn off chart wrapper until converted to react-art
         <VictoryChart {...this.props}>{this.props.children}</VictoryChart>
+        */}
       </div>
     );
   }
