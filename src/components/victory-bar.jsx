@@ -20,7 +20,8 @@ const defaultStyles = {
   },
   labels: {
     fontSize: 12,
-    padding: 4
+    padding: 4,
+    fill: "black"
   }
 };
 
@@ -113,7 +114,9 @@ export default class VictoryBar extends React.Component {
     /**
      * The grouped prop determines whether the chart should consist of sets of grouped bars.
      * When this prop is set to true, the data prop *must* be an array of multiple data series
-     * ie. not an array of data points, but an array of arrays of data points
+     * ie. not an array of data points, but an array of arrays of data points.  If data is
+     * given as an array or arrays, and data accessor props have default values
+     * (ie. x={"x"} y={"y"}), the grouped prop will default to true.
      */
     grouped: PropTypes.bool,
     /**
@@ -260,7 +263,10 @@ export default class VictoryBar extends React.Component {
           datum={datum}
         />
       );
-      if (LayoutHelpers.shouldPlotLabel(seriesIndex, this.props, calculatedProps.datasets)) {
+      const shouldPlotLabel = LayoutHelpers.shouldPlotLabel(
+        seriesIndex, this.props, calculatedProps.datasets
+      );
+      if (datum.label || shouldPlotLabel) {
         const labelIndex = LayoutHelpers.getLabelIndex(datum, calculatedProps);
         const labelText = this.props.labels ?
           this.props.labels[labelIndex] || this.props.labels[0] : "";
@@ -274,7 +280,7 @@ export default class VictoryBar extends React.Component {
               style={baseStyle.labels}
               position={position}
               datum={datum}
-              labelText={labelText}
+              labelText={datum.label || labelText}
               labelComponent={labelComponent}
             />
           </g>
