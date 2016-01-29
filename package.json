@@ -22,9 +22,11 @@
   "dependencies": {
     "builder": "~2.4.0",
     "builder-victory-component": "~0.2.1",
+    "lodash": "^3.10.1",
+    "radium": "^0.16.2",
     "victory-animation": "^0.0.13",
-    "victory-util": "^3.0.0",
-    "victory-label": "^0.3.1"
+    "victory-util": "^4.0.0",
+    "victory-label": "^1.0.0"
   },
   "devDependencies": {
     "builder-victory-component-dev": "~0.2.1",

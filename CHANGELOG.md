@@ -4,13 +4,11 @@
 
 - Supports data accessor functions!
 [more detail](https://github.com/FormidableLabs/victory/issues/84)
+- Application dependencies like `radium` and `lodash` now live in components, not in the Builder archetype. This is a breaking change. https://github.com/FormidableLabs/victory/issues/176
 
 ## 3.0.0 (2016-01-15)
 
 - Upgrade to Radium 0.16.2. This is a breaking change if you're using media queries or keyframes in your components. Please review upgrade guide at https://github.com/FormidableLabs/radium/blob/master/docs/guides/upgrade-v0.16.x.md
-- Demo application now works with hot reloading.
-- Application dependencies like `radium` and `lodash` now live in components, not in the Builder archetype. This is a breaking change. https://github.com/FormidableLabs/victory/issues/176
-
 
 ## 2.6.1 (2016-1-19)
 
