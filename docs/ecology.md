@@ -13,11 +13,10 @@ VictoryBar is written to be highly configurable, but it also includes a set of s
 <VictoryBar/>
 ```
 
-To display your own data, just pass in an array of data objects, or an array of arrays via the data prop. Here, the x domain is automatically set to contain the data. The y domain is explicity set here to make the smallest bars more visible.
+To display your own data, just pass in an array of data objects, or an array of arrays via the data prop.
 
 ```playground
 <VictoryBar
-  domain={{y: [0, 4]}}
   data={[
     {x: 1, y: 1},
     {x: 2, y: 2},
@@ -28,11 +27,27 @@ To display your own data, just pass in an array of data objects, or an array of 
 />
 ```
 
-Pass in an array of arrays of data objects to create a set of grouped bars. The bars are automatically colored separately for each data series.
+VictoryBar comes with data accessor props to make passing in data much more flexible.
+assign a property to x or y, or process data on the fly.
 
 ```playground
 <VictoryBar
-  domain={{y: [0, 4]}}
+  data={[
+    {amount: 1, yield: 1, error: 0.5},
+    {amount: 2, yield: 2, error: 1.1},
+    {amount: 3, yield: 3, error: 0},
+    {amount: 4, yield: 2, error: 0.1},
+    {amount: 5, yield: 1, error: 1.5}
+  ]}
+  x={"amount"}
+  y={(data) => (data.yield + data.error)}
+/>
+```
+
+Pass in an array of arrays of data objects to create a set of grouped bars. The bars are automatically colored separately for each data series
+
+```playground
+<VictoryBar
   height={500}
   data={[
     [
@@ -117,6 +132,64 @@ The sensible defaults VictoryBar provides makes it easy to get started, but ever
 />
 ```
 *NOTE: horizontal bars are only partially supported in VictoryChart. Check for updates soon!*
+
+data objects can be styled directly for granular control
+
+```playground
+<VictoryBar
+  height={500}
+  padding={75}
+  data={[
+    [
+      {x: 1, y: 1, fill: "tomato"},
+      {x: 2, y: 2},
+      {x: 3, y: 3}
+    ],
+    [
+      {x: 1, y: 2},
+      {x: 2, y: 1, fill: "blue"},
+      {x: 3, y: 1}
+    ],
+    [
+      {x: 1, y: 3},
+      {x: 2, y: 4, label: "BEST"},
+      {x: 3, y: 2, fill: "gold"}
+    ],
+  ]}
+/>
+```
+
+Functional styles allow elements to determine their own styles based on data
+
+```playground
+<VictoryBar
+  height={500}
+  padding={75}
+  style={{
+    data: {
+      fill: (data) => data.y > 2 ?
+        "red" : "blue"
+    }
+  }}
+  data={[
+    [
+      {x: 1, y: 1},
+      {x: 2, y: 2},
+      {x: 3, y: 3}
+    ],
+    [
+      {x: 1, y: 2},
+      {x: 2, y: 1},
+      {x: 3, y: 1}
+    ],
+    [
+      {x: 1, y: 3},
+      {x: 2, y: 4},
+      {x: 3, y: 2}
+    ],
+  ]}
+/>
+```
 
 ### Animating
 
