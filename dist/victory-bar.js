@@ -96,21 +96,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _victoryUtil = __webpack_require__(77);
 	
-	var _victoryAnimation = __webpack_require__(195);
+	var _victoryAnimation = __webpack_require__(196);
 	
-	var _bar = __webpack_require__(202);
+	var _bar = __webpack_require__(203);
 	
 	var _bar2 = _interopRequireDefault(_bar);
 	
-	var _barLabel = __webpack_require__(203);
+	var _barLabel = __webpack_require__(204);
 	
 	var _barLabel2 = _interopRequireDefault(_barLabel);
 	
-	var _domainHelpers = __webpack_require__(237);
+	var _domainHelpers = __webpack_require__(207);
 	
 	var _domainHelpers2 = _interopRequireDefault(_domainHelpers);
 	
-	var _layoutHelpers = __webpack_require__(238);
+	var _layoutHelpers = __webpack_require__(208);
 	
 	var _layoutHelpers2 = _interopRequireDefault(_layoutHelpers);
 	
@@ -125,7 +125,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  labels: {
 	    fontSize: 12,
-	    padding: 4
+	    padding: 4,
+	    fill: "black"
 	  }
 	};
 	
@@ -145,19 +146,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function renderBars(dataset, seriesIndex, calculatedProps) {
 	      var _this = this;
 	
-	      return dataset.data.map(function (data, barIndex) {
+	      return dataset.data.map(function (datum, barIndex) {
 	        var index = { seriesIndex: seriesIndex, barIndex: barIndex };
-	        var position = _layoutHelpers2["default"].getBarPosition(data, index, calculatedProps);
+	        var position = _layoutHelpers2["default"].getBarPosition(datum, index, calculatedProps);
 	        var baseStyle = calculatedProps.style;
-	        var style = _layoutHelpers2["default"].getBarStyle(data, dataset, baseStyle);
+	        var style = _layoutHelpers2["default"].getBarStyle(datum, dataset, baseStyle);
 	        var barComponent = _react2["default"].createElement(_bar2["default"], { key: "series-" + index + "-bar-" + barIndex,
 	          horizontal: _this.props.horizontal,
 	          style: style,
 	          position: position,
-	          data: data
+	          datum: datum
 	        });
-	        if (_layoutHelpers2["default"].shouldPlotLabel(seriesIndex, _this.props, calculatedProps.datasets)) {
-	          var labelIndex = _layoutHelpers2["default"].getLabelIndex(data, calculatedProps);
+	        var shouldPlotLabel = _layoutHelpers2["default"].shouldPlotLabel(seriesIndex, _this.props, calculatedProps.datasets);
+	        if (datum.label || shouldPlotLabel) {
+	          var labelIndex = _layoutHelpers2["default"].getLabelIndex(datum, calculatedProps);
 	          var labelText = _this.props.labels ? _this.props.labels[labelIndex] || _this.props.labels[0] : "";
 	          var labelComponent = _this.props.labelComponents ? _this.props.labelComponents[labelIndex] || _this.props.labelComponents[0] : undefined;
 	          return _react2["default"].createElement(
@@ -168,8 +170,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	              horizontal: _this.props.horizontal,
 	              style: baseStyle.labels,
 	              position: position,
-	              data: data,
-	              labelText: labelText,
+	              datum: datum,
+	              labelText: datum.label || labelText,
 	              labelComponent: labelComponent
 	            })
 	          );
@@ -182,10 +184,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function renderData(props, style) {
 	      var _this2 = this;
 	
-	      var datasets = _victoryUtil.Data.consolidateData(props);
+	      var stacked = props.stacked;
+	      var categories = props.categories;
+	
+	      var grouped = _domainHelpers2["default"].shouldGroup(props);
+	      var hasMultipleDatasets = grouped || stacked;
+	      var rawDatasets = hasMultipleDatasets ? props.data : [props.data];
+	      var datasets = _victoryUtil.Data.formatDatasets(rawDatasets, props);
 	      var stringMap = {
-	        x: _victoryUtil.Data.createStringMap(props, "x"),
-	        y: _victoryUtil.Data.createStringMap(props, "y")
+	        x: _victoryUtil.Data.createStringMap(props, "x", hasMultipleDatasets),
+	        y: _victoryUtil.Data.createStringMap(props, "y", hasMultipleDatasets)
 	      };
 	      var padding = _victoryUtil.Chart.getPadding(props);
 	      var range = {
@@ -200,10 +208,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        x: _victoryUtil.Scale.getBaseScale(props, "x").domain(domain.x).range(range.x),
 	        y: _victoryUtil.Scale.getBaseScale(props, "y").domain(domain.y).range(range.y)
 	      };
-	      var stacked = props.stacked;
-	      var categories = props.categories;
 	      var calculatedProps = {
-	        categories: categories, datasets: datasets, domain: domain, padding: padding, range: range, scale: scale, stacked: stacked, stringMap: stringMap, style: style
+	        categories: categories, datasets: datasets, domain: domain, padding: padding, range: range, scale: scale, grouped: grouped, stacked: stacked, stringMap: stringMap, style: style
 	      };
 	      return datasets.map(function (dataset, index) {
 	        return _this2.renderBars(dataset, index, calculatedProps);
@@ -259,17 +265,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      /**
 	       * The data prop specifies the data to be plotted. Data should be in the form of an array
 	       * of data points, or an array of arrays of data points for multiple datasets.
-	       * Each data point should be an object with x and y properties.
-	       * @examples [{x: 1, y:2}, {x: 2, y: 3}],
+	       * Each data point may be any format you wish (depending on the `x` and `y` accessor props),
+	       * but by default, an object with x and y properties is expected.
+	       * @examples [{x: 1, y: 2}, {x: 2, y: 3}], [[1, 2], [2, 3]],
 	       * [[{x: "a", y: 1}, {x: "b", y: 2}], [{x: "a", y: 2}, {x: "b", y: 3}]]
 	       */
-	      data: _react.PropTypes.oneOfType([_react.PropTypes.arrayOf(_react.PropTypes.shape({
-	        x: _react.PropTypes.any,
-	        y: _react.PropTypes.any
-	      })), _react.PropTypes.arrayOf(_react.PropTypes.arrayOf(_react.PropTypes.shape({
-	        x: _react.PropTypes.any,
-	        y: _react.PropTypes.any
-	      })))]),
+	      data: _react.PropTypes.array,
 	      /**
 	       * The dataAttributes prop describes how a data set should be styled.
 	       * This prop can be given as an object, or an array of objects. If this prop is
@@ -315,6 +316,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        x: _victoryUtil.PropTypes.nonNegative,
 	        y: _victoryUtil.PropTypes.nonNegative
 	      }), _victoryUtil.PropTypes.nonNegative]),
+	      /**
+	       * The grouped prop determines whether the chart should consist of sets of grouped bars.
+	       * When this prop is set to true, the data prop *must* be an array of multiple data series
+	       * ie. not an array of data points, but an array of arrays of data points.  If data is
+	       * given as an array or arrays, and data accessor props have default values
+	       * (ie. x={"x"} y={"y"}), the grouped prop will default to true.
+	       */
+	      grouped: _react.PropTypes.bool,
 	      /**
 	       * The height props specifies the height of the chart container element in pixels
 	       */
@@ -365,7 +374,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      })]),
 	      /**
 	       * The stacked prop determines whether the chart should consist of stacked bars.
-	       * When this prop is set to false, grouped bars will be rendered instead.
+	       * When this prop is set to true, the data prop *must* be an array of multiple data series
+	       * ie. not an array of data points, but an array of arrays of data points
 	       */
 	      stacked: _react.PropTypes.bool,
 	      /**
@@ -386,9 +396,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	        labels: _react.PropTypes.object
 	      }),
 	      /**
-	       * The width props specifies the width of the chart container element in pixels
+	       * The width prop specifies the width of the chart container element in pixels
 	       */
-	      width: _victoryUtil.PropTypes.nonNegative
+	      width: _victoryUtil.PropTypes.nonNegative,
+	      /**
+	       * The x prop specifies how to access the X value of each data point.
+	       * If given as a function, it will be run on each data point, and returned value will be used.
+	       * If given as an integer, it will be used as an array index for array-type data points.
+	       * If given as a string, it will be used as a property key for object-type data points.
+	       * If given as an array of strings, or a string containing dots or brackets,
+	       * it will be used as a nested object property path (for details see Lodash docs for _.get).
+	       * If `null` or `undefined`, the data value will be used as is (identity function/pass-through).
+	       * @examples 0, 'x', 'x.value.nested.1.thing', 'x[2].also.nested', null, d => Math.sin(d)
+	       */
+	      x: _react.PropTypes.oneOfType([_react.PropTypes.func, _victoryUtil.PropTypes.allOfType([_victoryUtil.PropTypes.integer, _victoryUtil.PropTypes.nonNegative]), _react.PropTypes.string, _react.PropTypes.arrayOf(_react.PropTypes.string)]),
+	      /**
+	       * The y prop specifies how to access the Y value of each data point.
+	       * If given as a function, it will be run on each data point, and returned value will be used.
+	       * If given as an integer, it will be used as an array index for array-type data points.
+	       * If given as a string, it will be used as a property key for object-type data points.
+	       * If given as an array of strings, or a string containing dots or brackets,
+	       * it will be used as a nested object property path (for details see Lodash docs for _.get).
+	       * If `null` or `undefined`, the data value will be used as is (identity function/pass-through).
+	       * @examples 0, 'y', 'y.value.nested.1.thing', 'y[2].also.nested', null, d => Math.sin(d)
+	       */
+	      y: _react.PropTypes.oneOfType([_react.PropTypes.func, _victoryUtil.PropTypes.allOfType([_victoryUtil.PropTypes.integer, _victoryUtil.PropTypes.nonNegative]), _react.PropTypes.string, _react.PropTypes.arrayOf(_react.PropTypes.string)])
 	    },
 	    enumerable: true
 	  }, {
@@ -401,7 +433,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      scale: "linear",
 	      stacked: false,
 	      standalone: true,
-	      width: 450
+	      width: 450,
+	      x: "x",
+	      y: "y"
 	    },
 	    enumerable: true
 	  }, {
@@ -1345,8 +1379,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
 	
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-	
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
 	Object.defineProperty(exports, "__esModule", {
@@ -1372,6 +1404,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
+	
 	var KEYS_TO_IGNORE_WHEN_COPYING_PROPERTIES = ['arguments', 'callee', 'caller', 'length', 'name', 'prototype', 'type'];
 	
 	function copyProperties(source, target) {
@@ -1384,17 +1418,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	function enhanceWithRadium(configOrComposedComponent) {
+	  var _class2, _temp;
+	
 	  var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 	
 	  if (typeof configOrComposedComponent !== 'function') {
-	    var _ret = function () {
+	    var _ret = (function () {
 	      var newConfig = _extends({}, config, configOrComposedComponent);
 	      return {
 	        v: function v(configOrComponent) {
 	          return enhanceWithRadium(configOrComponent, newConfig);
 	        }
 	      };
-	    }();
+	    })();
 	
 	    if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 	  }
@@ -1404,25 +1440,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  // Handle stateless components
 	  if (!ComposedComponent.render && !ComposedComponent.prototype.render) {
-	    ComposedComponent = function (_Component) {
-	      _inherits(ComposedComponent, _Component);
+	    ComposedComponent = (function (_Component) {
+	      _inherits(_class, _Component);
 	
-	      function ComposedComponent() {
-	        _classCallCheck(this, ComposedComponent);
+	      function _class() {
+	        _classCallCheck(this, _class);
 	
 	        return _possibleConstructorReturn(this, _Component.apply(this, arguments));
 	      }
 	
-	      ComposedComponent.prototype.render = function render() {
+	      _class.prototype.render = function render() {
 	        return component(this.props, this.context);
 	      };
 	
-	      return ComposedComponent;
-	    }(_react.Component);
+	      return _class;
+	    })(_react.Component);
 	    ComposedComponent.displayName = component.displayName || component.name;
 	  }
 	
-	  var RadiumEnhancer = function (_ComposedComponent) {
+	  var RadiumEnhancer = (_temp = _class2 = (function (_ComposedComponent) {
 	    _inherits(RadiumEnhancer, _ComposedComponent);
 	
 	    function RadiumEnhancer() {
@@ -1482,7 +1518,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    return RadiumEnhancer;
-	  }(ComposedComponent);
+	  })(ComposedComponent), _class2._isRadiumEnhanced = true, _temp);
 	
 	  // Class inheritance uses Object.create and because of __proto__ issues
 	  // with IE <10 any static properties of the superclass aren't inherited and
@@ -1630,7 +1666,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var StyleKeeper = function () {
+	var StyleKeeper = (function () {
 	  function StyleKeeper(userAgent) {
 	    _classCallCheck(this, StyleKeeper);
 	
@@ -1685,7 +1721,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	
 	  return StyleKeeper;
-	}();
+	})();
 	
 	exports.default = StyleKeeper;
 	module.exports = exports['default'];
@@ -1697,8 +1733,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 	
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
@@ -1734,6 +1768,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
+	
 	var DEFAULT_CONFIG = {
 	  plugins: [_plugins2.default.mergeStyleArray, _plugins2.default.checkProps, _plugins2.default.resolveMediaQueries, _plugins2.default.resolveInteractionStyles, _plugins2.default.keyframes, _plugins2.default.prefix, _plugins2.default.checkProps]
 	};
@@ -1743,6 +1779,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// Declare early for recursive helpers.
 	var resolveStyles = null;
+	
+	var _shouldResolveStyles = function _shouldResolveStyles(component) {
+	  return component.type && !component.type._isRadiumEnhanced;
+	};
 	
 	var _resolveChildren = function _resolveChildren(_ref) {
 	  var children = _ref.children;
@@ -1766,7 +1806,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return function () {
 	      var result = children.apply(this, arguments);
 	      if (_react2.default.isValidElement(result)) {
-	        return resolveStyles(component, result, config, existingKeyMap);
+	        return resolveStyles(component, result, config, existingKeyMap, true);
 	      }
 	      return result;
 	    };
@@ -1776,12 +1816,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // If a React Element is an only child, don't wrap it in an array for
 	    // React.Children.map() for React.Children.only() compatibility.
 	    var onlyChild = _react2.default.Children.only(children);
-	    return resolveStyles(component, onlyChild, config, existingKeyMap);
+	    return resolveStyles(component, onlyChild, config, existingKeyMap, true);
 	  }
 	
 	  return _react2.default.Children.map(children, function (child) {
 	    if (_react2.default.isValidElement(child)) {
-	      return resolveStyles(component, child, config, existingKeyMap);
+	      return resolveStyles(component, child, config, existingKeyMap, true);
 	    }
 	
 	    return child;
@@ -1806,7 +1846,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var propValue = props[prop];
 	    if (_react2.default.isValidElement(propValue)) {
 	      newProps = _extends({}, newProps);
-	      newProps[prop] = resolveStyles(component, propValue, config, existingKeyMap);
+	      newProps[prop] = resolveStyles(component, propValue, config, existingKeyMap, true);
 	    }
 	  });
 	
@@ -1967,20 +2007,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	// interactions (e.g. mouse over). It also replaces the style prop because it
 	// adds in the various interaction styles (e.g. :hover).
 	//
-	resolveStyles = function resolveStyles(component, // ReactComponent, flow+eslint complaining
+	resolveStyles = function (component, // ReactComponent, flow+eslint complaining
 	renderedElement) {
 	  var // ReactElement
 	  config = arguments.length <= 2 || arguments[2] === undefined ? DEFAULT_CONFIG : arguments[2];
 	  var existingKeyMap = arguments[3];
+	  var shouldCheckBeforeResolve = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
 	  // ReactElement
 	  existingKeyMap = existingKeyMap || {};
-	
 	  if (!renderedElement ||
 	  // Bail if we've already processed this element. This ensures that only the
 	  // owner of an element processes that element, since the owner's render
 	  // function will be called first (which will always be the case, since you
 	  // can't know what else to render until you render the parent component).
-	  renderedElement.props && renderedElement.props._radiumDidResolveStyles) {
+	  renderedElement.props && renderedElement.props._radiumDidResolveStyles ||
+	
+	  // Bail if this element is a radium enhanced element, because if it is,
+	  // then it will take care of resolving its own styles.
+	  shouldCheckBeforeResolve && !_shouldResolveStyles(renderedElement)) {
 	    return renderedElement;
 	  }
 	
@@ -2090,15 +2134,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
 	
 	var _index = __webpack_require__(34);
 	
-	var _checkProps = function checkProps() {};
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
+	
+	var checkProps = function checkProps() {};
 	
 	if (process.env.NODE_ENV !== 'production') {
 	  (function () {
@@ -2118,7 +2162,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      'transition': ['transitionDelay', 'transitionDuration', 'transitionProperty', 'transitionTimingFunction']
 	    };
 	
-	    _checkProps = function checkProps(config) {
+	    checkProps = function (config) {
 	      var componentName = config.componentName;
 	      var style = config.style;
 	
@@ -2140,14 +2184,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 	
 	      styleKeys.forEach(function (k) {
-	        return _checkProps(_extends({}, config, { style: style[k] }));
+	        return checkProps(_extends({}, config, { style: style[k] }));
 	      });
 	      return;
 	    };
 	  })();
 	}
 	
-	exports.default = _checkProps;
+	exports.default = checkProps;
 	module.exports = exports['default'];
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)))
 
@@ -2270,11 +2314,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return '';
 	  }
 	
-	  var prefixedRules = (0, _prefixer.getPrefixedStyle)(rules, userAgent);
-	  var rulesWithPx = (0, _mapObject2.default)(prefixedRules, function (value, key) {
+	  var rulesWithPx = (0, _mapObject2.default)(rules, function (value, key) {
 	    return (0, _appendPxIfNeeded2.default)(key, value);
 	  });
-	  var cssPrefixedRules = (0, _camelCasePropsToDashCase2.default)(rulesWithPx);
+	  var prefixedRules = (0, _prefixer.getPrefixedStyle)(rulesWithPx, userAgent);
+	  var cssPrefixedRules = (0, _camelCasePropsToDashCase2.default)(prefixedRules);
 	  var serializedRules = createMarkupForStyles(cssPrefixedRules);
 	
 	  return selector + '{' + serializedRules + '}';
@@ -2409,43 +2453,48 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; } /**
+	                                                                                                                              * Based on https://github.com/jsstyles/css-vendor, but without having to
+	                                                                                                                              * convert between different cases all the time.
+	                                                                                                                              *
+	                                                                                                                              * 
+	                                                                                                                              */
+	
 	function transformValues(style) {
 	  return Object.keys(style).reduce(function (newStyle, key) {
 	    var value = style[key];
 	    if (Array.isArray(value)) {
 	      value = value.join(';' + key + ':');
+	    } else if (value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && typeof value.toString === 'function') {
+	      value = value.toString();
 	    }
+	
 	    newStyle[key] = value;
 	    return newStyle;
 	  }, {});
-	} /**
-	   * Based on https://github.com/jsstyles/css-vendor, but without having to
-	   * convert between different cases all the time.
-	   *
-	   * 
-	   */
+	}
 	
-	var hasWarnedAboutUserAgent = false;
-	var lastUserAgent = undefined;
-	var prefixer = undefined;
+	var _hasWarnedAboutUserAgent = false;
+	var _lastUserAgent = undefined;
+	var _cachedPrefixer = undefined;
 	
 	function getPrefixer(userAgent) {
 	  var actualUserAgent = userAgent || global && global.navigator && global.navigator.userAgent;
 	
 	  if (process.env.NODE_ENV !== 'production') {
-	    if (!actualUserAgent && !hasWarnedAboutUserAgent) {
+	    if (!actualUserAgent && !_hasWarnedAboutUserAgent) {
 	      /* eslint-disable no-console */
 	      console.warn('Radium: userAgent should be supplied for server-side rendering. See ' + 'https://github.com/FormidableLabs/radium/tree/master/docs/api#radium ' + 'for more information.');
 	      /* eslint-enable no-console */
-	      hasWarnedAboutUserAgent = true;
+	      _hasWarnedAboutUserAgent = true;
 	    }
 	  }
 	
-	  if (!prefixer || actualUserAgent !== lastUserAgent) {
-	    prefixer = new _inlineStylePrefixer2.default({ userAgent: actualUserAgent });
-	    lastUserAgent = actualUserAgent;
+	  if (!_cachedPrefixer || actualUserAgent !== _lastUserAgent) {
+	    _cachedPrefixer = new _inlineStylePrefixer2.default({ userAgent: actualUserAgent });
+	    _lastUserAgent = actualUserAgent;
 	  }
-	  return prefixer;
+	  return _cachedPrefixer;
 	}
 	
 	function getPrefixedKeyframes(userAgent) {
@@ -2455,10 +2504,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Returns a new style object with vendor prefixes added to property names
 	// and values.
 	function getPrefixedStyle(style, userAgent) {
+	  var styleWithFallbacks = transformValues(style);
 	  var prefixer = getPrefixer(userAgent);
-	  var prefixedStyle = prefixer.prefix(style);
-	  var prefixedStyleWithFallbacks = transformValues(prefixedStyle);
-	  return prefixedStyleWithFallbacks;
+	  var prefixedStyle = prefixer.prefix(styleWithFallbacks);
+	  return prefixedStyle;
 	}
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(30)))
 
@@ -2749,86 +2798,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  // Find the prefix for this browser (if any)
 	  prefixKeys = Object.keys(vendorPrefixes);
-	  var _iteratorNormalCompletion = true;
-	  var _didIteratorError = false;
-	  var _iteratorError = undefined;
+	  for (var i = 0; i < prefixKeys.length; i++) {
+	    prefix = prefixKeys[i];
 	
-	  try {
-	    for (var _iterator = prefixKeys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	      prefix = _step.value;
+	    // Find a matching vendor
+	    vendors = vendorPrefixes[prefix];
+	    conditions = browsers[browser];
 	
-	      // Find a matching vendor
-	      vendors = vendorPrefixes[prefix];
-	      conditions = browsers[browser];
-	      var _iteratorNormalCompletion2 = true;
-	      var _didIteratorError2 = false;
-	      var _iteratorError2 = undefined;
+	    for (var j = 0; j < vendors.length; j++) {
+	      prefixVendor = vendors[j];
 	
-	      try {
-	        for (var _iterator2 = vendors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-	          prefixVendor = _step2.value;
-	          var _iteratorNormalCompletion3 = true;
-	          var _didIteratorError3 = false;
-	          var _iteratorError3 = undefined;
+	      for (var k = 0; k < conditions.length; k++) {
+	        browserVendors = conditions[k];
 	
-	          try {
-	            for (var _iterator3 = conditions[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-	              browserVendors = _step3.value;
-	
-	              if (browserVendors.indexOf(prefixVendor) !== -1) {
-	                return {
-	                  inline: prefix,
-	                  css: '-' + prefix.toLowerCase() + '-'
-	                };
-	              }
-	            }
-	          } catch (err) {
-	            _didIteratorError3 = true;
-	            _iteratorError3 = err;
-	          } finally {
-	            try {
-	              if (!_iteratorNormalCompletion3 && _iterator3['return']) {
-	                _iterator3['return']();
-	              }
-	            } finally {
-	              if (_didIteratorError3) {
-	                throw _iteratorError3;
-	              }
-	            }
-	          }
+	        if (browserVendors.indexOf(prefixVendor) !== -1) {
+	          return {
+	            inline: prefix,
+	            css: '-' + prefix.toLowerCase() + '-'
+	          };
 	        }
-	      } catch (err) {
-	        _didIteratorError2 = true;
-	        _iteratorError2 = err;
-	      } finally {
-	        try {
-	          if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-	            _iterator2['return']();
-	          }
-	        } finally {
-	          if (_didIteratorError2) {
-	            throw _iteratorError2;
-	          }
-	        }
-	      }
-	    }
-	
-	    // No prefix found for this browser
-	  } catch (err) {
-	    _didIteratorError = true;
-	    _iteratorError = err;
-	  } finally {
-	    try {
-	      if (!_iteratorNormalCompletion && _iterator['return']) {
-	        _iterator['return']();
-	      }
-	    } finally {
-	      if (_didIteratorError) {
-	        throw _iteratorError;
 	      }
 	    }
 	  }
 	
+	  // No prefix found for this browser
 	  return { inline: '', css: '' };
 	};
 	
@@ -3300,7 +3293,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 50 */
 /***/ function(module, exports) {
 
-	var caniuseData = {"chrome":{"transform":35,"transformOrigin":35,"transformOriginX":35,"transformOriginY":35,"backfaceVisibility":35,"perspective":35,"perspectiveOrigin":35,"transformStyle":35,"transformOriginZ":35,"animation":42,"animationDelay":42,"animationDirection":42,"animationFillMode":42,"animationDuration":42,"animationIterationCount":42,"animationName":42,"animationPlayState":42,"animationTimingFunction":42,"appearance":50,"userSelect":50,"fontKerning":32,"textEmphasisPosition":50,"textEmphasis":50,"textEmphasisStyle":50,"textEmphasisColor":50,"boxDecorationBreak":50,"clipPath":50,"maskImage":50,"maskMode":50,"maskRepeat":50,"maskPosition":50,"maskClip":50,"maskOrigin":50,"maskSize":50,"maskComposite":50,"mask":50,"maskBorderSource":50,"maskBorderMode":50,"maskBorderSlice":50,"maskBorderWidth":50,"maskBorderOutset":50,"maskBorderRepeat":50,"maskBorder":50,"maskType":50,"textDecorationStyle":50,"textDecorationSkip":50,"textDecorationLine":50,"textDecorationColor":50,"filter":50,"fontFeatureSettings":47,"breakAfter":50,"breakBefore":50,"breakInside":50,"columnCount":50,"columnFill":50,"columnGap":50,"columnRule":50,"columnRuleColor":50,"columnRuleStyle":50,"columnRuleWidth":50,"columns":50,"columnSpan":50,"columnWidth":50},"safari":{"flex":8,"flexBasis":8,"flexDirection":8,"flexGrow":8,"flexFlow":8,"flexShrink":8,"flexWrap":8,"alignContent":8,"alignItems":8,"alignSelf":8,"justifyContent":8,"order":8,"transition":6,"transitionDelay":6,"transitionDuration":6,"transitionProperty":6,"transitionTimingFunction":6,"transform":8,"transformOrigin":8,"transformOriginX":8,"transformOriginY":8,"backfaceVisibility":8,"perspective":8,"perspectiveOrigin":8,"transformStyle":8,"transformOriginZ":8,"animation":8,"animationDelay":8,"animationDirection":8,"animationFillMode":8,"animationDuration":8,"animationIterationCount":8,"animationName":8,"animationPlayState":8,"animationTimingFunction":8,"appearance":9.1,"userSelect":9.1,"backdropFilter":9.1,"fontKerning":9.1,"scrollSnapType":9.1,"scrollSnapPointsX":9.1,"scrollSnapPointsY":9.1,"scrollSnapDestination":9.1,"scrollSnapCoordinate":9.1,"textEmphasisPosition":7,"textEmphasis":7,"textEmphasisStyle":7,"textEmphasisColor":7,"boxDecorationBreak":9.1,"clipPath":9.1,"maskImage":9.1,"maskMode":9.1,"maskRepeat":9.1,"maskPosition":9.1,"maskClip":9.1,"maskOrigin":9.1,"maskSize":9.1,"maskComposite":9.1,"mask":9.1,"maskBorderSource":9.1,"maskBorderMode":9.1,"maskBorderSlice":9.1,"maskBorderWidth":9.1,"maskBorderOutset":9.1,"maskBorderRepeat":9.1,"maskBorder":9.1,"maskType":9.1,"textDecorationStyle":9.1,"textDecorationSkip":9.1,"textDecorationLine":9.1,"textDecorationColor":9.1,"shapeImageThreshold":9.1,"shapeImageMargin":9.1,"shapeImageOutside":9.1,"filter":9,"hyphens":9.1,"flowInto":9.1,"flowFrom":9.1,"breakBefore":8,"breakAfter":8,"breakInside":8,"regionFragment":9.1,"columnCount":8,"columnFill":8,"columnGap":8,"columnRule":8,"columnRuleColor":8,"columnRuleStyle":8,"columnRuleWidth":8,"columns":8,"columnSpan":8,"columnWidth":8},"firefox":{"appearance":46,"userSelect":46,"boxSizing":28,"textAlignLast":46,"textDecorationStyle":35,"textDecorationSkip":35,"textDecorationLine":35,"textDecorationColor":35,"tabSize":46,"hyphens":42,"fontFeatureSettings":33,"breakAfter":46,"breakBefore":46,"breakInside":46,"columnCount":46,"columnFill":46,"columnGap":46,"columnRule":46,"columnRuleColor":46,"columnRuleStyle":46,"columnRuleWidth":46,"columns":46,"columnSpan":46,"columnWidth":46},"opera":{"flex":16,"flexBasis":16,"flexDirection":16,"flexGrow":16,"flexFlow":16,"flexShrink":16,"flexWrap":16,"alignContent":16,"alignItems":16,"alignSelf":16,"justifyContent":16,"order":16,"transform":22,"transformOrigin":22,"transformOriginX":22,"transformOriginY":22,"backfaceVisibility":22,"perspective":22,"perspectiveOrigin":22,"transformStyle":22,"transformOriginZ":22,"animation":29,"animationDelay":29,"animationDirection":29,"animationFillMode":29,"animationDuration":29,"animationIterationCount":29,"animationName":29,"animationPlayState":29,"animationTimingFunction":29,"appearance":36,"userSelect":36,"fontKerning":19,"textEmphasisPosition":36,"textEmphasis":36,"textEmphasisStyle":36,"textEmphasisColor":36,"boxDecorationBreak":36,"clipPath":36,"maskImage":36,"maskMode":36,"maskRepeat":36,"maskPosition":36,"maskClip":36,"maskOrigin":36,"maskSize":36,"maskComposite":36,"mask":36,"maskBorderSource":36,"maskBorderMode":36,"maskBorderSlice":36,"maskBorderWidth":36,"maskBorderOutset":36,"maskBorderRepeat":36,"maskBorder":36,"maskType":36,"filter":36,"fontFeatureSettings":36,"breakAfter":36,"breakBefore":36,"breakInside":36,"columnCount":36,"columnFill":36,"columnGap":36,"columnRule":36,"columnRuleColor":36,"columnRuleStyle":36,"columnRuleWidth":36,"columns":36,"columnSpan":36,"columnWidth":36},"ie":{"gridAutoRows":11,"gridTemplateColumns":11,"gridTemplate":11,"scrollSnapDestination":11,"gridGap":11,"gridRow":11,"gridRowStart":11,"flexFlow":10,"breakInside":11,"flowInto":11,"wrapThrough":11,"wrapMargin":11,"gridArea":11,"scrollSnapType":11,"transformOrigin":9,"transformOriginX":9,"userSelect":11,"touchAction":10,"scrollSnapPointsY":11,"gridTemplateRows":11,"breakAfter":11,"flexDirection":10,"gridAutoFlow":11,"flex":10,"flexWrap":10,"scrollSnapPointsX":11,"gridTemplateAreas":11,"hyphens":11,"transform":9,"flowFrom":11,"regionFragment":11,"gridColumnGap":11,"gridColumnEnd":11,"gridColumnStart":11,"scrollSnapCoordinate":11,"wrapFlow":11,"gridRowGap":11,"gridRowEnd":11,"breakBefore":11,"transformOriginY":9,"grid":11,"gridAutoColumns":11,"gridColumn":11,"textSizeAdjust":11},"edge":{"userSelect":14,"wrapFlow":14,"wrapThrough":14,"wrapMargin":14,"scrollSnapType":14,"scrollSnapPointsX":14,"scrollSnapPointsY":14,"scrollSnapDestination":14,"scrollSnapCoordinate":14,"hyphens":14,"flowInto":14,"flowFrom":14,"breakBefore":14,"breakAfter":14,"breakInside":14,"regionFragment":14,"gridTemplateColumns":14,"gridTemplateRows":14,"gridTemplateAreas":14,"gridTemplate":14,"gridAutoColumns":14,"gridAutoRows":14,"gridAutoFlow":14,"grid":14,"gridRowStart":14,"gridColumnStart":14,"gridRowEnd":14,"gridRow":14,"gridColumn":14,"gridColumnEnd":14,"gridColumnGap":14,"gridRowGap":14,"gridArea":14,"gridGap":14},"ios_saf":{"flex":8.1,"flexBasis":8.1,"flexDirection":8.1,"flexGrow":8.1,"flexFlow":8.1,"flexShrink":8.1,"flexWrap":8.1,"alignContent":8.1,"alignItems":8.1,"alignSelf":8.1,"justifyContent":8.1,"order":8.1,"transition":6,"transitionDelay":6,"transitionDuration":6,"transitionProperty":6,"transitionTimingFunction":6,"transform":8.1,"transformOrigin":8.1,"transformOriginX":8.1,"transformOriginY":8.1,"backfaceVisibility":8.1,"perspective":8.1,"perspectiveOrigin":8.1,"transformStyle":8.1,"transformOriginZ":8.1,"animation":8.1,"animationDelay":8.1,"animationDirection":8.1,"animationFillMode":8.1,"animationDuration":8.1,"animationIterationCount":8.1,"animationName":8.1,"animationPlayState":8.1,"animationTimingFunction":8.1,"appearance":9.3,"userSelect":9.3,"backdropFilter":9.3,"fontKerning":9.3,"scrollSnapType":9.3,"scrollSnapPointsX":9.3,"scrollSnapPointsY":9.3,"scrollSnapDestination":9.3,"scrollSnapCoordinate":9.3,"boxDecorationBreak":9.3,"clipPath":9.3,"maskImage":9.3,"maskMode":9.3,"maskRepeat":9.3,"maskPosition":9.3,"maskClip":9.3,"maskOrigin":9.3,"maskSize":9.3,"maskComposite":9.3,"mask":9.3,"maskBorderSource":9.3,"maskBorderMode":9.3,"maskBorderSlice":9.3,"maskBorderWidth":9.3,"maskBorderOutset":9.3,"maskBorderRepeat":9.3,"maskBorder":9.3,"maskType":9.3,"textSizeAdjust":9.3,"textDecorationStyle":9.3,"textDecorationSkip":9.3,"textDecorationLine":9.3,"textDecorationColor":9.3,"shapeImageThreshold":9.3,"shapeImageMargin":9.3,"shapeImageOutside":9.3,"filter":9,"hyphens":9.3,"flowInto":9.3,"flowFrom":9.3,"breakBefore":8.1,"breakAfter":8.1,"breakInside":8.1,"regionFragment":9.3,"columnCount":8.1,"columnFill":8.1,"columnGap":8.1,"columnRule":8.1,"columnRuleColor":8.1,"columnRuleStyle":8.1,"columnRuleWidth":8.1,"columns":8.1,"columnSpan":8.1,"columnWidth":8.1},"android":{"borderImage":4.2,"borderImageOutset":4.2,"borderImageRepeat":4.2,"borderImageSlice":4.2,"borderImageSource":4.2,"borderImageWidth":4.2,"flex":4.2,"flexBasis":4.2,"flexDirection":4.2,"flexGrow":4.2,"flexFlow":4.2,"flexShrink":4.2,"flexWrap":4.2,"alignContent":4.2,"alignItems":4.2,"alignSelf":4.2,"justifyContent":4.2,"order":4.2,"transition":4.2,"transitionDelay":4.2,"transitionDuration":4.2,"transitionProperty":4.2,"transitionTimingFunction":4.2,"transform":4.4,"transformOrigin":4.4,"transformOriginX":4.4,"transformOriginY":4.4,"backfaceVisibility":4.4,"perspective":4.4,"perspectiveOrigin":4.4,"transformStyle":4.4,"transformOriginZ":4.4,"animation":4.4,"animationDelay":4.4,"animationDirection":4.4,"animationFillMode":4.4,"animationDuration":4.4,"animationIterationCount":4.4,"animationName":4.4,"animationPlayState":4.4,"animationTimingFunction":4.4,"appearance":46,"userSelect":46,"fontKerning":4.4,"textEmphasisPosition":46,"textEmphasis":46,"textEmphasisStyle":46,"textEmphasisColor":46,"boxDecorationBreak":46,"clipPath":46,"maskImage":46,"maskMode":46,"maskRepeat":46,"maskPosition":46,"maskClip":46,"maskOrigin":46,"maskSize":46,"maskComposite":46,"mask":46,"maskBorderSource":46,"maskBorderMode":46,"maskBorderSlice":46,"maskBorderWidth":46,"maskBorderOutset":46,"maskBorderRepeat":46,"maskBorder":46,"maskType":46,"filter":46,"fontFeatureSettings":46,"breakAfter":46,"breakBefore":46,"breakInside":46,"columnCount":46,"columnFill":46,"columnGap":46,"columnRule":46,"columnRuleColor":46,"columnRuleStyle":46,"columnRuleWidth":46,"columns":46,"columnSpan":46,"columnWidth":46},"and_chr":{"appearance":47,"userSelect":47,"textEmphasisPosition":47,"textEmphasis":47,"textEmphasisStyle":47,"textEmphasisColor":47,"boxDecorationBreak":47,"clipPath":47,"maskImage":47,"maskMode":47,"maskRepeat":47,"maskPosition":47,"maskClip":47,"maskOrigin":47,"maskSize":47,"maskComposite":47,"mask":47,"maskBorderSource":47,"maskBorderMode":47,"maskBorderSlice":47,"maskBorderWidth":47,"maskBorderOutset":47,"maskBorderRepeat":47,"maskBorder":47,"maskType":47,"textDecorationStyle":47,"textDecorationSkip":47,"textDecorationLine":47,"textDecorationColor":47,"filter":47,"fontFeatureSettings":47,"breakAfter":47,"breakBefore":47,"breakInside":47,"columnCount":47,"columnFill":47,"columnGap":47,"columnRule":47,"columnRuleColor":47,"columnRuleStyle":47,"columnRuleWidth":47,"columns":47,"columnSpan":47,"columnWidth":47},"and_uc":{"flex":9.9,"flexBasis":9.9,"flexDirection":9.9,"flexGrow":9.9,"flexFlow":9.9,"flexShrink":9.9,"flexWrap":9.9,"alignContent":9.9,"alignItems":9.9,"alignSelf":9.9,"justifyContent":9.9,"order":9.9,"transition":9.9,"transitionDelay":9.9,"transitionDuration":9.9,"transitionProperty":9.9,"transitionTimingFunction":9.9,"transform":9.9,"transformOrigin":9.9,"transformOriginX":9.9,"transformOriginY":9.9,"backfaceVisibility":9.9,"perspective":9.9,"perspectiveOrigin":9.9,"transformStyle":9.9,"transformOriginZ":9.9,"animation":9.9,"animationDelay":9.9,"animationDirection":9.9,"animationFillMode":9.9,"animationDuration":9.9,"animationIterationCount":9.9,"animationName":9.9,"animationPlayState":9.9,"animationTimingFunction":9.9,"appearance":9.9,"userSelect":9.9,"fontKerning":9.9,"textEmphasisPosition":9.9,"textEmphasis":9.9,"textEmphasisStyle":9.9,"textEmphasisColor":9.9,"maskImage":9.9,"maskMode":9.9,"maskRepeat":9.9,"maskPosition":9.9,"maskClip":9.9,"maskOrigin":9.9,"maskSize":9.9,"maskComposite":9.9,"mask":9.9,"maskBorderSource":9.9,"maskBorderMode":9.9,"maskBorderSlice":9.9,"maskBorderWidth":9.9,"maskBorderOutset":9.9,"maskBorderRepeat":9.9,"maskBorder":9.9,"maskType":9.9,"textSizeAdjust":9.9,"filter":9.9,"hyphens":9.9,"flowInto":9.9,"flowFrom":9.9,"breakBefore":9.9,"breakAfter":9.9,"breakInside":9.9,"regionFragment":9.9,"fontFeatureSettings":9.9,"columnCount":9.9,"columnFill":9.9,"columnGap":9.9,"columnRule":9.9,"columnRuleColor":9.9,"columnRuleStyle":9.9,"columnRuleWidth":9.9,"columns":9.9,"columnSpan":9.9,"columnWidth":9.9},"op_mini":{"borderImage":5,"borderImageOutset":5,"borderImageRepeat":5,"borderImageSlice":5,"borderImageSource":5,"borderImageWidth":5,"tabSize":5,"objectFit":5,"objectPosition":5}}; module.exports = caniuseData
+	var caniuseData = {"chrome":{"transform":35,"transformOrigin":35,"transformOriginX":35,"transformOriginY":35,"backfaceVisibility":35,"perspective":35,"perspectiveOrigin":35,"transformStyle":35,"transformOriginZ":35,"animation":42,"animationDelay":42,"animationDirection":42,"animationFillMode":42,"animationDuration":42,"animationIterationCount":42,"animationName":42,"animationPlayState":42,"animationTimingFunction":42,"appearance":50,"userSelect":50,"fontKerning":32,"textEmphasisPosition":50,"textEmphasis":50,"textEmphasisStyle":50,"textEmphasisColor":50,"boxDecorationBreak":50,"clipPath":50,"maskImage":50,"maskMode":50,"maskRepeat":50,"maskPosition":50,"maskClip":50,"maskOrigin":50,"maskSize":50,"maskComposite":50,"mask":50,"maskBorderSource":50,"maskBorderMode":50,"maskBorderSlice":50,"maskBorderWidth":50,"maskBorderOutset":50,"maskBorderRepeat":50,"maskBorder":50,"maskType":50,"textDecorationStyle":50,"textDecorationSkip":50,"textDecorationLine":50,"textDecorationColor":50,"filter":50,"fontFeatureSettings":47,"breakAfter":50,"breakBefore":50,"breakInside":50,"columnCount":50,"columnFill":50,"columnGap":50,"columnRule":50,"columnRuleColor":50,"columnRuleStyle":50,"columnRuleWidth":50,"columns":50,"columnSpan":50,"columnWidth":50},"safari":{"flex":8,"flexBasis":8,"flexDirection":8,"flexGrow":8,"flexFlow":8,"flexShrink":8,"flexWrap":8,"alignContent":8,"alignItems":8,"alignSelf":8,"justifyContent":8,"order":8,"transition":6,"transitionDelay":6,"transitionDuration":6,"transitionProperty":6,"transitionTimingFunction":6,"transform":8,"transformOrigin":8,"transformOriginX":8,"transformOriginY":8,"backfaceVisibility":8,"perspective":8,"perspectiveOrigin":8,"transformStyle":8,"transformOriginZ":8,"animation":8,"animationDelay":8,"animationDirection":8,"animationFillMode":8,"animationDuration":8,"animationIterationCount":8,"animationName":8,"animationPlayState":8,"animationTimingFunction":8,"appearance":9.1,"userSelect":9.1,"backdropFilter":9.1,"fontKerning":9.1,"scrollSnapType":9.1,"scrollSnapPointsX":9.1,"scrollSnapPointsY":9.1,"scrollSnapDestination":9.1,"scrollSnapCoordinate":9.1,"textEmphasisPosition":7,"textEmphasis":7,"textEmphasisStyle":7,"textEmphasisColor":7,"boxDecorationBreak":9.1,"clipPath":9.1,"maskImage":9.1,"maskMode":9.1,"maskRepeat":9.1,"maskPosition":9.1,"maskClip":9.1,"maskOrigin":9.1,"maskSize":9.1,"maskComposite":9.1,"mask":9.1,"maskBorderSource":9.1,"maskBorderMode":9.1,"maskBorderSlice":9.1,"maskBorderWidth":9.1,"maskBorderOutset":9.1,"maskBorderRepeat":9.1,"maskBorder":9.1,"maskType":9.1,"textDecorationStyle":9.1,"textDecorationSkip":9.1,"textDecorationLine":9.1,"textDecorationColor":9.1,"shapeImageThreshold":9.1,"shapeImageMargin":9.1,"shapeImageOutside":9.1,"filter":9,"hyphens":9.1,"flowInto":9.1,"flowFrom":9.1,"breakBefore":8,"breakAfter":8,"breakInside":8,"regionFragment":9.1,"columnCount":8,"columnFill":8,"columnGap":8,"columnRule":8,"columnRuleColor":8,"columnRuleStyle":8,"columnRuleWidth":8,"columns":8,"columnSpan":8,"columnWidth":8},"firefox":{"appearance":46,"userSelect":46,"boxSizing":28,"textAlignLast":46,"textDecorationStyle":35,"textDecorationSkip":35,"textDecorationLine":35,"textDecorationColor":35,"tabSize":46,"hyphens":42,"fontFeatureSettings":33,"breakAfter":46,"breakBefore":46,"breakInside":46,"columnCount":46,"columnFill":46,"columnGap":46,"columnRule":46,"columnRuleColor":46,"columnRuleStyle":46,"columnRuleWidth":46,"columns":46,"columnSpan":46,"columnWidth":46},"opera":{"flex":16,"flexBasis":16,"flexDirection":16,"flexGrow":16,"flexFlow":16,"flexShrink":16,"flexWrap":16,"alignContent":16,"alignItems":16,"alignSelf":16,"justifyContent":16,"order":16,"transform":22,"transformOrigin":22,"transformOriginX":22,"transformOriginY":22,"backfaceVisibility":22,"perspective":22,"perspectiveOrigin":22,"transformStyle":22,"transformOriginZ":22,"animation":29,"animationDelay":29,"animationDirection":29,"animationFillMode":29,"animationDuration":29,"animationIterationCount":29,"animationName":29,"animationPlayState":29,"animationTimingFunction":29,"appearance":36,"userSelect":36,"fontKerning":19,"textEmphasisPosition":36,"textEmphasis":36,"textEmphasisStyle":36,"textEmphasisColor":36,"boxDecorationBreak":36,"clipPath":36,"maskImage":36,"maskMode":36,"maskRepeat":36,"maskPosition":36,"maskClip":36,"maskOrigin":36,"maskSize":36,"maskComposite":36,"mask":36,"maskBorderSource":36,"maskBorderMode":36,"maskBorderSlice":36,"maskBorderWidth":36,"maskBorderOutset":36,"maskBorderRepeat":36,"maskBorder":36,"maskType":36,"filter":36,"fontFeatureSettings":36,"breakAfter":36,"breakBefore":36,"breakInside":36,"columnCount":36,"columnFill":36,"columnGap":36,"columnRule":36,"columnRuleColor":36,"columnRuleStyle":36,"columnRuleWidth":36,"columns":36,"columnSpan":36,"columnWidth":36},"ie":{"gridArea":11,"gridGap":11,"gridColumnStart":11,"userSelect":11,"grid":11,"breakInside":11,"hyphens":11,"gridTemplateAreas":11,"breakAfter":11,"scrollSnapCoordinate":11,"gridRowStart":11,"gridAutoFlow":11,"scrollSnapDestination":11,"gridTemplate":11,"gridTemplateColumns":11,"transformOrigin":9,"gridAutoRows":11,"gridColumnEnd":11,"transformOriginY":9,"scrollSnapPointsY":11,"breakBefore":11,"gridRowGap":11,"scrollSnapPointsX":11,"regionFragment":11,"flexWrap":10,"wrapFlow":11,"gridRowEnd":11,"flex":10,"flexDirection":10,"flowInto":11,"touchAction":10,"gridColumn":11,"transform":9,"gridTemplateRows":11,"flexFlow":10,"transformOriginX":9,"flowFrom":11,"scrollSnapType":11,"wrapMargin":11,"gridColumnGap":11,"gridRow":11,"wrapThrough":11,"gridAutoColumns":11,"textSizeAdjust":11},"edge":{"userSelect":14,"wrapFlow":14,"wrapThrough":14,"wrapMargin":14,"scrollSnapType":14,"scrollSnapPointsX":14,"scrollSnapPointsY":14,"scrollSnapDestination":14,"scrollSnapCoordinate":14,"hyphens":14,"flowInto":14,"flowFrom":14,"breakBefore":14,"breakAfter":14,"breakInside":14,"regionFragment":14,"gridTemplateColumns":14,"gridTemplateRows":14,"gridTemplateAreas":14,"gridTemplate":14,"gridAutoColumns":14,"gridAutoRows":14,"gridAutoFlow":14,"grid":14,"gridRowStart":14,"gridColumnStart":14,"gridRowEnd":14,"gridRow":14,"gridColumn":14,"gridColumnEnd":14,"gridColumnGap":14,"gridRowGap":14,"gridArea":14,"gridGap":14},"ios_saf":{"flex":8.1,"flexBasis":8.1,"flexDirection":8.1,"flexGrow":8.1,"flexFlow":8.1,"flexShrink":8.1,"flexWrap":8.1,"alignContent":8.1,"alignItems":8.1,"alignSelf":8.1,"justifyContent":8.1,"order":8.1,"transition":6,"transitionDelay":6,"transitionDuration":6,"transitionProperty":6,"transitionTimingFunction":6,"transform":8.1,"transformOrigin":8.1,"transformOriginX":8.1,"transformOriginY":8.1,"backfaceVisibility":8.1,"perspective":8.1,"perspectiveOrigin":8.1,"transformStyle":8.1,"transformOriginZ":8.1,"animation":8.1,"animationDelay":8.1,"animationDirection":8.1,"animationFillMode":8.1,"animationDuration":8.1,"animationIterationCount":8.1,"animationName":8.1,"animationPlayState":8.1,"animationTimingFunction":8.1,"appearance":9.3,"userSelect":9.3,"backdropFilter":9.3,"fontKerning":9.3,"scrollSnapType":9.3,"scrollSnapPointsX":9.3,"scrollSnapPointsY":9.3,"scrollSnapDestination":9.3,"scrollSnapCoordinate":9.3,"boxDecorationBreak":9.3,"clipPath":9.3,"maskImage":9.3,"maskMode":9.3,"maskRepeat":9.3,"maskPosition":9.3,"maskClip":9.3,"maskOrigin":9.3,"maskSize":9.3,"maskComposite":9.3,"mask":9.3,"maskBorderSource":9.3,"maskBorderMode":9.3,"maskBorderSlice":9.3,"maskBorderWidth":9.3,"maskBorderOutset":9.3,"maskBorderRepeat":9.3,"maskBorder":9.3,"maskType":9.3,"textSizeAdjust":9.3,"textDecorationStyle":9.3,"textDecorationSkip":9.3,"textDecorationLine":9.3,"textDecorationColor":9.3,"shapeImageThreshold":9.3,"shapeImageMargin":9.3,"shapeImageOutside":9.3,"filter":9,"hyphens":9.3,"flowInto":9.3,"flowFrom":9.3,"breakBefore":8.1,"breakAfter":8.1,"breakInside":8.1,"regionFragment":9.3,"columnCount":8.1,"columnFill":8.1,"columnGap":8.1,"columnRule":8.1,"columnRuleColor":8.1,"columnRuleStyle":8.1,"columnRuleWidth":8.1,"columns":8.1,"columnSpan":8.1,"columnWidth":8.1},"android":{"borderImage":4.2,"borderImageOutset":4.2,"borderImageRepeat":4.2,"borderImageSlice":4.2,"borderImageSource":4.2,"borderImageWidth":4.2,"flex":4.2,"flexBasis":4.2,"flexDirection":4.2,"flexGrow":4.2,"flexFlow":4.2,"flexShrink":4.2,"flexWrap":4.2,"alignContent":4.2,"alignItems":4.2,"alignSelf":4.2,"justifyContent":4.2,"order":4.2,"transition":4.2,"transitionDelay":4.2,"transitionDuration":4.2,"transitionProperty":4.2,"transitionTimingFunction":4.2,"transform":4.4,"transformOrigin":4.4,"transformOriginX":4.4,"transformOriginY":4.4,"backfaceVisibility":4.4,"perspective":4.4,"perspectiveOrigin":4.4,"transformStyle":4.4,"transformOriginZ":4.4,"animation":4.4,"animationDelay":4.4,"animationDirection":4.4,"animationFillMode":4.4,"animationDuration":4.4,"animationIterationCount":4.4,"animationName":4.4,"animationPlayState":4.4,"animationTimingFunction":4.4,"appearance":46,"userSelect":46,"fontKerning":4.4,"textEmphasisPosition":46,"textEmphasis":46,"textEmphasisStyle":46,"textEmphasisColor":46,"boxDecorationBreak":46,"clipPath":46,"maskImage":46,"maskMode":46,"maskRepeat":46,"maskPosition":46,"maskClip":46,"maskOrigin":46,"maskSize":46,"maskComposite":46,"mask":46,"maskBorderSource":46,"maskBorderMode":46,"maskBorderSlice":46,"maskBorderWidth":46,"maskBorderOutset":46,"maskBorderRepeat":46,"maskBorder":46,"maskType":46,"filter":46,"fontFeatureSettings":46,"breakAfter":46,"breakBefore":46,"breakInside":46,"columnCount":46,"columnFill":46,"columnGap":46,"columnRule":46,"columnRuleColor":46,"columnRuleStyle":46,"columnRuleWidth":46,"columns":46,"columnSpan":46,"columnWidth":46},"and_chr":{"appearance":47,"userSelect":47,"textEmphasisPosition":47,"textEmphasis":47,"textEmphasisStyle":47,"textEmphasisColor":47,"boxDecorationBreak":47,"clipPath":47,"maskImage":47,"maskMode":47,"maskRepeat":47,"maskPosition":47,"maskClip":47,"maskOrigin":47,"maskSize":47,"maskComposite":47,"mask":47,"maskBorderSource":47,"maskBorderMode":47,"maskBorderSlice":47,"maskBorderWidth":47,"maskBorderOutset":47,"maskBorderRepeat":47,"maskBorder":47,"maskType":47,"textDecorationStyle":47,"textDecorationSkip":47,"textDecorationLine":47,"textDecorationColor":47,"filter":47,"fontFeatureSettings":47,"breakAfter":47,"breakBefore":47,"breakInside":47,"columnCount":47,"columnFill":47,"columnGap":47,"columnRule":47,"columnRuleColor":47,"columnRuleStyle":47,"columnRuleWidth":47,"columns":47,"columnSpan":47,"columnWidth":47},"and_uc":{"flex":9.9,"flexBasis":9.9,"flexDirection":9.9,"flexGrow":9.9,"flexFlow":9.9,"flexShrink":9.9,"flexWrap":9.9,"alignContent":9.9,"alignItems":9.9,"alignSelf":9.9,"justifyContent":9.9,"order":9.9,"transition":9.9,"transitionDelay":9.9,"transitionDuration":9.9,"transitionProperty":9.9,"transitionTimingFunction":9.9,"transform":9.9,"transformOrigin":9.9,"transformOriginX":9.9,"transformOriginY":9.9,"backfaceVisibility":9.9,"perspective":9.9,"perspectiveOrigin":9.9,"transformStyle":9.9,"transformOriginZ":9.9,"animation":9.9,"animationDelay":9.9,"animationDirection":9.9,"animationFillMode":9.9,"animationDuration":9.9,"animationIterationCount":9.9,"animationName":9.9,"animationPlayState":9.9,"animationTimingFunction":9.9,"appearance":9.9,"userSelect":9.9,"fontKerning":9.9,"textEmphasisPosition":9.9,"textEmphasis":9.9,"textEmphasisStyle":9.9,"textEmphasisColor":9.9,"maskImage":9.9,"maskMode":9.9,"maskRepeat":9.9,"maskPosition":9.9,"maskClip":9.9,"maskOrigin":9.9,"maskSize":9.9,"maskComposite":9.9,"mask":9.9,"maskBorderSource":9.9,"maskBorderMode":9.9,"maskBorderSlice":9.9,"maskBorderWidth":9.9,"maskBorderOutset":9.9,"maskBorderRepeat":9.9,"maskBorder":9.9,"maskType":9.9,"textSizeAdjust":9.9,"filter":9.9,"hyphens":9.9,"flowInto":9.9,"flowFrom":9.9,"breakBefore":9.9,"breakAfter":9.9,"breakInside":9.9,"regionFragment":9.9,"fontFeatureSettings":9.9,"columnCount":9.9,"columnFill":9.9,"columnGap":9.9,"columnRule":9.9,"columnRuleColor":9.9,"columnRuleStyle":9.9,"columnRuleWidth":9.9,"columns":9.9,"columnSpan":9.9,"columnWidth":9.9},"op_mini":{"borderImage":5,"borderImageOutset":5,"borderImageRepeat":5,"borderImageSlice":5,"borderImageSource":5,"borderImageWidth":5,"tabSize":5,"objectFit":5,"objectPosition":5}}; module.exports = caniuseData
 
 /***/ },
 /* 51 */
@@ -3609,7 +3602,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 	      var newValue = value;
 	
-	      var multipleValues = newValue.split(',');
+	      // only split multi values, not cubic beziers
+	      var multipleValues = newValue.split(/,(?![^()]*(?:\([^()]*\))?\))/g);
 	
 	      requiresPrefixDashCased.forEach(function (property) {
 	        multipleValues.forEach(function (val, index) {
@@ -4330,8 +4324,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
@@ -4343,6 +4335,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
 	
 	function isNestedStyle(value) {
 	  // Don't merge objects overriding toString, since they should be converted
@@ -4625,7 +4619,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return instance._radiumStyleKeeper;
 	}
 	
-	var StyleRoot = function (_Component) {
+	var StyleRoot = (function (_Component) {
 	  _inherits(StyleRoot, _Component);
 	
 	  function StyleRoot() {
@@ -4651,7 +4645,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	
 	  return StyleRoot;
-	}(_react.Component);
+	})(_react.Component);
 	
 	StyleRoot.contextTypes = {
 	  _radiumConfig: _react.PropTypes.object,
@@ -4696,7 +4690,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var StyleSheet = (_temp = _class = function (_Component) {
+	var StyleSheet = (_temp = _class = (function (_Component) {
 	  _inherits(StyleSheet, _Component);
 	
 	  function StyleSheet() {
@@ -4740,7 +4734,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	
 	  return StyleSheet;
-	}(_react.Component), _class.contextTypes = {
+	})(_react.Component), _class.contextTypes = {
 	  _radiumStyleKeeper: _react2.default.PropTypes.instanceOf(_styleKeeper2.default)
 	}, _temp);
 	exports.default = StyleSheet;
@@ -4772,27 +4766,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _data2 = _interopRequireDefault(_data);
 	
-	var _domain = __webpack_require__(166);
+	var _domain = __webpack_require__(167);
 	
 	var _domain2 = _interopRequireDefault(_domain);
 	
-	var _log = __webpack_require__(167);
+	var _log = __webpack_require__(168);
 	
 	var Log = _interopRequireWildcard(_log);
 	
-	var _scale = __webpack_require__(155);
+	var _scale = __webpack_require__(156);
 	
 	var _scale2 = _interopRequireDefault(_scale);
 	
-	var _style = __webpack_require__(150);
+	var _style = __webpack_require__(151);
 	
 	var Style = _interopRequireWildcard(_style);
 	
-	var _type = __webpack_require__(168);
+	var _type = __webpack_require__(169);
 	
 	var Type = _interopRequireWildcard(_type);
 	
-	var _propTypes = __webpack_require__(169);
+	var _propTypes = __webpack_require__(170);
 	
 	var PropTypes = _interopRequireWildcard(_propTypes);
 	
@@ -6927,6 +6921,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
@@ -6945,56 +6943,79 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _lodashArrayFlatten2 = _interopRequireDefault(_lodashArrayFlatten);
 	
-	var _lodashArrayTake = __webpack_require__(131);
-	
-	var _lodashArrayTake2 = _interopRequireDefault(_lodashArrayTake);
-	
-	var _lodashArrayUnion = __webpack_require__(132);
+	var _lodashArrayUnion = __webpack_require__(131);
 	
 	var _lodashArrayUnion2 = _interopRequireDefault(_lodashArrayUnion);
 	
-	var _lodashLangIsEmpty = __webpack_require__(140);
+	var _lodashLangIsEmpty = __webpack_require__(139);
 	
 	var _lodashLangIsEmpty2 = _interopRequireDefault(_lodashLangIsEmpty);
+	
+	var _lodashLangIsFunction = __webpack_require__(14);
+	
+	var _lodashLangIsFunction2 = _interopRequireDefault(_lodashLangIsFunction);
+	
+	var _lodashLangIsUndefined = __webpack_require__(141);
+	
+	var _lodashLangIsUndefined2 = _interopRequireDefault(_lodashLangIsUndefined);
+	
+	var _lodashLangIsNull = __webpack_require__(142);
+	
+	var _lodashLangIsNull2 = _interopRequireDefault(_lodashLangIsNull);
+	
+	var _lodashObjectHas = __webpack_require__(143);
+	
+	var _lodashObjectHas2 = _interopRequireDefault(_lodashObjectHas);
+	
+	var _lodashObjectAssign = __webpack_require__(144);
+	
+	var _lodashObjectAssign2 = _interopRequireDefault(_lodashObjectAssign);
 	
 	var _lodashObjectMerge = __webpack_require__(107);
 	
 	var _lodashObjectMerge2 = _interopRequireDefault(_lodashObjectMerge);
 	
-	var _lodashUtilityRange = __webpack_require__(142);
+	var _lodashUtilityIdentity = __webpack_require__(17);
+	
+	var _lodashUtilityIdentity2 = _interopRequireDefault(_lodashUtilityIdentity);
+	
+	var _lodashUtilityProperty = __webpack_require__(103);
+	
+	var _lodashUtilityProperty2 = _interopRequireDefault(_lodashUtilityProperty);
+	
+	var _lodashUtilityRange = __webpack_require__(147);
 	
 	var _lodashUtilityRange2 = _interopRequireDefault(_lodashUtilityRange);
 	
-	var _lodashArrayUniq = __webpack_require__(143);
+	var _lodashArrayUniq = __webpack_require__(148);
 	
 	var _lodashArrayUniq2 = _interopRequireDefault(_lodashArrayUniq);
 	
-	var _lodashArrayZipObject = __webpack_require__(145);
+	var _lodashArrayZipObject = __webpack_require__(150);
 	
 	var _lodashArrayZipObject2 = _interopRequireDefault(_lodashArrayZipObject);
 	
-	var _lodashArrayZip = __webpack_require__(146);
-	
-	var _lodashArrayZip2 = _interopRequireDefault(_lodashArrayZip);
-	
-	var _collection = __webpack_require__(120);
-	
-	var Collection = _interopRequireWildcard(_collection);
-	
-	var _style = __webpack_require__(150);
+	var _style = __webpack_require__(151);
 	
 	var Style = _interopRequireWildcard(_style);
 	
-	var _scale = __webpack_require__(155);
+	var _scale = __webpack_require__(156);
 	
 	var _scale2 = _interopRequireDefault(_scale);
 	
-	module.exports = {
+	exports["default"] = {
 	  // String Data
 	  createStringMap: function createStringMap(props, axis) {
+	    var _this = this;
+	
+	    var hasMultipleDatasets = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+	
 	    var stringsFromAxes = this.getStringsFromAxes(props, axis);
 	    var stringsFromCategories = this.getStringsFromCategories(props, axis);
-	    var stringsFromData = this.getDataStrings(props, axis);
+	    var stringsFromData = hasMultipleDatasets ? (0, _lodashArrayUniq2["default"])((0, _lodashArrayFlatten2["default"])(props.data.map(function (dataset) {
+	      return _this.getStringsFromData((0, _lodashObjectMerge2["default"])({}, props, { data: dataset }), axis);
+	    }))) : this.getStringsFromData(props, axis);
+	
 	    var allStrings = (0, _lodashArrayUniq2["default"])((0, _lodashArrayCompact2["default"])([].concat(_toConsumableArray(stringsFromAxes), _toConsumableArray(stringsFromCategories), _toConsumableArray(stringsFromData))));
 	    return (0, _lodashLangIsEmpty2["default"])(allStrings) ? null : (0, _lodashArrayZipObject2["default"])(allStrings.map(function (string, index) {
 	      return [string, index + 1];
@@ -7002,7 +7023,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	
 	  getStringsFromAxes: function getStringsFromAxes(props, axis) {
-	
 	    if (!props.tickValues || !Array.isArray(props.tickValues) && !props.tickValues[axis]) {
 	      return [];
 	    }
@@ -7024,40 +7044,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	
-	  getDataStrings: function getDataStrings(props, axis) {
-	    var xyStrings = this.getStringsFromXY(props, axis);
-	    var dataStrings = this.getStringsFromData(props, axis);
-	    var allStrings = (0, _lodashArrayFlatten2["default"])([].concat(_toConsumableArray(dataStrings), _toConsumableArray(xyStrings)));
-	    // return a unique set of strings
-	    return (0, _lodashArrayCompact2["default"])((0, _lodashArrayUniq2["default"])(allStrings));
-	  },
-	
 	  getStringsFromData: function getStringsFromData(props, axis) {
 	    if (!props.data) {
 	      return [];
 	    }
-	    var axisData = (0, _lodashArrayFlatten2["default"])(props.data).map(function (datum) {
-	      return datum && datum[axis];
-	    });
-	    return axisData.filter(function (datum) {
+	    var accessor = this.createAccessor((0, _lodashObjectHas2["default"])(props, axis) ? props[axis] : axis);
+	    var dataStrings = props.data.map(function (datum) {
+	      return accessor(datum);
+	    }).filter(function (datum) {
 	      return typeof datum === "string";
 	    });
-	  },
-	
-	  getStringsFromXY: function getStringsFromXY(props, axis) {
-	    if (!props[axis] || !Array.isArray(props[axis])) {
-	      return [];
-	    }
-	    var allData = (0, _lodashArrayFlatten2["default"])(props[axis]);
-	    return allData.filter(function (element) {
-	      return typeof element === "string";
-	    });
-	  },
-	
-	  // For components that take multiple datasets
-	  consolidateData: function consolidateData(props) {
-	    var datasets = Array.isArray(props.data[0]) ? props.data : [props.data];
-	    return this.formatData(datasets, props);
+	    // return a unique set of strings
+	    return (0, _lodashArrayCompact2["default"])((0, _lodashArrayUniq2["default"])(dataStrings));
 	  },
 	
 	  // for components that take single datasets
@@ -7065,77 +7063,66 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (props.data) {
 	      return this.formatData(props.data, props);
 	    }
-	    var x = this.returnOrGenerateX(props);
-	    var y = this.returnOrGenerateY(props, x);
-	    var n = Math.min(x.length, y.length);
-	    // create a dataset from x and y with n points
-	    var dataset = (0, _lodashArrayZip2["default"])((0, _lodashArrayTake2["default"])(x, n), (0, _lodashArrayTake2["default"])(y, n));
-	    // return data as an array of objects
-	    var data = dataset.map(function (point) {
-	      return { x: point[0], y: point[1] };
-	    });
+	    var data = this.generateData(props);
 	    return this.formatData(data, props);
 	  },
 	
-	  returnOrGenerateX: function returnOrGenerateX(props) {
-	    if (props.x) {
-	      return props.x;
-	    }
-	    // if x is not given in props, create an array of values evenly
-	    // spaced across the x domain
+	  generateData: function generateData(props) {
+	    // create an array of values evenly spaced across the x domain that include domain min/max
 	    var domain = props.domain ? props.domain.x || props.domain : _scale2["default"].getBaseScale(props, "x").domain();
-	    var samples = Array.isArray(props.y) ? props.y.length : props.samples;
-	    var step = Math.max.apply(Math, _toConsumableArray(domain)) / samples;
-	    // return an array of x values spaced across the domain,
-	    // include the maximum of the domain
-	    return (0, _lodashArrayUnion2["default"])((0, _lodashUtilityRange2["default"])(Math.min.apply(Math, _toConsumableArray(domain)), Math.max.apply(Math, _toConsumableArray(domain)), step), [Math.max.apply(Math, _toConsumableArray(domain))]);
+	    var step = Math.max.apply(Math, _toConsumableArray(domain)) / props.samples;
+	    var values = (0, _lodashArrayUnion2["default"])((0, _lodashUtilityRange2["default"])(Math.min.apply(Math, _toConsumableArray(domain)), Math.max.apply(Math, _toConsumableArray(domain)), step), [Math.max.apply(Math, _toConsumableArray(domain))]);
+	    // return data objects for values in {x, y} format
+	    return values.map(function (v) {
+	      return { x: v, y: v };
+	    });
 	  },
 	
-	  returnOrGenerateY: function returnOrGenerateY(props, x) {
-	    if (props.y && typeof props.y === "function") {
-	      // if y is a function, apply the function y to to each value of the array x,
-	      // and return the results as an array
-	      return x.map(function (datum) {
-	        return props.y(datum);
-	      });
-	    }
-	    // y is either a function or an array, and is never undefined
-	    // if it isn't a function, just return it.
-	    return props.y;
-	  },
+	  formatData: function formatData(dataset, props, stringMap) {
+	    var _this2 = this;
 	
-	  formatData: function formatData(allData, props) {
-	    var _this = this;
-	
-	    if (!allData) {
+	    if (!dataset) {
 	      return [];
 	    }
-	    var stringMap = {
+	    stringMap = stringMap || {
 	      x: this.createStringMap(props, "x"),
 	      y: this.createStringMap(props, "y")
 	    };
-	    var _formatData = function _formatData(dataset) {
-	      var cleanedData = _this.cleanData(dataset, props);
-	      return cleanedData.map(function (data) {
-	        return (0, _lodashObjectMerge2["default"])({}, data, {
-	          category: _this.determineCategoryIndex(data.x, props.categories),
-	          // map string data to numeric values, and add names
-	          x: typeof data.x === "string" ? stringMap.x[data.x] : data.x,
-	          xName: typeof data.x === "string" ? data.x : undefined,
-	          y: typeof data.y === "string" ? stringMap.y[data.y] : data.y,
-	          yName: typeof data.y === "string" ? data.y : undefined
-	        });
-	      });
+	    var accessor = {
+	      x: this.createAccessor(props.x),
+	      y: this.createAccessor(props.y)
 	    };
-	    if (Collection.isArrayOfArrays(allData)) {
-	      return allData.map(function (dataset, index) {
-	        return {
-	          attrs: _this.getAttributes(props, index),
-	          data: _formatData(dataset)
-	        };
+	
+	    return this.cleanData(dataset, props).map(function (datum) {
+	      var x = accessor.x(datum);
+	      var y = accessor.y(datum);
+	      return (0, _lodashObjectMerge2["default"])({}, datum, {
+	        category: _this2.determineCategoryIndex(x, props.categories),
+	        // map string data to numeric values, and add names
+	        x: typeof x === "string" ? stringMap.x[x] : x,
+	        xName: typeof x === "string" ? x : undefined,
+	        y: typeof y === "string" ? stringMap.y[y] : y,
+	        yName: typeof y === "string" ? y : undefined
 	      });
-	    }
-	    return _formatData(allData);
+	    });
+	  },
+	
+	  // For components that take multiple datasets
+	  formatDatasets: function formatDatasets(datasets, props) {
+	    var _this3 = this;
+	
+	    // string map must be calculated using all datasets and shared
+	    var propsWithDatasets = (0, _lodashObjectAssign2["default"])({}, props, { data: datasets });
+	    var stringMap = {
+	      x: this.createStringMap(propsWithDatasets, "x", true),
+	      y: this.createStringMap(propsWithDatasets, "y", true)
+	    };
+	    return datasets.map(function (dataset, index) {
+	      return {
+	        attrs: _this3.getAttributes(props, index),
+	        data: _this3.formatData(dataset, props, stringMap)
+	      };
+	    });
 	  },
 	
 	  cleanData: function cleanData(dataset, props) {
@@ -7147,11 +7134,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      x: _scale2["default"].getScaleType(props, "x"),
 	      y: _scale2["default"].getScaleType(props, "y")
 	    };
+	    var accessor = {
+	      x: this.createAccessor(props.x),
+	      y: this.createAccessor(props.y)
+	    };
 	    if (scaleType.x !== "log" && scaleType.y !== "log") {
 	      return dataset;
 	    }
 	    var rules = function rules(datum, axis) {
-	      return scaleType[axis] === "log" ? datum[axis] !== 0 : true;
+	      return scaleType[axis] === "log" ? accessor[axis](datum) !== 0 : true;
 	    };
 	    return dataset.filter(function (datum) {
 	      return rules(datum, "x") && rules(datum, "y");
@@ -7189,8 +7180,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var colorScale = Array.isArray(props.colorScale) ? props.colorScale : Style.getColorScale(props.colorScale);
 	    return colorScale[index % colorScale.length];
+	  },
+	
+	  createAccessor: function createAccessor(key) {
+	    // creates a data accessor function
+	    // given a property key, path, array index, or null for identity.
+	    if ((0, _lodashLangIsFunction2["default"])(key)) {
+	      return key;
+	    } else if ((0, _lodashLangIsNull2["default"])(key) || (0, _lodashLangIsUndefined2["default"])(key)) {
+	      // null/undefined means "return the data item itself"
+	      return _lodashUtilityIdentity2["default"];
+	    }
+	    // otherwise, assume it is an array index, property key or path (_.property handles all three)
+	    return (0, _lodashUtilityProperty2["default"])(key);
 	  }
 	};
+	module.exports = exports["default"];
 
 /***/ },
 /* 126 */
@@ -7385,53 +7390,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 131 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseSlice = __webpack_require__(98),
-	    isIterateeCall = __webpack_require__(115);
-	
-	/**
-	 * Creates a slice of `array` with `n` elements taken from the beginning.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @category Array
-	 * @param {Array} array The array to query.
-	 * @param {number} [n=1] The number of elements to take.
-	 * @param- {Object} [guard] Enables use as a callback for functions like `_.map`.
-	 * @returns {Array} Returns the slice of `array`.
-	 * @example
-	 *
-	 * _.take([1, 2, 3]);
-	 * // => [1]
-	 *
-	 * _.take([1, 2, 3], 2);
-	 * // => [1, 2]
-	 *
-	 * _.take([1, 2, 3], 5);
-	 * // => [1, 2, 3]
-	 *
-	 * _.take([1, 2, 3], 0);
-	 * // => []
-	 */
-	function take(array, n, guard) {
-	  var length = array ? array.length : 0;
-	  if (!length) {
-	    return [];
-	  }
-	  if (guard ? isIterateeCall(array, n, guard) : n == null) {
-	    n = 1;
-	  }
-	  return baseSlice(array, 0, n < 0 ? 0 : n);
-	}
-	
-	module.exports = take;
-
-
-/***/ },
-/* 132 */
-/***/ function(module, exports, __webpack_require__) {
-
 	var baseFlatten = __webpack_require__(3),
-	    baseUniq = __webpack_require__(133),
+	    baseUniq = __webpack_require__(132),
 	    restParam = __webpack_require__(26);
 	
 	/**
@@ -7457,12 +7417,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 133 */
+/* 132 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseIndexOf = __webpack_require__(134),
-	    cacheIndexOf = __webpack_require__(136),
-	    createCache = __webpack_require__(137);
+	var baseIndexOf = __webpack_require__(133),
+	    cacheIndexOf = __webpack_require__(135),
+	    createCache = __webpack_require__(136);
 	
 	/** Used as the size to enable large array optimizations. */
 	var LARGE_ARRAY_SIZE = 200;
@@ -7523,10 +7483,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 134 */
+/* 133 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var indexOfNaN = __webpack_require__(135);
+	var indexOfNaN = __webpack_require__(134);
 	
 	/**
 	 * The base implementation of `_.indexOf` without support for binary searches.
@@ -7556,7 +7516,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 135 */
+/* 134 */
 /***/ function(module, exports) {
 
 	/**
@@ -7585,7 +7545,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 136 */
+/* 135 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isObject = __webpack_require__(15);
@@ -7610,10 +7570,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 137 */
+/* 136 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {var SetCache = __webpack_require__(138),
+	/* WEBPACK VAR INJECTION */(function(global) {var SetCache = __webpack_require__(137),
 	    getNative = __webpack_require__(12);
 	
 	/** Native method references. */
@@ -7638,10 +7598,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 138 */
+/* 137 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {var cachePush = __webpack_require__(139),
+	/* WEBPACK VAR INJECTION */(function(global) {var cachePush = __webpack_require__(138),
 	    getNative = __webpack_require__(12);
 	
 	/** Native method references. */
@@ -7674,7 +7634,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 139 */
+/* 138 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isObject = __webpack_require__(15);
@@ -7700,7 +7660,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 140 */
+/* 139 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isArguments = __webpack_require__(5),
@@ -7708,7 +7668,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    isArrayLike = __webpack_require__(6),
 	    isFunction = __webpack_require__(14),
 	    isObjectLike = __webpack_require__(10),
-	    isString = __webpack_require__(141),
+	    isString = __webpack_require__(140),
 	    keys = __webpack_require__(90);
 	
 	/**
@@ -7753,7 +7713,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 141 */
+/* 140 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isObjectLike = __webpack_require__(10);
@@ -7794,7 +7754,236 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
+/* 141 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if `value` is `undefined`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is `undefined`, else `false`.
+	 * @example
+	 *
+	 * _.isUndefined(void 0);
+	 * // => true
+	 *
+	 * _.isUndefined(null);
+	 * // => false
+	 */
+	function isUndefined(value) {
+	  return value === undefined;
+	}
+	
+	module.exports = isUndefined;
+
+
+/***/ },
 /* 142 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if `value` is `null`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is `null`, else `false`.
+	 * @example
+	 *
+	 * _.isNull(null);
+	 * // => true
+	 *
+	 * _.isNull(void 0);
+	 * // => false
+	 */
+	function isNull(value) {
+	  return value === null;
+	}
+	
+	module.exports = isNull;
+
+
+/***/ },
+/* 143 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGet = __webpack_require__(97),
+	    baseSlice = __webpack_require__(98),
+	    isArguments = __webpack_require__(5),
+	    isArray = __webpack_require__(11),
+	    isIndex = __webpack_require__(25),
+	    isKey = __webpack_require__(99),
+	    isLength = __webpack_require__(9),
+	    last = __webpack_require__(100),
+	    toPath = __webpack_require__(101);
+	
+	/** Used for native method references. */
+	var objectProto = Object.prototype;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/**
+	 * Checks if `path` is a direct property.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Object
+	 * @param {Object} object The object to query.
+	 * @param {Array|string} path The path to check.
+	 * @returns {boolean} Returns `true` if `path` is a direct property, else `false`.
+	 * @example
+	 *
+	 * var object = { 'a': { 'b': { 'c': 3 } } };
+	 *
+	 * _.has(object, 'a');
+	 * // => true
+	 *
+	 * _.has(object, 'a.b.c');
+	 * // => true
+	 *
+	 * _.has(object, ['a', 'b', 'c']);
+	 * // => true
+	 */
+	function has(object, path) {
+	  if (object == null) {
+	    return false;
+	  }
+	  var result = hasOwnProperty.call(object, path);
+	  if (!result && !isKey(path)) {
+	    path = toPath(path);
+	    object = path.length == 1 ? object : baseGet(object, baseSlice(path, 0, -1));
+	    if (object == null) {
+	      return false;
+	    }
+	    path = last(path);
+	    result = hasOwnProperty.call(object, path);
+	  }
+	  return result || (isLength(object.length) && isIndex(path, object.length) &&
+	    (isArray(object) || isArguments(object)));
+	}
+	
+	module.exports = has;
+
+
+/***/ },
+/* 144 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var assignWith = __webpack_require__(145),
+	    baseAssign = __webpack_require__(146),
+	    createAssigner = __webpack_require__(114);
+	
+	/**
+	 * Assigns own enumerable properties of source object(s) to the destination
+	 * object. Subsequent sources overwrite property assignments of previous sources.
+	 * If `customizer` is provided it's invoked to produce the assigned values.
+	 * The `customizer` is bound to `thisArg` and invoked with five arguments:
+	 * (objectValue, sourceValue, key, object, source).
+	 *
+	 * **Note:** This method mutates `object` and is based on
+	 * [`Object.assign`](http://ecma-international.org/ecma-262/6.0/#sec-object.assign).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @alias extend
+	 * @category Object
+	 * @param {Object} object The destination object.
+	 * @param {...Object} [sources] The source objects.
+	 * @param {Function} [customizer] The function to customize assigned values.
+	 * @param {*} [thisArg] The `this` binding of `customizer`.
+	 * @returns {Object} Returns `object`.
+	 * @example
+	 *
+	 * _.assign({ 'user': 'barney' }, { 'age': 40 }, { 'user': 'fred' });
+	 * // => { 'user': 'fred', 'age': 40 }
+	 *
+	 * // using a customizer callback
+	 * var defaults = _.partialRight(_.assign, function(value, other) {
+	 *   return _.isUndefined(value) ? other : value;
+	 * });
+	 *
+	 * defaults({ 'user': 'barney' }, { 'age': 36 }, { 'user': 'fred' });
+	 * // => { 'user': 'barney', 'age': 36 }
+	 */
+	var assign = createAssigner(function(object, source, customizer) {
+	  return customizer
+	    ? assignWith(object, source, customizer)
+	    : baseAssign(object, source);
+	});
+	
+	module.exports = assign;
+
+
+/***/ },
+/* 145 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var keys = __webpack_require__(90);
+	
+	/**
+	 * A specialized version of `_.assign` for customizing assigned values without
+	 * support for argument juggling, multiple sources, and `this` binding `customizer`
+	 * functions.
+	 *
+	 * @private
+	 * @param {Object} object The destination object.
+	 * @param {Object} source The source object.
+	 * @param {Function} customizer The function to customize assigned values.
+	 * @returns {Object} Returns `object`.
+	 */
+	function assignWith(object, source, customizer) {
+	  var index = -1,
+	      props = keys(source),
+	      length = props.length;
+	
+	  while (++index < length) {
+	    var key = props[index],
+	        value = object[key],
+	        result = customizer(value, source[key], key, object, source);
+	
+	    if ((result === result ? (result !== value) : (value === value)) ||
+	        (value === undefined && !(key in object))) {
+	      object[key] = result;
+	    }
+	  }
+	  return object;
+	}
+	
+	module.exports = assignWith;
+
+
+/***/ },
+/* 146 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseCopy = __webpack_require__(113),
+	    keys = __webpack_require__(90);
+	
+	/**
+	 * The base implementation of `_.assign` without support for argument juggling,
+	 * multiple sources, and `customizer` functions.
+	 *
+	 * @private
+	 * @param {Object} object The destination object.
+	 * @param {Object} source The source object.
+	 * @returns {Object} Returns `object`.
+	 */
+	function baseAssign(object, source) {
+	  return source == null
+	    ? object
+	    : baseCopy(source, keys(source), object);
+	}
+	
+	module.exports = baseAssign;
+
+
+/***/ },
+/* 147 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isIterateeCall = __webpack_require__(115);
@@ -7866,13 +8055,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 143 */
+/* 148 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var baseCallback = __webpack_require__(81),
-	    baseUniq = __webpack_require__(133),
+	    baseUniq = __webpack_require__(132),
 	    isIterateeCall = __webpack_require__(115),
-	    sortedUniq = __webpack_require__(144);
+	    sortedUniq = __webpack_require__(149);
 	
 	/**
 	 * Creates a duplicate-free version of an array, using
@@ -7943,7 +8132,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 144 */
+/* 149 */
 /***/ function(module, exports) {
 
 	/**
@@ -7978,7 +8167,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 145 */
+/* 150 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isArray = __webpack_require__(11);
@@ -8027,145 +8216,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 146 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var restParam = __webpack_require__(26),
-	    unzip = __webpack_require__(147);
-	
-	/**
-	 * Creates an array of grouped elements, the first of which contains the first
-	 * elements of the given arrays, the second of which contains the second elements
-	 * of the given arrays, and so on.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @category Array
-	 * @param {...Array} [arrays] The arrays to process.
-	 * @returns {Array} Returns the new array of grouped elements.
-	 * @example
-	 *
-	 * _.zip(['fred', 'barney'], [30, 40], [true, false]);
-	 * // => [['fred', 30, true], ['barney', 40, false]]
-	 */
-	var zip = restParam(unzip);
-	
-	module.exports = zip;
-
-
-/***/ },
-/* 147 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayFilter = __webpack_require__(148),
-	    arrayMap = __webpack_require__(149),
-	    baseProperty = __webpack_require__(8),
-	    isArrayLike = __webpack_require__(6);
-	
-	/* Native method references for those with the same name as other `lodash` methods. */
-	var nativeMax = Math.max;
-	
-	/**
-	 * This method is like `_.zip` except that it accepts an array of grouped
-	 * elements and creates an array regrouping the elements to their pre-zip
-	 * configuration.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @category Array
-	 * @param {Array} array The array of grouped elements to process.
-	 * @returns {Array} Returns the new array of regrouped elements.
-	 * @example
-	 *
-	 * var zipped = _.zip(['fred', 'barney'], [30, 40], [true, false]);
-	 * // => [['fred', 30, true], ['barney', 40, false]]
-	 *
-	 * _.unzip(zipped);
-	 * // => [['fred', 'barney'], [30, 40], [true, false]]
-	 */
-	function unzip(array) {
-	  if (!(array && array.length)) {
-	    return [];
-	  }
-	  var index = -1,
-	      length = 0;
-	
-	  array = arrayFilter(array, function(group) {
-	    if (isArrayLike(group)) {
-	      length = nativeMax(group.length, length);
-	      return true;
-	    }
-	  });
-	  var result = Array(length);
-	  while (++index < length) {
-	    result[index] = arrayMap(array, baseProperty(index));
-	  }
-	  return result;
-	}
-	
-	module.exports = unzip;
-
-
-/***/ },
-/* 148 */
-/***/ function(module, exports) {
-
-	/**
-	 * A specialized version of `_.filter` for arrays without support for callback
-	 * shorthands and `this` binding.
-	 *
-	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} predicate The function invoked per iteration.
-	 * @returns {Array} Returns the new filtered array.
-	 */
-	function arrayFilter(array, predicate) {
-	  var index = -1,
-	      length = array.length,
-	      resIndex = -1,
-	      result = [];
-	
-	  while (++index < length) {
-	    var value = array[index];
-	    if (predicate(value, index, array)) {
-	      result[++resIndex] = value;
-	    }
-	  }
-	  return result;
-	}
-	
-	module.exports = arrayFilter;
-
-
-/***/ },
-/* 149 */
-/***/ function(module, exports) {
-
-	/**
-	 * A specialized version of `_.map` for arrays without support for callback
-	 * shorthands and `this` binding.
-	 *
-	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} iteratee The function invoked per iteration.
-	 * @returns {Array} Returns the new mapped array.
-	 */
-	function arrayMap(array, iteratee) {
-	  var index = -1,
-	      length = array.length,
-	      result = Array(length);
-	
-	  while (++index < length) {
-	    result[index] = iteratee(array[index], index, array);
-	  }
-	  return result;
-	}
-	
-	module.exports = arrayMap;
-
-
-/***/ },
-/* 150 */
+/* 151 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -8176,7 +8227,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 	
-	var _reduceCssCalc = __webpack_require__(151);
+	var _reduceCssCalc = __webpack_require__(152);
 	
 	var _reduceCssCalc2 = _interopRequireDefault(_reduceCssCalc);
 	
@@ -8232,14 +8283,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.getColorScale = getColorScale;
 
 /***/ },
-/* 151 */
+/* 152 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module dependencies
 	 */
-	var balanced = __webpack_require__(152)
-	var reduceFunctionCall = __webpack_require__(153)
+	var balanced = __webpack_require__(153)
+	var reduceFunctionCall = __webpack_require__(154)
 	
 	/**
 	 * Constantes
@@ -8391,7 +8442,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 152 */
+/* 153 */
 /***/ function(module, exports) {
 
 	module.exports = function(a, b, str) {
@@ -8421,13 +8472,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 153 */
+/* 154 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
 	 * Module dependencies
 	 */
-	var balanced = __webpack_require__(154)
+	var balanced = __webpack_require__(155)
 	
 	/**
 	 * Expose `reduceFunctionCall`
@@ -8501,7 +8552,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 154 */
+/* 155 */
 /***/ function(module, exports) {
 
 	module.exports = function(a, b, str) {
@@ -8531,7 +8582,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 155 */
+/* 156 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -8544,7 +8595,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _lodashArrayFlatten2 = _interopRequireDefault(_lodashArrayFlatten);
 	
-	var _lodashCollectionIncludes = __webpack_require__(156);
+	var _lodashCollectionIncludes = __webpack_require__(157);
 	
 	var _lodashCollectionIncludes2 = _interopRequireDefault(_lodashCollectionIncludes);
 	
@@ -8552,7 +8603,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Collection = _interopRequireWildcard(_collection);
 	
-	var _d3Scale = __webpack_require__(159);
+	var _data = __webpack_require__(125);
+	
+	var _data2 = _interopRequireDefault(_data);
+	
+	var _d3Scale = __webpack_require__(160);
 	
 	var _d3Scale2 = _interopRequireDefault(_d3Scale);
 	
@@ -8594,10 +8649,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!props.data) {
 	      return "linear";
 	    }
+	    var accessor = _data2["default"].createAccessor(props[axis]);
 	    var allData = (0, _lodashArrayFlatten2["default"])(props.data);
-	    var axisData = allData.map(function (datum) {
-	      return datum[axis];
-	    });
+	    var axisData = allData.map(accessor);
 	    return Collection.containsDates(axisData) ? "time" : "linear";
 	  },
 	
@@ -8631,16 +8685,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 156 */
+/* 157 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseIndexOf = __webpack_require__(134),
+	var baseIndexOf = __webpack_require__(133),
 	    getLength = __webpack_require__(7),
 	    isArray = __webpack_require__(11),
 	    isIterateeCall = __webpack_require__(115),
 	    isLength = __webpack_require__(9),
-	    isString = __webpack_require__(141),
-	    values = __webpack_require__(157);
+	    isString = __webpack_require__(140),
+	    values = __webpack_require__(158);
 	
 	/* Native method references for those with the same name as other `lodash` methods. */
 	var nativeMax = Math.max;
@@ -8694,10 +8748,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 157 */
+/* 158 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseValues = __webpack_require__(158),
+	var baseValues = __webpack_require__(159),
 	    keys = __webpack_require__(90);
 	
 	/**
@@ -8733,7 +8787,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 158 */
+/* 159 */
 /***/ function(module, exports) {
 
 	/**
@@ -8761,11 +8815,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 159 */
+/* 160 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
-	   true ? factory(exports, __webpack_require__(160), __webpack_require__(161), __webpack_require__(162), __webpack_require__(163), __webpack_require__(164), __webpack_require__(165)) :
+	   true ? factory(exports, __webpack_require__(161), __webpack_require__(162), __webpack_require__(163), __webpack_require__(164), __webpack_require__(165), __webpack_require__(166)) :
 	  typeof define === 'function' && define.amd ? define('d3-scale', ['exports', 'd3-color', 'd3-interpolate', 'd3-arrays', 'd3-format', 'd3-time-format', 'd3-time'], factory) :
 	  factory((global.d3_scale = {}),global.d3_color,global.d3_interpolate,global.d3_arrays,global.d3_format,global.d3_time_format,global.d3_time);
 	}(this, function (exports,d3Color,d3Interpolate,d3Arrays,d3Format,d3TimeFormat,d3Time) { 'use strict';
@@ -9641,47 +9695,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 160 */
+/* 161 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
 	   true ? factory(exports) :
-	  typeof define === 'function' && define.amd ? define('d3-color', ['exports'], factory) :
-	  factory((global.d3_color = {}));
+	  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	  (factory((global.d3_color = {})));
 	}(this, function (exports) { 'use strict';
 	
-	  function Color() {};
+	  function Color() {}
+	
+	  var darker = 0.7;
+	  var brighter = 1 / darker;
 	
 	  var reHex3 = /^#([0-9a-f]{3})$/;
 	  var reHex6 = /^#([0-9a-f]{6})$/;
 	  var reRgbInteger = /^rgb\(\s*([-+]?\d+)\s*,\s*([-+]?\d+)\s*,\s*([-+]?\d+)\s*\)$/;
 	  var reRgbPercent = /^rgb\(\s*([-+]?\d+(?:\.\d+)?)%\s*,\s*([-+]?\d+(?:\.\d+)?)%\s*,\s*([-+]?\d+(?:\.\d+)?)%\s*\)$/;
 	  var reHslPercent = /^hsl\(\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)%\s*,\s*([-+]?\d+(?:\.\d+)?)%\s*\)$/;
-	  color.prototype = Color.prototype = {
-	    displayable: function() {
-	      return this.rgb().displayable();
-	    },
-	    toString: function() {
-	      return this.rgb() + "";
-	    }
-	  };
-	
-	  function color(format) {
-	    var m;
-	    format = (format + "").trim().toLowerCase();
-	    return (m = reHex3.exec(format)) ? (m = parseInt(m[1], 16), rgb((m >> 8 & 0xf) | (m >> 4 & 0x0f0), (m >> 4 & 0xf) | (m & 0xf0), ((m & 0xf) << 4) | (m & 0xf))) // #f00
-	        : (m = reHex6.exec(format)) ? rgbn(parseInt(m[1], 16)) // #ff0000
-	        : (m = reRgbInteger.exec(format)) ? rgb(m[1], m[2], m[3]) // rgb(255,0,0)
-	        : (m = reRgbPercent.exec(format)) ? rgb(m[1] * 255 / 100, m[2] * 255 / 100, m[3] * 255 / 100) // rgb(100%,0%,0%)
-	        : (m = reHslPercent.exec(format)) ? hsl(m[1], m[2] / 100, m[3] / 100) // hsl(120,50%,50%)
-	        : named.hasOwnProperty(format) ? rgbn(named[format])
-	        : null;
-	  };
-	
-	  function rgbn(n) {
-	    return rgb(n >> 16 & 0xff, n >> 8 & 0xff, n & 0xff);
-	  }
-	
 	  var named = {
 	    aliceblue: 0xf0f8ff,
 	    antiquewhite: 0xfaebd7,
@@ -9833,8 +9865,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	    yellowgreen: 0x9acd32
 	  };
 	
-	  var darker = .7;
-	  var brighter = 1 / darker;
+	  color.prototype = Color.prototype = {
+	    displayable: function() {
+	      return this.rgb().displayable();
+	    },
+	    toString: function() {
+	      return this.rgb() + "";
+	    }
+	  };
+	
+	  function color(format) {
+	    var m;
+	    format = (format + "").trim().toLowerCase();
+	    return (m = reHex3.exec(format)) ? (m = parseInt(m[1], 16), new Rgb((m >> 8 & 0xf) | (m >> 4 & 0x0f0), (m >> 4 & 0xf) | (m & 0xf0), ((m & 0xf) << 4) | (m & 0xf))) // #f00
+	        : (m = reHex6.exec(format)) ? rgbn(parseInt(m[1], 16)) // #ff0000
+	        : (m = reRgbInteger.exec(format)) ? new Rgb(m[1], m[2], m[3]) // rgb(255,0,0)
+	        : (m = reRgbPercent.exec(format)) ? new Rgb(m[1] * 255 / 100, m[2] * 255 / 100, m[3] * 255 / 100) // rgb(100%,0%,0%)
+	        : (m = reHslPercent.exec(format)) ? new Hsl(m[1], m[2] / 100, m[3] / 100) // hsl(120,50%,50%)
+	        : named.hasOwnProperty(format) ? rgbn(named[format])
+	        : null;
+	  }
+	
+	  function rgbn(n) {
+	    return new Rgb(n >> 16 & 0xff, n >> 8 & 0xff, n & 0xff);
+	  }
 	
 	  function rgb(r, g, b) {
 	    if (arguments.length === 1) {
@@ -9849,37 +9903,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 	    return new Rgb(r, g, b);
-	  };
+	  }
 	
 	  function Rgb(r, g, b) {
 	    this.r = +r;
 	    this.g = +g;
 	    this.b = +b;
-	  };
+	  }
 	
-	  var prototype = rgb.prototype = Rgb.prototype = new Color;
+	  var _rgb = rgb.prototype = Rgb.prototype = new Color;
 	
-	  prototype.brighter = function(k) {
+	  _rgb.brighter = function(k) {
 	    k = k == null ? brighter : Math.pow(brighter, k);
 	    return new Rgb(this.r * k, this.g * k, this.b * k);
 	  };
 	
-	  prototype.darker = function(k) {
+	  _rgb.darker = function(k) {
 	    k = k == null ? darker : Math.pow(darker, k);
 	    return new Rgb(this.r * k, this.g * k, this.b * k);
 	  };
 	
-	  prototype.rgb = function() {
+	  _rgb.rgb = function() {
 	    return this;
 	  };
 	
-	  prototype.displayable = function() {
+	  _rgb.displayable = function() {
 	    return (0 <= this.r && this.r <= 255)
 	        && (0 <= this.g && this.g <= 255)
 	        && (0 <= this.b && this.b <= 255);
 	  };
 	
-	  prototype.toString = function() {
+	  _rgb.toString = function() {
 	    var r = Math.round(this.r),
 	        g = Math.round(this.g),
 	        b = Math.round(this.b);
@@ -9908,7 +9962,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	              range = max - min;
 	          l = (max + min) / 2;
 	          if (range) {
-	            s = l < .5 ? range / (max + min) : range / (2 - max - min);
+	            s = l < 0.5 ? range / (max + min) : range / (2 - max - min);
 	            if (r === max) h = (g - b) / range + (g < b) * 6;
 	            else if (g === max) h = (b - r) / range + 2;
 	            else h = (r - g) / range + 4;
@@ -9923,31 +9977,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 	    return new Hsl(h, s, l);
-	  };
+	  }
 	
 	  function Hsl(h, s, l) {
 	    this.h = +h;
 	    this.s = +s;
 	    this.l = +l;
-	  };
+	  }
 	
-	  var prototype$1 = hsl.prototype = Hsl.prototype = new Color;
+	  var _hsl = hsl.prototype = Hsl.prototype = new Color;
 	
-	  prototype$1.brighter = function(k) {
+	  _hsl.brighter = function(k) {
 	    k = k == null ? brighter : Math.pow(brighter, k);
 	    return new Hsl(this.h, this.s, this.l * k);
 	  };
 	
-	  prototype$1.darker = function(k) {
+	  _hsl.darker = function(k) {
 	    k = k == null ? darker : Math.pow(darker, k);
 	    return new Hsl(this.h, this.s, this.l * k);
 	  };
 	
-	  prototype$1.rgb = function() {
+	  _hsl.rgb = function() {
 	    var h = this.h % 360 + (this.h < 0) * 360,
 	        s = isNaN(h) || isNaN(this.s) ? 0 : this.s,
 	        l = this.l,
-	        m2 = l + (l < .5 ? l : 1 - l) * s,
+	        m2 = l + (l < 0.5 ? l : 1 - l) * s,
 	        m1 = 2 * l - m2;
 	    return new Rgb(
 	      hsl2rgb(h >= 240 ? h - 240 : h + 120, m1, m2),
@@ -9956,7 +10010,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    );
 	  };
 	
-	  prototype$1.displayable = function() {
+	  _hsl.displayable = function() {
 	    return (0 <= this.s && this.s <= 1 || isNaN(this.s))
 	        && (0 <= this.l && this.l <= 1);
 	  };
@@ -9972,45 +10026,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var deg2rad = Math.PI / 180;
 	  var rad2deg = 180 / Math.PI;
 	
-	  function hcl(h, c, l) {
-	    if (arguments.length === 1) {
-	      if (h instanceof Hcl) {
-	        l = h.l;
-	        c = h.c;
-	        h = h.h;
-	      } else {
-	        if (!(h instanceof Lab)) h = lab(h);
-	        l = h.l;
-	        c = Math.sqrt(h.a * h.a + h.b * h.b);
-	        h = Math.atan2(h.b, h.a) * rad2deg;
-	        if (h < 0) h += 360;
-	      }
-	    }
-	    return new Hcl(h, c, l);
-	  };
-	
-	  function Hcl(h, c, l) {
-	    this.h = +h;
-	    this.c = +c;
-	    this.l = +l;
-	  };
-	
-	  var prototype$3 = hcl.prototype = Hcl.prototype = new Color;
-	
-	  prototype$3.brighter = function(k) {
-	    return new Hcl(this.h, this.c, this.l + Kn * (k == null ? 1 : k));
-	  };
-	
-	  prototype$3.darker = function(k) {
-	    return new Hcl(this.h, this.c, this.l - Kn * (k == null ? 1 : k));
-	  };
-	
-	  prototype$3.rgb = function() {
-	    return lab(this).rgb();
-	  };
-	
 	  var Kn = 18;
-	
 	  var Xn = 0.950470;
 	  var Yn = 1;
 	  var Zn = 1.088830;
@@ -10031,37 +10047,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	        l = l.l;
 	      } else {
 	        if (!(l instanceof Rgb)) l = rgb(l);
-	        var r = rgb2xyz(l.r),
-	            g = rgb2xyz(l.g),
-	            b = rgb2xyz(l.b),
-	            x = xyz2lab((0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / Xn),
-	            y = xyz2lab((0.2126729 * r + 0.7151522 * g + 0.0721750 * b) / Yn),
-	            z = xyz2lab((0.0193339 * r + 0.1191920 * g + 0.9503041 * b) / Zn);
+	        b = rgb2xyz(l.r);
+	        a = rgb2xyz(l.g);
+	        l = rgb2xyz(l.b);
+	        var x = xyz2lab((0.4124564 * b + 0.3575761 * a + 0.1804375 * l) / Xn),
+	            y = xyz2lab((0.2126729 * b + 0.7151522 * a + 0.0721750 * l) / Yn),
+	            z = xyz2lab((0.0193339 * b + 0.1191920 * a + 0.9503041 * l) / Zn);
 	        b = 200 * (y - z);
 	        a = 500 * (x - y);
 	        l = 116 * y - 16;
 	      }
 	    }
 	    return new Lab(l, a, b);
-	  };
+	  }
 	
 	  function Lab(l, a, b) {
 	    this.l = +l;
 	    this.a = +a;
 	    this.b = +b;
-	  };
+	  }
 	
-	  var prototype$2 = lab.prototype = Lab.prototype = new Color;
+	  var _lab = lab.prototype = Lab.prototype = new Color;
 	
-	  prototype$2.brighter = function(k) {
+	  _lab.brighter = function(k) {
 	    return new Lab(this.l + Kn * (k == null ? 1 : k), this.a, this.b);
 	  };
 	
-	  prototype$2.darker = function(k) {
+	  _lab.darker = function(k) {
 	    return new Lab(this.l - Kn * (k == null ? 1 : k), this.a, this.b);
 	  };
 	
-	  prototype$2.rgb = function() {
+	  _lab.rgb = function() {
 	    var y = (this.l + 16) / 116,
 	        x = isNaN(this.a) ? y : y + this.a / 500,
 	        z = isNaN(this.b) ? y : y - this.b / 200;
@@ -10091,6 +10107,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return (x /= 255) <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
 	  }
 	
+	  function hcl(h, c, l) {
+	    if (arguments.length === 1) {
+	      if (h instanceof Hcl) {
+	        l = h.l;
+	        c = h.c;
+	        h = h.h;
+	      } else {
+	        if (!(h instanceof Lab)) h = lab(h);
+	        l = h.l;
+	        c = Math.sqrt(h.a * h.a + h.b * h.b);
+	        h = Math.atan2(h.b, h.a) * rad2deg;
+	        if (h < 0) h += 360;
+	      }
+	    }
+	    return new Hcl(h, c, l);
+	  }
+	
+	  function Hcl(h, c, l) {
+	    this.h = +h;
+	    this.c = +c;
+	    this.l = +l;
+	  }
+	
+	  var _hcl = hcl.prototype = Hcl.prototype = new Color;
+	
+	  _hcl.brighter = function(k) {
+	    return new Hcl(this.h, this.c, this.l + Kn * (k == null ? 1 : k));
+	  };
+	
+	  _hcl.darker = function(k) {
+	    return new Hcl(this.h, this.c, this.l - Kn * (k == null ? 1 : k));
+	  };
+	
+	  _hcl.rgb = function() {
+	    return lab(this).rgb();
+	  };
+	
 	  var A = -0.14861;
 	  var B = +1.78277;
 	  var C = -0.29227;
@@ -10116,27 +10169,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 	    return new Cubehelix(h, s, l);
-	  };
+	  }
 	
 	  function Cubehelix(h, s, l) {
 	    this.h = +h;
 	    this.s = +s;
 	    this.l = +l;
-	  };
+	  }
 	
-	  var prototype$4 = cubehelix.prototype = Cubehelix.prototype = new Color;
+	  var _cubehelix = cubehelix.prototype = Cubehelix.prototype = new Color;
 	
-	  prototype$4.brighter = function(k) {
+	  _cubehelix.brighter = function(k) {
 	    k = k == null ? brighter : Math.pow(brighter, k);
 	    return new Cubehelix(this.h, this.s, this.l * k);
 	  };
 	
-	  prototype$4.darker = function(k) {
+	  _cubehelix.darker = function(k) {
 	    k = k == null ? darker : Math.pow(darker, k);
 	    return new Cubehelix(this.h, this.s, this.l * k);
 	  };
 	
-	  prototype$4.rgb = function() {
+	  _cubehelix.rgb = function() {
 	    var h = isNaN(this.h) ? 0 : (this.h + 120) * deg2rad,
 	        l = +this.l,
 	        a = isNaN(this.s) ? 0 : this.s * l * (1 - l),
@@ -10149,7 +10202,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    );
 	  };
 	
-	  var version = "0.3.2";
+	  var version = "0.3.4";
 	
 	  exports.version = version;
 	  exports.color = color;
@@ -10162,11 +10215,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 161 */
+/* 162 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
-	   true ? factory(exports, __webpack_require__(160)) :
+	   true ? factory(exports, __webpack_require__(161)) :
 	  typeof define === 'function' && define.amd ? define('d3-interpolate', ['exports', 'd3-color'], factory) :
 	  factory((global.d3_interpolate = {}),global.d3_color);
 	}(this, function (exports,d3Color) { 'use strict';
@@ -10649,7 +10702,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 162 */
+/* 163 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
@@ -11196,7 +11249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 163 */
+/* 164 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
@@ -11696,11 +11749,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 164 */
+/* 165 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
-	   true ? factory(exports, __webpack_require__(165)) :
+	   true ? factory(exports, __webpack_require__(166)) :
 	  typeof define === 'function' && define.amd ? define('d3-time-format', ['exports', 'd3-time'], factory) :
 	  factory((global.d3_time_format = {}),global.d3_time);
 	}(this, function (exports,d3Time) { 'use strict';
@@ -12521,7 +12574,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 165 */
+/* 166 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
@@ -12880,7 +12933,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 166 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -12960,7 +13013,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 167 */
+/* 168 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/* global console */
@@ -12983,7 +13036,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)))
 
 /***/ },
-/* 168 */
+/* 169 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -13034,7 +13087,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.getConstructorName = getConstructorName;
 
 /***/ },
-/* 169 */
+/* 170 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -13047,15 +13100,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 	
-	var _lodashFunctionBind = __webpack_require__(170);
+	var _lodashFunctionBind = __webpack_require__(171);
 	
 	var _lodashFunctionBind2 = _interopRequireDefault(_lodashFunctionBind);
 	
 	var _react = __webpack_require__(27);
 	
-	var _type = __webpack_require__(168);
+	var _type = __webpack_require__(169);
 	
-	var _scale = __webpack_require__(155);
+	var _scale = __webpack_require__(156);
 	
 	var Scale = _interopRequireWildcard(_scale);
 	
@@ -13085,6 +13138,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	exports.makeChainable = makeChainable;
 	/**
+	 * Return a new validator which returns true
+	 * if and only if all validators passed as arguments return true.
+	 * Like React.propTypes.oneOfType, except "all" instead of "any"
+	 * @param {Array} validators Validation functions.
+	 * @returns {Function} Combined validator function
+	 */
+	var allOfType = function allOfType(validators) {
+	  return makeChainable(function (props, propName, componentName) {
+	    var error = validators.reduce(function (result, validator) {
+	      return result || validator(props, propName, componentName);
+	    }, undefined);
+	    if (error) {
+	      return error;
+	    }
+	  });
+	};
+	
+	exports.allOfType = allOfType;
+	/**
 	 * Check that the value is a non-negative number.
 	 */
 	var nonNegative = makeChainable(function (props, propName, componentName) {
@@ -13099,6 +13171,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 	
 	exports.nonNegative = nonNegative;
+	/**
+	 * Check that the value is an integer.
+	 */
+	var integer = makeChainable(function (props, propName, componentName) {
+	  var error = _react.PropTypes.number(props, propName, componentName);
+	  if (error) {
+	    return error;
+	  }
+	  var value = props[propName];
+	  if (value % 1 !== 0) {
+	    return new Error("`" + propName + "` in `" + componentName + "` must be an integer.");
+	  }
+	});
+	
+	exports.integer = integer;
 	/**
 	 * Check that the value is an Array of two unique values.
 	 */
@@ -13149,11 +13236,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.homogeneousArray = homogeneousArray;
 
 /***/ },
-/* 170 */
+/* 171 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var createWrapper = __webpack_require__(171),
-	    replaceHolders = __webpack_require__(190),
+	var createWrapper = __webpack_require__(172),
+	    replaceHolders = __webpack_require__(191),
 	    restParam = __webpack_require__(26);
 	
 	/** Used to compose bitmasks for wrapper metadata. */
@@ -13211,16 +13298,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 171 */
+/* 172 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseSetData = __webpack_require__(172),
-	    createBindWrapper = __webpack_require__(174),
-	    createHybridWrapper = __webpack_require__(176),
-	    createPartialWrapper = __webpack_require__(193),
-	    getData = __webpack_require__(182),
-	    mergeData = __webpack_require__(194),
-	    setData = __webpack_require__(191);
+	var baseSetData = __webpack_require__(173),
+	    createBindWrapper = __webpack_require__(175),
+	    createHybridWrapper = __webpack_require__(177),
+	    createPartialWrapper = __webpack_require__(194),
+	    getData = __webpack_require__(183),
+	    mergeData = __webpack_require__(195),
+	    setData = __webpack_require__(192);
 	
 	/** Used to compose bitmasks for wrapper metadata. */
 	var BIND_FLAG = 1,
@@ -13303,11 +13390,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 172 */
+/* 173 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var identity = __webpack_require__(17),
-	    metaMap = __webpack_require__(173);
+	    metaMap = __webpack_require__(174);
 	
 	/**
 	 * The base implementation of `setData` without support for hot loop detection.
@@ -13326,7 +13413,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 173 */
+/* 174 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {var getNative = __webpack_require__(12);
@@ -13342,10 +13429,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 174 */
+/* 175 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {var createCtorWrapper = __webpack_require__(175);
+	/* WEBPACK VAR INJECTION */(function(global) {var createCtorWrapper = __webpack_require__(176);
 	
 	/**
 	 * Creates a function that wraps `func` and invokes it with the `this`
@@ -13371,7 +13458,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 175 */
+/* 176 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var baseCreate = __webpack_require__(105),
@@ -13414,17 +13501,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 176 */
+/* 177 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {var arrayCopy = __webpack_require__(110),
-	    composeArgs = __webpack_require__(177),
-	    composeArgsRight = __webpack_require__(178),
-	    createCtorWrapper = __webpack_require__(175),
-	    isLaziable = __webpack_require__(179),
-	    reorder = __webpack_require__(189),
-	    replaceHolders = __webpack_require__(190),
-	    setData = __webpack_require__(191);
+	    composeArgs = __webpack_require__(178),
+	    composeArgsRight = __webpack_require__(179),
+	    createCtorWrapper = __webpack_require__(176),
+	    isLaziable = __webpack_require__(180),
+	    reorder = __webpack_require__(190),
+	    replaceHolders = __webpack_require__(191),
+	    setData = __webpack_require__(192);
 	
 	/** Used to compose bitmasks for wrapper metadata. */
 	var BIND_FLAG = 1,
@@ -13532,7 +13619,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 177 */
+/* 178 */
 /***/ function(module, exports) {
 
 	/* Native method references for those with the same name as other `lodash` methods. */
@@ -13572,7 +13659,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 178 */
+/* 179 */
 /***/ function(module, exports) {
 
 	/* Native method references for those with the same name as other `lodash` methods. */
@@ -13614,13 +13701,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 179 */
+/* 180 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var LazyWrapper = __webpack_require__(180),
-	    getData = __webpack_require__(182),
-	    getFuncName = __webpack_require__(184),
-	    lodash = __webpack_require__(186);
+	var LazyWrapper = __webpack_require__(181),
+	    getData = __webpack_require__(183),
+	    getFuncName = __webpack_require__(185),
+	    lodash = __webpack_require__(187);
 	
 	/**
 	 * Checks if `func` has a lazy counterpart.
@@ -13647,11 +13734,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 180 */
+/* 181 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var baseCreate = __webpack_require__(105),
-	    baseLodash = __webpack_require__(181);
+	    baseLodash = __webpack_require__(182);
 	
 	/** Used as references for `-Infinity` and `Infinity`. */
 	var POSITIVE_INFINITY = Number.POSITIVE_INFINITY;
@@ -13679,7 +13766,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 181 */
+/* 182 */
 /***/ function(module, exports) {
 
 	/**
@@ -13695,11 +13782,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 182 */
+/* 183 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var metaMap = __webpack_require__(173),
-	    noop = __webpack_require__(183);
+	var metaMap = __webpack_require__(174),
+	    noop = __webpack_require__(184);
 	
 	/**
 	 * Gets metadata for `func`.
@@ -13716,7 +13803,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 183 */
+/* 184 */
 /***/ function(module, exports) {
 
 	/**
@@ -13741,10 +13828,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 184 */
+/* 185 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var realNames = __webpack_require__(185);
+	var realNames = __webpack_require__(186);
 	
 	/**
 	 * Gets the name of `func`.
@@ -13772,7 +13859,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 185 */
+/* 186 */
 /***/ function(module, exports) {
 
 	/** Used to lookup unminified function names. */
@@ -13782,15 +13869,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 186 */
+/* 187 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var LazyWrapper = __webpack_require__(180),
-	    LodashWrapper = __webpack_require__(187),
-	    baseLodash = __webpack_require__(181),
+	var LazyWrapper = __webpack_require__(181),
+	    LodashWrapper = __webpack_require__(188),
+	    baseLodash = __webpack_require__(182),
 	    isArray = __webpack_require__(11),
 	    isObjectLike = __webpack_require__(10),
-	    wrapperClone = __webpack_require__(188);
+	    wrapperClone = __webpack_require__(189);
 	
 	/** Used for native method references. */
 	var objectProto = Object.prototype;
@@ -13913,11 +14000,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 187 */
+/* 188 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var baseCreate = __webpack_require__(105),
-	    baseLodash = __webpack_require__(181);
+	    baseLodash = __webpack_require__(182);
 	
 	/**
 	 * The base constructor for creating `lodash` wrapper objects.
@@ -13940,11 +14027,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 188 */
+/* 189 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var LazyWrapper = __webpack_require__(180),
-	    LodashWrapper = __webpack_require__(187),
+	var LazyWrapper = __webpack_require__(181),
+	    LodashWrapper = __webpack_require__(188),
 	    arrayCopy = __webpack_require__(110);
 	
 	/**
@@ -13964,7 +14051,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 189 */
+/* 190 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var arrayCopy = __webpack_require__(110),
@@ -13999,7 +14086,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 190 */
+/* 191 */
 /***/ function(module, exports) {
 
 	/** Used as the internal argument placeholder. */
@@ -14033,11 +14120,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 191 */
+/* 192 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseSetData = __webpack_require__(172),
-	    now = __webpack_require__(192);
+	var baseSetData = __webpack_require__(173),
+	    now = __webpack_require__(193);
 	
 	/** Used to detect when a function becomes hot. */
 	var HOT_COUNT = 150,
@@ -14080,7 +14167,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 192 */
+/* 193 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var getNative = __webpack_require__(12);
@@ -14110,10 +14197,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 193 */
+/* 194 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {var createCtorWrapper = __webpack_require__(175);
+	/* WEBPACK VAR INJECTION */(function(global) {var createCtorWrapper = __webpack_require__(176);
 	
 	/** Used to compose bitmasks for wrapper metadata. */
 	var BIND_FLAG = 1;
@@ -14160,13 +14247,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 194 */
+/* 195 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var arrayCopy = __webpack_require__(110),
-	    composeArgs = __webpack_require__(177),
-	    composeArgsRight = __webpack_require__(178),
-	    replaceHolders = __webpack_require__(190);
+	    composeArgs = __webpack_require__(178),
+	    composeArgsRight = __webpack_require__(179),
+	    replaceHolders = __webpack_require__(191);
 	
 	/** Used to compose bitmasks for wrapper metadata. */
 	var BIND_FLAG = 1,
@@ -14255,17 +14342,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 195 */
+/* 196 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	
 	module.exports = {
-	  VictoryAnimation: __webpack_require__(196)
+	  VictoryAnimation: __webpack_require__(197)
 	};
 
 /***/ },
-/* 196 */
+/* 197 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14290,17 +14377,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _d3Ease = __webpack_require__(197);
+	var _d3Ease = __webpack_require__(198);
 	
 	var _d3Ease2 = _interopRequireDefault(_d3Ease);
 	
-	var _d3Interpolate = __webpack_require__(161);
+	var _d3Interpolate = __webpack_require__(162);
 	
 	var _d3Interpolate2 = _interopRequireDefault(_d3Interpolate);
 	
-	var _d3Timer = __webpack_require__(198);
+	var _d3Timer = __webpack_require__(199);
 	
-	var _util = __webpack_require__(199);
+	var _util = __webpack_require__(200);
 	
 	// Nearly all animation libraries are duration-based, not velocity-based.
 	// In other words, you say "I want the animation to take this long", not
@@ -14481,7 +14568,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports["default"];
 
 /***/ },
-/* 197 */
+/* 198 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
@@ -14711,7 +14798,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 198 */
+/* 199 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (global, factory) {
@@ -14817,7 +14904,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}));
 
 /***/ },
-/* 199 */
+/* 200 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -14828,11 +14915,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 	
-	var _lodash = __webpack_require__(200);
+	var _lodash = __webpack_require__(201);
 	
 	var _lodash2 = _interopRequireDefault(_lodash);
 	
-	var _d3Interpolate = __webpack_require__(161);
+	var _d3Interpolate = __webpack_require__(162);
 	
 	var _d3Interpolate2 = _interopRequireDefault(_d3Interpolate);
 	
@@ -14974,7 +15061,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.addVictoryInterpolator = addVictoryInterpolator;
 
 /***/ },
-/* 200 */
+/* 201 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/**
@@ -27329,10 +27416,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}.call(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(201)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(202)(module), (function() { return this; }())))
 
 /***/ },
-/* 201 */
+/* 202 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -27348,7 +27435,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 202 */
+/* 203 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -27414,7 +27501,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: "renderBar",
 	    value: function renderBar(props) {
-	      var style = _victoryUtil.Chart.evaluateStyle(props.style, props.data);
+	      var style = _victoryUtil.Chart.evaluateStyle(props.style, props.datum);
 	      // TODO better bar width calculation
 	      var barWidth = style.width;
 	      var path = props.position.independent ? this.getBarPath(props.position, barWidth) : undefined;
@@ -27439,7 +27526,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      position: _react.PropTypes.object,
 	      horizontal: _react.PropTypes.bool,
 	      style: _react.PropTypes.object,
-	      data: _react.PropTypes.object
+	      datum: _react.PropTypes.object
 	    },
 	    enumerable: true
 	  }]);
@@ -27453,7 +27540,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports["default"];
 
 /***/ },
-/* 203 */
+/* 204 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -27484,7 +27571,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _radium2 = _interopRequireDefault(_radium);
 	
-	var _victoryLabel = __webpack_require__(204);
+	var _victoryLabel = __webpack_require__(205);
 	
 	var _victoryUtil = __webpack_require__(77);
 	
@@ -27500,7 +27587,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _createClass(BarLabel, [{
 	    key: "getLabelAnchors",
 	    value: function getLabelAnchors(props) {
-	      var sign = props.data.y >= 0 ? 1 : -1;
+	      var sign = props.datum.y >= 0 ? 1 : -1;
 	      if (!props.horizontal) {
 	        return {
 	          vertical: sign >= 0 ? "end" : "start",
@@ -27526,13 +27613,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function renderLabelComponent(props, position, anchors) {
 	      var component = props.labelComponent;
 	      var baseStyle = (0, _lodashObjectMerge2["default"])({ padding: 0 }, props.style, component.props.style);
-	      var style = _victoryUtil.Chart.evaluateStyle(baseStyle, props.data);
+	      var style = _victoryUtil.Chart.evaluateStyle(baseStyle, props.datum);
 	      var padding = this.getlabelPadding(props, style);
 	      var children = component.props.children || props.labelText;
 	      var newProps = {
 	        x: component.props.x || position.x + padding.x,
 	        y: component.props.y || position.y - padding.y,
-	        data: props.data, // Pass data for custom label component to access
+	        data: props.datum, // Pass data for custom label component to access - todo: rename to datum
 	        textAnchor: component.props.textAnchor || anchors.text,
 	        verticalAnchor: component.props.verticalAnchor || anchors.vertical,
 	        style: style
@@ -27543,14 +27630,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: "renderVictoryLabel",
 	    value: function renderVictoryLabel(props, position, anchors) {
 	      var baseStyle = (0, _lodashObjectMerge2["default"])({ padding: 0 }, props.style);
-	      var style = _victoryUtil.Chart.evaluateStyle(baseStyle, props.data);
+	      var style = _victoryUtil.Chart.evaluateStyle(baseStyle, props.datum);
 	      var padding = this.getlabelPadding(props, style);
 	      return _react2["default"].createElement(
 	        _victoryLabel.VictoryLabel,
 	        {
 	          x: position.x + padding.x,
 	          y: position.y - padding.y,
-	          data: props.data,
+	          data: props.datum, // todo: rename to datum
 	          textAnchor: anchors.text,
 	          verticalAnchor: anchors.vertical,
 	          style: style
@@ -27583,7 +27670,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      position: _react.PropTypes.object,
 	      horizontal: _react.PropTypes.bool,
 	      style: _react.PropTypes.object,
-	      data: _react.PropTypes.object,
+	      datum: _react.PropTypes.object,
 	      labelText: _react.PropTypes.string,
 	      labelComponent: _react.PropTypes.any
 	    },
@@ -27599,17 +27686,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports["default"];
 
 /***/ },
-/* 204 */
+/* 205 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	
 	module.exports = {
-	  VictoryLabel: __webpack_require__(205)
+	  VictoryLabel: __webpack_require__(206)
 	};
 
 /***/ },
-/* 205 */
+/* 206 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -27632,19 +27719,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _radium = __webpack_require__(206);
+	var _radium = __webpack_require__(28);
 	
 	var _radium2 = _interopRequireDefault(_radium);
 	
 	var _victoryUtil = __webpack_require__(77);
 	
-	var _victoryUtil2 = _interopRequireDefault(_victoryUtil);
+	var _lodashObjectMerge = __webpack_require__(107);
 	
-	var _lodash = __webpack_require__(200);
+	var _lodashObjectMerge2 = _interopRequireDefault(_lodashObjectMerge);
 	
-	var _lodash2 = _interopRequireDefault(_lodash);
-	
-	var styles = {
+	var defaultStyles = {
 	  stroke: "transparent",
 	  fill: "#756f6a",
 	  fontSize: 16,
@@ -27662,89 +27747,69 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  _createClass(VictoryLabel, [{
-	    key: "getCalculatedValues",
-	    value: function getCalculatedValues(props) {
-	      this.style = this.getStyles(props);
-	      this.transform = _victoryUtil2["default"].Style.toTransformString(this.evaluateProp(props.transform));
-	      this.verticalAnchor = props.verticalAnchor ? this.evaluateProp(props.verticalAnchor) : "middle";
-	      this.textAnchor = props.textAnchor ? this.evaluateProp(props.textAnchor) : "start";
-	      this.capHeight = this.getHeight(props, "capHeight");
-	      this.lineHeight = this.getHeight(props, "lineHeight");
-	      this.content = this.getContent(props);
-	      this.dy = this.getDy(props);
-	      this.dx = this.getDx(props);
-	    }
-	  }, {
 	    key: "getStyles",
 	    value: function getStyles(props) {
-	      var style = props.style ? _lodash2["default"].merge({}, styles, props.style) : styles;
-	      return this.evaluateStyle(style);
-	    }
-	  }, {
-	    key: "evaluateStyle",
-	    value: function evaluateStyle(style) {
-	      var _this = this;
-	
-	      return _lodash2["default"].transform(style, function (result, value, key) {
-	        result[key] = _this.evaluateProp(value);
-	      });
-	    }
-	  }, {
-	    key: "evaluateProp",
-	    value: function evaluateProp(prop) {
-	      return _lodash2["default"].isFunction(prop) ? prop.call(this, this.props.data) : prop;
+	      var style = props.style ? (0, _lodashObjectMerge2["default"])({}, defaultStyles, props.style) : defaultStyles;
+	      return _victoryUtil.Chart.evaluateStyle(style);
 	    }
 	  }, {
 	    key: "getHeight",
 	    value: function getHeight(props, type) {
-	      var height = this.evaluateProp(props[type]);
-	      return _lodash2["default"].isNumber(height) ? height + "em" : height;
+	      var height = _victoryUtil.Chart.evaluateProp(props[type]);
+	      return typeof height === "number" ? height + "em" : height;
 	    }
 	  }, {
 	    key: "getContent",
 	    value: function getContent(props) {
 	      if (props.children) {
-	        var child = this.evaluateProp(props.children);
+	        var child = _victoryUtil.Chart.evaluateProp(props.children);
 	        return ("" + child).split("\n");
 	      }
 	      return [""];
 	    }
 	  }, {
-	    key: "getDx",
-	    value: function getDx(props) {
-	      return props.dx ? this.evaluateProp(props.dx) : 0;
-	    }
-	  }, {
 	    key: "getDy",
-	    value: function getDy(props) {
-	      var dy = props.dy ? this.evaluateProp(props.dy) : 0;
-	      var length = this.content.length;
-	      switch (this.verticalAnchor) {
+	    value: function getDy(props, content, lineHeight) {
+	      var dy = props.dy ? _victoryUtil.Chart.evaluateProp(props.dy) : 0;
+	      var length = content.length;
+	      var capHeight = this.getHeight(props, "capHeight");
+	      var verticalAnchor = props.verticalAnchor ? _victoryUtil.Chart.evaluateProp(props.verticalAnchor) : "middle";
+	      switch (verticalAnchor) {
 	        case "end":
-	          return _victoryUtil2["default"].Style.calc(dy + " +  " + this.capHeight + " / 2 + (0.5 - " + length + ") * " + this.lineHeight);
+	          return _victoryUtil.Style.calc(dy + " +  " + capHeight + " / 2 + (0.5 - " + length + ") * " + lineHeight);
 	        case "middle":
-	          return _victoryUtil2["default"].Style.calc(dy + " + " + this.capHeight + " / 2 + (0.5 - " + length + " / 2) * " + this.lineHeight);
+	          return _victoryUtil.Style.calc(dy + " + " + capHeight + " / 2 + (0.5 - " + length + " / 2) * " + lineHeight);
 	        default:
-	          return _victoryUtil2["default"].Style.calc(dy + " + " + this.capHeight + " / 2 + " + this.lineHeight + " / 2");
+	          return _victoryUtil.Style.calc(dy + " + " + capHeight + " / 2 + " + lineHeight + " / 2");
 	      }
 	    }
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      var _this2 = this;
+	      var _this = this;
 	
-	      this.getCalculatedValues(this.props);
+	      var lineHeight = this.getHeight(this.props, "lineHeight");
+	      var transform = this.props.transform && _victoryUtil.Style.toTransformString(_victoryUtil.Chart.evaluateProp(this.props.transform));
+	      var textAnchor = this.props.textAnchor ? _victoryUtil.Chart.evaluateProp(this.props.textAnchor) : "start";
+	      var content = this.getContent(this.props);
+	      var style = this.getStyles(this.props);
+	      var dx = this.props.dx ? _victoryUtil.Chart.evaluateProp(this.props.dx) : 0;
+	      var dy = this.getDy(this.props, content, lineHeight);
 	      return _react2["default"].createElement(
 	        "text",
-	        { x: this.props.x, y: this.props.y, dy: this.dy, dx: this.dx,
-	          textAnchor: this.textAnchor,
-	          transform: this.transform,
-	          style: this.style
+	        {
+	          x: this.props.x,
+	          y: this.props.y,
+	          dy: dy,
+	          dx: dx,
+	          textAnchor: textAnchor,
+	          transform: transform,
+	          style: style
 	        },
-	        this.content.map(function (line, i) {
+	        content.map(function (line, i) {
 	          return _react2["default"].createElement(
 	            "tspan",
-	            { key: i, x: _this2.props.x, dy: i ? _this2.lineHeight : undefined },
+	            { key: i, x: _this.props.x, dy: i ? lineHeight : undefined },
 	            line
 	          );
 	        })
@@ -27761,7 +27826,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	       * `lineHeight` and `dy`, preferably ems. If given a unitless number, it
 	       * is assumed to be ems.
 	       */
-	      capHeight: _react.PropTypes.oneOfType([_react.PropTypes.string, _victoryUtil2["default"].PropTypes.nonNegative, _react.PropTypes.func]),
+	      capHeight: _react.PropTypes.oneOfType([_react.PropTypes.string, _victoryUtil.PropTypes.nonNegative, _react.PropTypes.func]),
 	      /**
 	       * all Victory components will pass a data prop to their label component. This can
 	       * be used to calculate functional styles, and determine child text
@@ -27783,7 +27848,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	       * as `capHeight` and `dy`, preferably ems. If given a unitless number, it
 	       * is assumed to be ems.
 	       */
-	      lineHeight: _react.PropTypes.oneOfType([_react.PropTypes.string, _victoryUtil2["default"].PropTypes.nonNegative, _react.PropTypes.func]),
+	      lineHeight: _react.PropTypes.oneOfType([_react.PropTypes.string, _victoryUtil.PropTypes.nonNegative, _react.PropTypes.func]),
 	      /**
 	       * The style prop applies CSS properties to the rendered `<text>` element.
 	       */
@@ -27844,2317 +27909,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports["default"];
 
 /***/ },
-/* 206 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _enhancer = __webpack_require__(207);
-	
-	var _enhancer2 = _interopRequireDefault(_enhancer);
-	
-	var _plugins = __webpack_require__(212);
-	
-	var _plugins2 = _interopRequireDefault(_plugins);
-	
-	var _componentsPrintStyleSheet = __webpack_require__(232);
-	
-	var _componentsPrintStyleSheet2 = _interopRequireDefault(_componentsPrintStyleSheet);
-	
-	var _componentsStyle = __webpack_require__(233);
-	
-	var _componentsStyle2 = _interopRequireDefault(_componentsStyle);
-	
-	var _getState = __webpack_require__(209);
-	
-	var _getState2 = _interopRequireDefault(_getState);
-	
-	var _keyframes = __webpack_require__(236);
-	
-	var _keyframes2 = _interopRequireDefault(_keyframes);
-	
-	var _resolveStyles = __webpack_require__(208);
-	
-	function Radium(ComposedComponent /*: constructor*/) {
-	  return _enhancer2['default'](ComposedComponent);
-	}
-	
-	Radium.Plugins = _plugins2['default'];
-	Radium.PrintStyleSheet = _componentsPrintStyleSheet2['default'];
-	Radium.Style = _componentsStyle2['default'];
-	Radium.getState = _getState2['default'];
-	Radium.keyframes = _keyframes2['default'];
-	Radium.__clearStateForTests = _resolveStyles.__clearStateForTests;
-	
-	exports['default'] = Radium;
-	module.exports = exports['default'];
-
-/***/ },
 /* 207 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(process) {/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	exports['default'] = enhanceWithRadium;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var _react = __webpack_require__(27);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
-	var _resolveStylesJs = __webpack_require__(208);
-	
-	var _resolveStylesJs2 = _interopRequireDefault(_resolveStylesJs);
-	
-	var _printStylesJs = __webpack_require__(231);
-	
-	var _printStylesJs2 = _interopRequireDefault(_printStylesJs);
-	
-	var KEYS_TO_IGNORE_WHEN_COPYING_PROPERTIES = ['arguments', 'callee', 'caller', 'length', 'name', 'prototype', 'type'];
-	
-	var copyProperties = function copyProperties(source, target) {
-	  Object.getOwnPropertyNames(source).forEach(function (key) {
-	    if (KEYS_TO_IGNORE_WHEN_COPYING_PROPERTIES.indexOf(key) < 0 && !target.hasOwnProperty(key)) {
-	      var descriptor = Object.getOwnPropertyDescriptor(source, key);
-	      Object.defineProperty(target, key, descriptor);
-	    }
-	  });
-	};
-	
-	function enhanceWithRadium(configOrComposedComponent /*: constructor | Function | Object*/) /*: constructor*/ {
-	  var config /*:: ?: Object*/ = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-	
-	  if (typeof configOrComposedComponent !== 'function') {
-	    var _ret = (function () {
-	      var newConfig = _extends({}, config, configOrComposedComponent);
-	      return {
-	        v: function (configOrComponent) {
-	          return enhanceWithRadium(configOrComponent, newConfig);
-	        }
-	      };
-	    })();
-	
-	    if (typeof _ret === 'object') return _ret.v;
-	  }
-	
-	  var component /*: Function*/ = configOrComposedComponent;
-	  var ComposedComponent /*: constructor*/ = component;
-	
-	  // Handle stateless components
-	  if (!ComposedComponent.render && !ComposedComponent.prototype.render) {
-	    ComposedComponent = (function (_Component) {
-	      _inherits(_class, _Component);
-	
-	      function _class() {
-	        _classCallCheck(this, _class);
-	
-	        _Component.apply(this, arguments);
-	      }
-	
-	      _class.prototype.render = function render() {
-	        return component(this.props, this.context);
-	      };
-	
-	      return _class;
-	    })(_react.Component);
-	    ComposedComponent.displayName = component.displayName || component.name;
-	  }
-	
-	  var RadiumEnhancer = (function (_ComposedComponent) {
-	    _inherits(RadiumEnhancer, _ComposedComponent);
-	
-	    function RadiumEnhancer() {
-	      _classCallCheck(this, RadiumEnhancer);
-	
-	      _ComposedComponent.apply(this, arguments);
-	
-	      this.state = this.state || {};
-	      this.state._radiumStyleState = {};
-	      this._radiumIsMounted = true;
-	
-	      if (RadiumEnhancer.printStyleClass) {
-	        this.printStyleClass = RadiumEnhancer.printStyleClass;
-	      }
-	    }
-	
-	    // Class inheritance uses Object.create and because of __proto__ issues
-	    // with IE <10 any static properties of the superclass aren't inherited and
-	    // so need to be manually populated.
-	    // See http://babeljs.io/docs/advanced/caveats/#classes-10-and-below-
-	
-	    RadiumEnhancer.prototype.componentWillUnmount = function componentWillUnmount() {
-	      if (_ComposedComponent.prototype.componentWillUnmount) {
-	        _ComposedComponent.prototype.componentWillUnmount.call(this);
-	      }
-	
-	      this._radiumIsMounted = false;
-	
-	      if (this._radiumMouseUpListener) {
-	        this._radiumMouseUpListener.remove();
-	      }
-	
-	      if (this._radiumMediaQueryListenersByQuery) {
-	        Object.keys(this._radiumMediaQueryListenersByQuery).forEach(function (query) {
-	          this._radiumMediaQueryListenersByQuery[query].remove();
-	        }, this);
-	      }
-	    };
-	
-	    RadiumEnhancer.prototype.getChildContext = function getChildContext() {
-	      var superChildContext = _ComposedComponent.prototype.getChildContext ? _ComposedComponent.prototype.getChildContext.call(this) : {};
-	
-	      if (!this.props.radiumConfig) {
-	        return superChildContext;
-	      }
-	
-	      return _extends({}, superChildContext, {
-	        radiumConfig: this.props.radiumConfig
-	      });
-	    };
-	
-	    RadiumEnhancer.prototype.render = function render() {
-	      var renderedElement = _ComposedComponent.prototype.render.call(this);
-	      var currentConfig = this.props.radiumConfig || this.context.radiumConfig || config;
-	
-	      if (config && currentConfig !== config) {
-	        currentConfig = _extends({}, config, currentConfig);
-	      }
-	
-	      return _resolveStylesJs2['default'](this, renderedElement, currentConfig);
-	    };
-	
-	    return RadiumEnhancer;
-	  })(ComposedComponent);
-	
-	  copyProperties(component, RadiumEnhancer);
-	
-	  if (process.env.NODE_ENV !== 'production') {
-	    // This also fixes React Hot Loader by exposing the original components top
-	    // level prototype methods on the Radium enhanced prototype as discussed in
-	    // https://github.com/FormidableLabs/radium/issues/219.
-	    copyProperties(ComposedComponent.prototype, RadiumEnhancer.prototype);
-	  }
-	
-	  if (RadiumEnhancer.propTypes && RadiumEnhancer.propTypes.style) {
-	    RadiumEnhancer.propTypes = _extends({}, RadiumEnhancer.propTypes, {
-	      style: _react.PropTypes.oneOfType([_react.PropTypes.array, _react.PropTypes.object])
-	    });
-	  }
-	
-	  RadiumEnhancer.displayName = component.displayName || component.name || 'Component';
-	
-	  RadiumEnhancer.printStyleClass = _printStylesJs2['default'].addPrintStyles(RadiumEnhancer);
-	
-	  RadiumEnhancer.contextTypes = _extends({}, RadiumEnhancer.contextTypes, {
-	    radiumConfig: _react2['default'].PropTypes.object
-	  });
-	
-	  RadiumEnhancer.childContextTypes = _extends({}, RadiumEnhancer.childContextTypes, {
-	    radiumConfig: _react2['default'].PropTypes.object
-	  });
-	
-	  return RadiumEnhancer;
-	}
-	
-	module.exports = exports['default'];
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)))
-
-/***/ },
-/* 208 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _getState2 = __webpack_require__(209);
-	
-	var _getState3 = _interopRequireDefault(_getState2);
-	
-	var _getStateKey = __webpack_require__(210);
-	
-	var _getStateKey2 = _interopRequireDefault(_getStateKey);
-	
-	var _mergeStyles = __webpack_require__(211);
-	
-	var _mergeStyles2 = _interopRequireDefault(_mergeStyles);
-	
-	var _plugins = __webpack_require__(212);
-	
-	var _plugins2 = _interopRequireDefault(_plugins);
-	
-	var _exenv = __webpack_require__(73);
-	
-	var _exenv2 = _interopRequireDefault(_exenv);
-	
-	var _react = __webpack_require__(27);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
-	/*:: import type {Config} from './config';*/
-	
-	var DEFAULT_CONFIG = {
-	  plugins: [_plugins2['default'].mergeStyleArray, _plugins2['default'].checkProps, _plugins2['default'].resolveMediaQueries, _plugins2['default'].resolveInteractionStyles, _plugins2['default'].prefix, _plugins2['default'].checkProps]
-	};
-	
-	// Gross
-	var globalState = {};
-	
-	// Declare early for recursive helpers.
-	var resolveStyles = ((null /*: any*/) /*: (
-	                                        component: any, // ReactComponent, flow+eslint complaining
-	                                        renderedElement: any,
-	                                        config: Config,
-	                                        existingKeyMap?: {[key: string]: bool}
-	                                      ) => any*/);
-	
-	var _resolveChildren = function _resolveChildren(_ref) {
-	  var children = _ref.children;
-	  var component = _ref.component;
-	  var config = _ref.config;
-	  var existingKeyMap = _ref.existingKeyMap;
-	
-	  if (!children) {
-	    return children;
-	  }
-	
-	  var childrenType = typeof children;
-	
-	  if (childrenType === 'string' || childrenType === 'number') {
-	    // Don't do anything with a single primitive child
-	    return children;
-	  }
-	
-	  if (childrenType === 'function') {
-	    // Wrap the function, resolving styles on the result
-	    return function () {
-	      var result = children.apply(this, arguments);
-	      if (_react2['default'].isValidElement(result)) {
-	        return resolveStyles(component, result, config, existingKeyMap);
-	      }
-	      return result;
-	    };
-	  }
-	
-	  if (_react2['default'].Children.count(children) === 1 && children.type) {
-	    // If a React Element is an only child, don't wrap it in an array for
-	    // React.Children.map() for React.Children.only() compatibility.
-	    var onlyChild = _react2['default'].Children.only(children);
-	    return resolveStyles(component, onlyChild, config, existingKeyMap);
-	  }
-	
-	  return _react2['default'].Children.map(children, function (child) {
-	    if (_react2['default'].isValidElement(child)) {
-	      return resolveStyles(component, child, config, existingKeyMap);
-	    }
-	
-	    return child;
-	  });
-	};
-	
-	// Recurse over props, just like children
-	var _resolveProps = function _resolveProps(_ref2) {
-	  var component = _ref2.component;
-	  var config = _ref2.config;
-	  var existingKeyMap = _ref2.existingKeyMap;
-	  var props = _ref2.props;
-	
-	  var newProps = props;
-	
-	  Object.keys(props).forEach(function (prop) {
-	    // We already recurse over children above
-	    if (prop === 'children') {
-	      return;
-	    }
-	
-	    var propValue = props[prop];
-	    if (_react2['default'].isValidElement(propValue)) {
-	      newProps = _extends({}, newProps);
-	      newProps[prop] = resolveStyles(component, propValue, config, existingKeyMap);
-	    }
-	  });
-	
-	  return newProps;
-	};
-	
-	var _buildGetKey = function _buildGetKey(renderedElement, existingKeyMap) {
-	  // We need a unique key to correlate state changes due to user interaction
-	  // with the rendered element, so we know to apply the proper interactive
-	  // styles.
-	  var originalKey = typeof renderedElement.ref === 'string' ? renderedElement.ref : renderedElement.key;
-	  var key = _getStateKey2['default'](originalKey);
-	
-	  var alreadyGotKey = false;
-	  var getKey = function getKey() {
-	    if (alreadyGotKey) {
-	      return key;
-	    }
-	
-	    alreadyGotKey = true;
-	
-	    if (existingKeyMap[key]) {
-	      throw new Error('Radium requires each element with interactive styles to have a unique ' + 'key, set using either the ref or key prop. ' + (originalKey ? 'Key "' + originalKey + '" is a duplicate.' : 'Multiple elements have no key specified.'));
-	    }
-	
-	    existingKeyMap[key] = true;
-	
-	    return key;
-	  };
-	
-	  return getKey;
-	};
-	
-	var _setStyleState = function _setStyleState(component, key, stateKey, value) {
-	  if (!component._radiumIsMounted) {
-	    return;
-	  }
-	
-	  var existing = component._lastRadiumState || component.state && component.state._radiumStyleState || {};
-	
-	  var state = { _radiumStyleState: _extends({}, existing) };
-	  state._radiumStyleState[key] = _extends({}, state._radiumStyleState[key]);
-	  state._radiumStyleState[key][stateKey] = value;
-	
-	  component._lastRadiumState = state._radiumStyleState;
-	  component.setState(state);
-	};
-	
-	var _runPlugins = function _runPlugins(_ref3) {
-	  var component = _ref3.component;
-	  var config = _ref3.config;
-	  var existingKeyMap = _ref3.existingKeyMap;
-	  var props = _ref3.props;
-	  var renderedElement = _ref3.renderedElement;
-	
-	  // Don't run plugins if renderedElement is not a simple ReactDOMElement or has
-	  // no style.
-	  if (!_react2['default'].isValidElement(renderedElement) || typeof renderedElement.type !== 'string' || !props.style) {
-	    return props;
-	  }
-	
-	  var newProps = props;
-	
-	  var plugins = config.plugins || DEFAULT_CONFIG.plugins;
-	
-	  var getKey = _buildGetKey(renderedElement, existingKeyMap);
-	
-	  var newStyle = props.style;
-	  plugins.forEach(function (plugin) {
-	    var result = plugin({
-	      ExecutionEnvironment: _exenv2['default'],
-	      componentName: component.constructor.displayName || component.constructor.name,
-	      config: config,
-	      getComponentField: function getComponentField(key) {
-	        return component[key];
-	      },
-	      getGlobalState: function getGlobalState(key) {
-	        return globalState[key];
-	      },
-	      getState: function getState(stateKey, elementKey) {
-	        return _getState3['default'](component.state, elementKey || getKey(), stateKey);
-	      },
-	      mergeStyles: _mergeStyles2['default'],
-	      props: newProps,
-	      setState: function setState(stateKey, value, elementKey) {
-	        return _setStyleState(component, elementKey || getKey(), stateKey, value);
-	      },
-	      style: newStyle
-	    }) || {};
-	
-	    newStyle = result.style || newStyle;
-	
-	    newProps = result.props && Object.keys(result.props).length ? _extends({}, newProps, result.props) : newProps;
-	
-	    var newComponentFields = result.componentFields || {};
-	    Object.keys(newComponentFields).forEach(function (fieldName) {
-	      component[fieldName] = newComponentFields[fieldName];
-	    });
-	
-	    var newGlobalState = result.globalState || {};
-	    Object.keys(newGlobalState).forEach(function (key) {
-	      globalState[key] = newGlobalState[key];
-	    });
-	  });
-	
-	  if (newStyle !== props.style) {
-	    newProps = _extends({}, newProps, { style: newStyle });
-	  }
-	
-	  return newProps;
-	};
-	
-	// Wrapper around React.cloneElement. To avoid processing the same element
-	// twice, whenever we clone an element add a special prop to make sure we don't
-	// process this element again.
-	var _cloneElement = function _cloneElement(renderedElement, newProps, newChildren) {
-	  // Only add flag if this is a normal DOM element
-	  if (typeof renderedElement.type === 'string') {
-	    newProps = _extends({}, newProps, { _radiumDidResolveStyles: true });
-	  }
-	
-	  return _react2['default'].cloneElement(renderedElement, newProps, newChildren);
-	};
-	
-	//
-	// The nucleus of Radium. resolveStyles is called on the rendered elements
-	// before they are returned in render. It iterates over the elements and
-	// children, rewriting props to add event handlers required to capture user
-	// interactions (e.g. mouse over). It also replaces the style prop because it
-	// adds in the various interaction styles (e.g. :hover).
-	//
-	resolveStyles = function (component /*: any*/, // ReactComponent, flow+eslint complaining
-	renderedElement /*: any*/, // ReactElement
-	config /*: Config*/, existingKeyMap /*:: ?: {[key: string]: boolean}*/) /*: any*/ {
-	  if (config === undefined) config = DEFAULT_CONFIG;
-	  // ReactElement
-	  existingKeyMap = existingKeyMap || {};
-	
-	  if (!renderedElement ||
-	  // Bail if we've already processed this element. This ensures that only the
-	  // owner of an element processes that element, since the owner's render
-	  // function will be called first (which will always be the case, since you
-	  // can't know what else to render until you render the parent component).
-	  renderedElement.props && renderedElement.props._radiumDidResolveStyles) {
-	    return renderedElement;
-	  }
-	
-	  var newChildren = _resolveChildren({
-	    children: renderedElement.props.children,
-	    component: component,
-	    config: config,
-	    existingKeyMap: existingKeyMap
-	  });
-	
-	  var newProps = _resolveProps({
-	    component: component,
-	    config: config,
-	    existingKeyMap: existingKeyMap,
-	    props: renderedElement.props
-	  });
-	
-	  newProps = _runPlugins({
-	    component: component,
-	    config: config,
-	    existingKeyMap: existingKeyMap,
-	    props: newProps,
-	    renderedElement: renderedElement
-	  });
-	
-	  // If nothing changed, don't bother cloning the element. Might be a bit
-	  // wasteful, as we add the sentinal to stop double-processing when we clone.
-	  // Assume benign double-processing is better than unneeded cloning.
-	  if (newChildren === renderedElement.props.children && newProps === renderedElement.props) {
-	    return renderedElement;
-	  }
-	
-	  return _cloneElement(renderedElement, newProps !== renderedElement.props ? newProps : {}, newChildren);
-	};
-	
-	// Only for use by tests
-	resolveStyles.__clearStateForTests = function () {
-	  globalState = {};
-	};
-	
-	exports['default'] = resolveStyles;
-	module.exports = exports['default'];
-	// ReactComponent, flow+eslint complaining
-
-/***/ },
-/* 209 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _getStateKey = __webpack_require__(210);
-	
-	var _getStateKey2 = _interopRequireDefault(_getStateKey);
-	
-	var getState = function getState(state /*: {_radiumStyleState: {[key: string]: {[value: string]: boolean}}}*/, elementKey /*: string*/, value /*: string*/) /*: any*/ {
-	  var key = _getStateKey2['default'](elementKey);
-	
-	  return !!state && !!state._radiumStyleState && !!state._radiumStyleState[key] && state._radiumStyleState[key][value];
-	};
-	
-	exports['default'] = getState;
-	module.exports = exports['default'];
-
-/***/ },
-/* 210 */
-/***/ function(module, exports) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	var getStateKey = function getStateKey(elementKey /*: ?string*/) /*: string*/ {
-	  return elementKey === null || elementKey === undefined ? 'main' : elementKey.toString();
-	};
-	
-	exports['default'] = getStateKey;
-	module.exports = exports['default'];
-
-/***/ },
-/* 211 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _isPlainObject = __webpack_require__(71);
-	
-	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
-	
-	var shouldMerge = function shouldMerge(value) {
-	  // Don't merge objects overriding toString, since they should be converted
-	  // to string values.
-	  return _isPlainObject2['default'](value) && value.toString === Object.prototype.toString;
-	};
-	
-	// Merge style objects. Deep merge plain object values.
-	var mergeStyles = function mergeStyles(styles) {
-	  var result = {};
-	
-	  styles.forEach(function (style) {
-	    if (!style || typeof style !== 'object') {
-	      return;
-	    }
-	
-	    if (Array.isArray(style)) {
-	      style = mergeStyles(style);
-	    }
-	
-	    Object.keys(style).forEach(function (key) {
-	      if (shouldMerge(style[key]) && shouldMerge(result[key])) {
-	        result[key] = mergeStyles([result[key], style[key]]);
-	      } else {
-	        result[key] = style[key];
-	      }
-	    });
-	  });
-	
-	  return result;
-	};
-	
-	exports['default'] = mergeStyles;
-	module.exports = exports['default'];
-
-/***/ },
-/* 212 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @flow */
-	/* eslint-disable block-scoped-const */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _checkPropsPlugin = __webpack_require__(213);
-	
-	var _checkPropsPlugin2 = _interopRequireDefault(_checkPropsPlugin);
-	
-	var _mergeStyleArrayPlugin = __webpack_require__(214);
-	
-	var _mergeStyleArrayPlugin2 = _interopRequireDefault(_mergeStyleArrayPlugin);
-	
-	var _prefixPlugin = __webpack_require__(215);
-	
-	var _prefixPlugin2 = _interopRequireDefault(_prefixPlugin);
-	
-	var _resolveInteractionStylesPlugin = __webpack_require__(228);
-	
-	var _resolveInteractionStylesPlugin2 = _interopRequireDefault(_resolveInteractionStylesPlugin);
-	
-	var _resolveMediaQueriesPlugin = __webpack_require__(230);
-	
-	var _resolveMediaQueriesPlugin2 = _interopRequireDefault(_resolveMediaQueriesPlugin);
-	
-	/*:: import type {Config} from '../config';*/
-	/*:: export type PluginConfig = {
-	  // May not be readable if code has been minified
-	  componentName: string,
-	
-	  // The Radium configuration
-	  config: Config,
-	
-	  // Retrieve the value of a field on the component
-	  getComponentField: (key: string) => any,
-	
-	  // Retrieve the value of a field global to the Radium module
-	  // Used so that tests can easily clear global state.
-	  getGlobalState: (key: string) => any,
-	
-	  // Retrieve the value of some state specific to the rendered element.
-	  // Requires the element to have a unique key or ref or for an element key
-	  // to be passed in.
-	  getState: (stateKey: string, elementKey?: string) => any,
-	
-	  // Access to the mergeStyles utility
-	  mergeStyles: (styles: Array<Object>) => Object,
-	
-	  // The props of the rendered element. This can be changed by each plugin,
-	  // and successive plugins will see the result of previous plugins.
-	  props: Object,
-	
-	  // Calls setState on the component with the given key and value.
-	  // By default this is specific to the rendered element, but you can override
-	  // by passing in the `elementKey` parameter.
-	  setState: (stateKey: string, value: any, elementKey?: string) => void,
-	
-	  // The style prop of the rendered element. This can be changed by each plugin,
-	  // and successive plugins will see the result of previous plugins. Kept
-	  // separate from `props` for ease of use.
-	  style: Object,
-	
-	  // uses the exenv npm module
-	  ExecutionEnvironment: {
-	    canUseEventListeners: bool,
-	    canUseDOM: bool,
-	  }
-	};*/
-	/*:: export type PluginResult = ?{
-	  // Merged into the component directly. Useful for storing things for which you
-	  // don't need to re-render, event subscriptions, for instance.
-	  componentFields?: Object,
-	
-	  // Merged into a Radium controlled global state object. Use this instead of
-	  // module level state for ease of clearing state between tests.
-	  globalState?: Object,
-	
-	  // Merged into the rendered element's props.
-	  props?: Object,
-	
-	  // Replaces (not merged into) the rendered element's style property.
-	  style?: Object,
-	};*/exports['default'] = {
-	  checkProps: _checkPropsPlugin2['default'],
-	  mergeStyleArray: _mergeStyleArrayPlugin2['default'],
-	  prefix: _prefixPlugin2['default'],
-	  resolveInteractionStyles: _resolveInteractionStylesPlugin2['default'],
-	  resolveMediaQueries: _resolveMediaQueriesPlugin2['default']
-	};
-	module.exports = exports['default'];
-	
-	// May not be readable if code has been minified
-	
-	// The Radium configuration
-	
-	// Retrieve the value of a field on the component
-	
-	// Retrieve the value of a field global to the Radium module
-	// Used so that tests can easily clear global state.
-	
-	// Retrieve the value of some state specific to the rendered element.
-	// Requires the element to have a unique key or ref or for an element key
-	// to be passed in.
-	
-	// Access to the mergeStyles utility
-	
-	// The props of the rendered element. This can be changed by each plugin,
-	// and successive plugins will see the result of previous plugins.
-	
-	// Calls setState on the component with the given key and value.
-	// By default this is specific to the rendered element, but you can override
-	// by passing in the `elementKey` parameter.
-	
-	// The style prop of the rendered element. This can be changed by each plugin,
-	// and successive plugins will see the result of previous plugins. Kept
-	// separate from `props` for ease of use.
-	
-	// uses the exenv npm module
-	
-	// Merged into the component directly. Useful for storing things for which you
-	// don't need to re-render, event subscriptions, for instance.
-	
-	// Merged into a Radium controlled global state object. Use this instead of
-	// module level state for ease of clearing state between tests.
-	
-	// Merged into the rendered element's props.
-	
-	// Replaces (not merged into) the rendered element's style property.
-
-/***/ },
-/* 213 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(process) {/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	/*:: import type {PluginConfig, PluginResult} from '.';*/
-	
-	var checkProps = (function () {} /*: any*/);
-	
-	if (process.env.NODE_ENV !== 'production') {
-	  (function () {
-	    // Warn if you use longhand and shorthand properties in the same style
-	    // object.
-	    // https://developer.mozilla.org/en-US/docs/Web/CSS/Shorthand_properties
-	
-	    var shorthandPropertyExpansions = {
-	      'background': ['backgroundAttachment', 'backgroundBlendMode', 'backgroundClip', 'backgroundColor', 'backgroundImage', 'backgroundOrigin', 'backgroundPosition', 'backgroundPositionX', 'backgroundPositionY', 'backgroundRepeat', 'backgroundRepeatX', 'backgroundRepeatY', 'backgroundSize'],
-	      'border': ['borderBottom', 'borderBottomColor', 'borderBottomStyle', 'borderBottomWidth', 'borderColor', 'borderLeft', 'borderLeftColor', 'borderLeftStyle', 'borderLeftWidth', 'borderRight', 'borderRightColor', 'borderRightStyle', 'borderRightWidth', 'borderStyle', 'borderTop', 'borderTopColor', 'borderTopStyle', 'borderTopWidth', 'borderWidth'],
-	      'borderImage': ['borderImageOutset', 'borderImageRepeat', 'borderImageSlice', 'borderImageSource', 'borderImageWidth'],
-	      'borderRadius': ['borderBottomLeftRadius', 'borderBottomRightRadius', 'borderTopLeftRadius', 'borderTopRightRadius'],
-	      'font': ['fontFamily', 'fontKerning', 'fontSize', 'fontStretch', 'fontStyle', 'fontVariant', 'fontVariantLigatures', 'fontWeight', 'lineHeight'],
-	      'listStyle': ['listStyleImage', 'listStylePosition', 'listStyleType'],
-	      'margin': ['marginBottom', 'marginLeft', 'marginRight', 'marginTop'],
-	      'padding': ['paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTop'],
-	      'transition': ['transitionDelay', 'transitionDuration', 'transitionProperty', 'transitionTimingFunction']
-	    };
-	
-	    checkProps = function (config /*: PluginConfig*/) /*: PluginResult*/ {
-	      var componentName = config.componentName;
-	      var style = config.style;
-	
-	      if (typeof style !== 'object' || !style) {
-	        return;
-	      }
-	
-	      var styleKeys = Object.keys(style);
-	      styleKeys.forEach(function (styleKey) {
-	        if (Array.isArray(shorthandPropertyExpansions[styleKey]) && shorthandPropertyExpansions[styleKey].some(function (sp) {
-	          return styleKeys.indexOf(sp) !== -1;
-	        })) {
-	          if (process.env.NODE_ENV !== 'production') {
-	            /* eslint-disable no-console */
-	            console.warn('Radium: property "' + styleKey + '" in style object', style, ': do not mix longhand and ' + 'shorthand properties in the same style object. Check the render ' + 'method of ' + componentName + '.', 'See https://github.com/FormidableLabs/radium/issues/95 for more ' + 'information.');
-	            /* eslint-enable no-console */
-	          }
-	        }
-	      });
-	
-	      styleKeys.forEach(function (k) {
-	        return checkProps(_extends({}, config, { style: style[k] }));
-	      });
-	      return;
-	    };
-	  })();
-	}
-	
-	exports['default'] = checkProps;
-	module.exports = exports['default'];
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)))
-
-/***/ },
-/* 214 */
-/***/ function(module, exports) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	// Convenient syntax for multiple styles: `style={[style1, style2, etc]}`
-	// Ignores non-objects, so you can do `this.state.isCool && styles.cool`.
-	/*:: import type {PluginConfig, PluginResult} from '.';*/var mergeStyleArrayPlugin = function mergeStyleArrayPlugin(_ref /*: PluginConfig*/) /*: PluginResult*/ {
-	  var style = _ref.style;
-	  var mergeStyles = _ref.mergeStyles;
-	
-	  var newStyle = Array.isArray(style) ? mergeStyles(style) : style;
-	  return { style: newStyle };
-	};
-	
-	exports['default'] = mergeStyleArrayPlugin;
-	module.exports = exports['default'];
-
-/***/ },
-/* 215 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	exports['default'] = prefixPlugin;
-	
-	var _prefixer = __webpack_require__(216);
-	
-	/*:: import type {PluginConfig, PluginResult} from '.';*/
-	function prefixPlugin(_ref /*: PluginConfig*/) /*: PluginResult*/ {
-	  var componentName = _ref.componentName;
-	  var config = _ref.config;
-	  var style = _ref.style;
-	
-	  var newStyle = _prefixer.getPrefixedStyle(style, componentName, config.userAgent);
-	  return { style: newStyle };
-	}
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 216 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(global, process) {/**
-	 * Based on https://github.com/jsstyles/css-vendor, but without having to
-	 * convert between different cases all the time.
-	 *
-	 * @flow
-	 */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	exports.getPrefixedStyle = getPrefixedStyle;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _inlineStylePrefixer = __webpack_require__(217);
-	
-	var _inlineStylePrefixer2 = _interopRequireDefault(_inlineStylePrefixer);
-	
-	function transformValues(style) {
-	  return Object.keys(style).reduce(function (newStyle, key) {
-	    var value = style[key];
-	    if (Array.isArray(value)) {
-	      value = value.join(';' + key + ':');
-	    }
-	    newStyle[key] = value;
-	    return newStyle;
-	  }, {});
-	}
-	
-	var hasWarnedAboutUserAgent = false;
-	var lastUserAgent = undefined;
-	var prefixer = undefined;
-	
-	// Returns a new style object with vendor prefixes added to property names
-	// and values.
-	
-	function getPrefixedStyle(style /*: Object*/, componentName /*: ?string*/, userAgent /*:: ?: ?string*/) /*: Object*/ {
-	  var actualUserAgent = userAgent || global && global.navigator && global.navigator.userAgent;
-	
-	  if (process.env.NODE_ENV !== 'production') {
-	    if (!actualUserAgent && !hasWarnedAboutUserAgent) {
-	      /* eslint-disable no-console */
-	      console.warn('Radium: userAgent should be supplied for server-side rendering. See ' + 'https://github.com/FormidableLabs/radium/tree/master/docs/api#radium ' + 'for more information.');
-	      /* eslint-enable no-console */
-	      hasWarnedAboutUserAgent = true;
-	    }
-	  }
-	
-	  if (!prefixer || actualUserAgent !== lastUserAgent) {
-	    prefixer = new _inlineStylePrefixer2['default'](actualUserAgent);
-	    lastUserAgent = actualUserAgent;
-	  }
-	
-	  var prefixedStyle = prefixer.prefix(style);
-	  var prefixedStyleWithFallbacks = transformValues(prefixedStyle);
-	  return prefixedStyleWithFallbacks;
-	}
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(30)))
-
-/***/ },
-/* 217 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-	
-	var _getBrowserInformation = __webpack_require__(218);
-	
-	var _getBrowserInformation2 = _interopRequireDefault(_getBrowserInformation);
-	
-	var _getPrefixedKeyframes = __webpack_require__(219);
-	
-	var _getPrefixedKeyframes2 = _interopRequireDefault(_getPrefixedKeyframes);
-	
-	var _caniuseData = __webpack_require__(220);
-	
-	var _caniuseData2 = _interopRequireDefault(_caniuseData);
-	
-	var _Plugins = __webpack_require__(221);
-	
-	var _Plugins2 = _interopRequireDefault(_Plugins);
-	
-	var defaultUserAgent = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
-	
-	// only throw warnings if devmode is enabled
-	var warn = function warn() {
-	  if (process.env.NODE_ENV !== 'production') {
-	    console.warn.apply(console, arguments);
-	  }
-	};
-	// helper to capitalize strings
-	var caplitalizeString = function caplitalizeString(str) {
-	  return str.charAt(0).toUpperCase() + str.slice(1);
-	};
-	
-	// leight polyfill for Object.assign
-	var assign = function assign(base, extend) {
-	  if (extend) {
-	    Object.keys(extend).forEach(function (key) {
-	      return base[key] = extend[key];
-	    });
-	  }
-	  return extend;
-	};
-	
-	var Prefixer = (function () {
-	  /**
-	   * Instantiante a new prefixer. Pass an asterisk as userAgent to combine all prefixes
-	   * @param {string} userAgent - userAgent to gather prefix information according to caniuse.com
-	   */
-	
-	  function Prefixer() {
-	    var _this = this;
-	
-	    var userAgent = arguments.length <= 0 || arguments[0] === undefined ? defaultUserAgent : arguments[0];
-	
-	    _classCallCheck(this, Prefixer);
-	
-	    this._userAgent = userAgent;
-	    this._browserInfo = (0, _getBrowserInformation2['default'])(userAgent);
-	
-	    // Checks if the userAgent was resolved correctly
-	    if (this._browserInfo && this._browserInfo.prefix) {
-	      this.cssPrefix = this._browserInfo.prefix.CSS;
-	      this.jsPrefix = this._browserInfo.prefix.inline;
-	      this.prefixedKeyframes = (0, _getPrefixedKeyframes2['default'])(this._browserInfo);
-	    } else {
-	      this._hasPropsRequiringPrefix = false;
-	      warn('Either the global navigator was undefined or an invalid userAgent was provided.', 'Using a valid userAgent? Please let us know and create an issue at https://github.com/rofrischmann/inline-style-prefixer/issues');
-	      return false;
-	    }
-	    var data = this._browserInfo.browser && _caniuseData2['default'][this._browserInfo.browser];
-	    if (data) {
-	      this._requiresPrefix = Object.keys(data).filter(function (key) {
-	        return data[key] >= _this._browserInfo.version;
-	      }).reduce(function (result, name) {
-	        result[name] = true;
-	        return result;
-	      }, {});
-	      this._hasPropsRequiringPrefix = Object.keys(this._requiresPrefix).length > 0;
-	    } else {
-	      this._hasPropsRequiringPrefix = false;
-	      warn('Your userAgent seems to be not supported by inline-style-prefixer. Feel free to open an issue.');
-	      return false;
-	    }
-	  }
-	
-	  /**
-	   * Returns a prefixed version of the style object
-	   * @param {Object} styles - Style object that gets prefixed properties added
-	   * @returns {Object} - Style object with prefixed properties and values
-	   */
-	
-	  _createClass(Prefixer, [{
-	    key: 'prefix',
-	    value: function prefix(styles) {
-	      var _this2 = this;
-	
-	      // only add prefixes if needed
-	      if (!this._hasPropsRequiringPrefix) {
-	        return styles;
-	      }
-	
-	      styles = assign({}, styles);
-	
-	      Object.keys(styles).forEach(function (property) {
-	        var value = styles[property];
-	        if (value instanceof Object) {
-	          // recurse through nested style objects
-	          styles[property] = _this2.prefix(value);
-	        } else {
-	          // add prefixes if needed
-	          if (_this2._requiresPrefix[property]) {
-	            styles[_this2.jsPrefix + caplitalizeString(property)] = value;
-	            delete styles[property];
-	          }
-	
-	          // resolve plugins
-	          _Plugins2['default'].forEach(function (plugin) {
-	            assign(styles, plugin(property, value, _this2._browserInfo, styles, false));
-	          });
-	        }
-	      });
-	
-	      return styles;
-	    }
-	
-	    /**
-	     * Returns a prefixed version of the style object using all vendor prefixes
-	     * @param {Object} styles - Style object that gets prefixed properties added
-	     * @returns {Object} - Style object with prefixed properties and values
-	     */
-	  }], [{
-	    key: 'prefixAll',
-	    value: function prefixAll(styles) {
-	      var prefixes = {};
-	      var browserInfo = (0, _getBrowserInformation2['default'])('*');
-	
-	      browserInfo.browsers.forEach(function (browser) {
-	        var data = _caniuseData2['default'][browser];
-	        if (data) {
-	          assign(prefixes, data);
-	        }
-	      });
-	
-	      // there should always be at least one prefixed style, but just incase
-	      if (!Object.keys(prefixes).length > 0) {
-	        return styles;
-	      }
-	
-	      styles = assign({}, styles);
-	
-	      Object.keys(styles).forEach(function (property) {
-	        var value = styles[property];
-	        if (value instanceof Object) {
-	          // recurse through nested style objects
-	          styles[property] = Prefixer.prefixAll(value);
-	        } else {
-	          var browsers = Object.keys(browserInfo.prefixes);
-	          browsers.forEach(function (browser) {
-	            var style = browserInfo.prefixes[browser];
-	            // add prefixes if needed
-	            if (prefixes[property]) {
-	              styles[style.inline + caplitalizeString(property)] = value;
-	            }
-	
-	            // resolve plugins for each browser
-	            _Plugins2['default'].forEach(function (plugin) {
-	              var browserInfo = {
-	                name: browser,
-	                prefix: style,
-	                version: 0 // assume lowest
-	              };
-	              assign(styles, plugin(property, value, browserInfo, styles, true));
-	            });
-	          });
-	        }
-	      });
-	
-	      return styles;
-	    }
-	  }]);
-	
-	  return Prefixer;
-	})();
-	
-	exports['default'] = Prefixer;
-	module.exports = exports['default'];
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(30)))
-
-/***/ },
-/* 218 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _bowser = __webpack_require__(45);
-	
-	var _bowser2 = _interopRequireDefault(_bowser);
-	
-	var vendorPrefixes = {
-	  Webkit: ['chrome', 'safari', 'ios', 'android', 'phantom', 'opera', 'webos', 'blackberry', 'bada', 'tizen'],
-	  Moz: ['firefox', 'seamonkey', 'sailfish'],
-	  ms: ['msie', 'msedge']
-	};
-	
-	var browsers = {
-	  chrome: [['chrome']],
-	  safari: [['safari']],
-	  firefox: [['firefox']],
-	  ie: [['msie'], ['msedge']],
-	  opera: [['opera']],
-	  ios_saf: [['ios', 'mobile'], ['ios', 'tablet']],
-	  ie_mob: [['windowsphone', 'mobile', 'msie'], ['windowsphone', 'tablet', 'msie'], ['windowsphone', 'mobile', 'msedge'], ['windowsphone', 'tablet', 'msedge']],
-	  op_mini: [['opera', 'mobile'], ['opera', 'tablet']],
-	  and_chr: [['android', 'chrome', 'mobile'], ['android', 'chrome', 'tablet']],
-	  and_uc: [['android', 'mobile'], ['android', 'tablet']],
-	  android: [['android', 'mobile'], ['android', 'tablet']]
-	};
-	
-	/**
-	 * Returns an object containing prefix data associated with a browser
-	 * @param {string} browser - browser to find a prefix for
-	 */
-	var getPrefixes = function getPrefixes(browser) {
-	  var prefixKeys = undefined;
-	  var prefix = undefined;
-	  var vendors = undefined;
-	  var conditions = undefined;
-	  var prefixVendor = undefined;
-	  var browserVendors = undefined;
-	
-	  // Find the prefix for this browser (if any)
-	  prefixKeys = Object.keys(vendorPrefixes);
-	  var _iteratorNormalCompletion = true;
-	  var _didIteratorError = false;
-	  var _iteratorError = undefined;
-	
-	  try {
-	    for (var _iterator = prefixKeys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	      prefix = _step.value;
-	
-	      // Find a matching vendor
-	      vendors = vendorPrefixes[prefix];
-	      conditions = browsers[browser];
-	      var _iteratorNormalCompletion2 = true;
-	      var _didIteratorError2 = false;
-	      var _iteratorError2 = undefined;
-	
-	      try {
-	        for (var _iterator2 = vendors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-	          prefixVendor = _step2.value;
-	          var _iteratorNormalCompletion3 = true;
-	          var _didIteratorError3 = false;
-	          var _iteratorError3 = undefined;
-	
-	          try {
-	            for (var _iterator3 = conditions[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-	              browserVendors = _step3.value;
-	
-	              if (browserVendors.indexOf(prefixVendor) !== -1) {
-	                return {
-	                  inline: prefix,
-	                  CSS: '-' + prefix.toLowerCase() + '-'
-	                };
-	              }
-	            }
-	          } catch (err) {
-	            _didIteratorError3 = true;
-	            _iteratorError3 = err;
-	          } finally {
-	            try {
-	              if (!_iteratorNormalCompletion3 && _iterator3['return']) {
-	                _iterator3['return']();
-	              }
-	            } finally {
-	              if (_didIteratorError3) {
-	                throw _iteratorError3;
-	              }
-	            }
-	          }
-	        }
-	      } catch (err) {
-	        _didIteratorError2 = true;
-	        _iteratorError2 = err;
-	      } finally {
-	        try {
-	          if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-	            _iterator2['return']();
-	          }
-	        } finally {
-	          if (_didIteratorError2) {
-	            throw _iteratorError2;
-	          }
-	        }
-	      }
-	    }
-	
-	    // No prefix found for this browser
-	  } catch (err) {
-	    _didIteratorError = true;
-	    _iteratorError = err;
-	  } finally {
-	    try {
-	      if (!_iteratorNormalCompletion && _iterator['return']) {
-	        _iterator['return']();
-	      }
-	    } finally {
-	      if (_didIteratorError) {
-	        throw _iteratorError;
-	      }
-	    }
-	  }
-	
-	  return { inline: '', CSS: '' };
-	};
-	
-	/**
-	 * Uses bowser to get default browser information such as version and name
-	 * Evaluates bowser info and adds vendorPrefix information
-	 * @param {string} userAgent - userAgent that gets evaluated
-	 */
-	
-	exports['default'] = function (userAgent) {
-	  if (!userAgent) {
-	    return false;
-	  }
-	
-	  var info = {};
-	
-	  // Special user agent, return all supported prefixes
-	  // instead of returning a string browser name and a prefix object
-	  // we return an array of browser names and map of prefixes for each browser
-	  if (userAgent === '*') {
-	    // Return an array of supported browsers
-	    info.browsers = Object.keys(browsers);
-	
-	    // Return prefixes associated by browser
-	    info.prefixes = {};
-	
-	    // Iterate browser list, assign prefix to each
-	    info.browsers.forEach(function (browser) {
-	      info.prefixes[browser] = getPrefixes(browser);
-	    });
-	
-	    return info;
-	  }
-	
-	  // Normal user agent, detect browser
-	  info = _bowser2['default']._detect(userAgent);
-	
-	  Object.keys(vendorPrefixes).forEach(function (prefix) {
-	    vendorPrefixes[prefix].forEach(function (browser) {
-	      if (info[browser]) {
-	        info.prefix = {
-	          inline: prefix,
-	          CSS: '-' + prefix.toLowerCase() + '-'
-	        };
-	      }
-	    });
-	  });
-	
-	  var name = '';
-	  Object.keys(browsers).forEach(function (browser) {
-	    browsers[browser].forEach(function (condition) {
-	      var match = 0;
-	      condition.forEach(function (single) {
-	        if (info[single]) {
-	          match += 1;
-	        }
-	      });
-	      if (condition.length === match) {
-	        name = browser;
-	      }
-	    });
-	  });
-	
-	  info.browser = name;
-	  info.version = parseFloat(info.version);
-	  info.osversion = parseFloat(info.osversion);
-	
-	  // For android < 4.4 we want to check the osversion
-	  // not the chrome version, see issue #26
-	  // https://github.com/rofrischmann/inline-style-prefixer/issues/26
-	  if (name === 'android' && info.osversion < 5) {
-	    info.version = info.osversion;
-	  }
-	
-	  return info;
-	};
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 219 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	exports['default'] = function (_ref) {
-	  var browser = _ref.browser;
-	  var version = _ref.version;
-	  var prefix = _ref.prefix;
-	
-	  var prefixedKeyframes = 'keyframes';
-	  if (browser === 'chrome' && version < 43 || (browser === 'safari' || browser === 'ios_saf') && version < 9 || browser === 'opera' && version < 30 || browser === 'android' && version <= 4.4 || browser === 'and_uc') {
-	    prefixedKeyframes = prefix.CSS + prefixedKeyframes;
-	  }
-	  return prefixedKeyframes;
-	};
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 220 */
-/***/ function(module, exports) {
-
-	var caniuseData = {"chrome":{"transform":35,"transformOrigin":35,"transformOriginX":35,"transformOriginY":35,"backfaceVisibility":35,"perspective":35,"perspectiveOrigin":35,"transformStyle":35,"transformOriginZ":35,"animation":42,"animationDelay":42,"animationDirection":42,"animationFillMode":42,"animationDuration":42,"animationIterationCount":42,"animationName":42,"animationPlayState":42,"animationTimingFunction":42,"appearance":49,"userSelect":49,"fontKerning":32,"textEmphasisPosition":49,"textEmphasis":49,"textEmphasisStyle":49,"textEmphasisColor":49,"boxDecorationBreak":49,"clipPath":49,"maskImage":49,"maskMode":49,"maskRepeat":49,"maskPosition":49,"maskClip":49,"maskOrigin":49,"maskSize":49,"maskComposite":49,"mask":49,"maskBorderSource":49,"maskBorderMode":49,"maskBorderSlice":49,"maskBorderWidth":49,"maskBorderOutset":49,"maskBorderRepeat":49,"maskBorder":49,"maskType":49,"textDecorationStyle":49,"textDecorationSkip":49,"textDecorationLine":49,"textDecorationColor":49,"filter":49,"fontFeatureSettings":49,"breakAfter":49,"breakBefore":49,"breakInside":49,"columnCount":49,"columnFill":49,"columnGap":49,"columnRule":49,"columnRuleColor":49,"columnRuleStyle":49,"columnRuleWidth":49,"columns":49,"columnSpan":49,"columnWidth":49},"safari":{"flex":8,"flexBasis":8,"flexDirection":8,"flexGrow":8,"flexFlow":8,"flexShrink":8,"flexWrap":8,"alignContent":8,"alignItems":8,"alignSelf":8,"justifyContent":8,"order":8,"transition":6,"transitionDelay":6,"transitionDuration":6,"transitionProperty":6,"transitionTimingFunction":6,"transform":8,"transformOrigin":8,"transformOriginX":8,"transformOriginY":8,"backfaceVisibility":8,"perspective":8,"perspectiveOrigin":8,"transformStyle":8,"transformOriginZ":8,"animation":8,"animationDelay":8,"animationDirection":8,"animationFillMode":8,"animationDuration":8,"animationIterationCount":8,"animationName":8,"animationPlayState":8,"animationTimingFunction":8,"appearance":9,"userSelect":9,"backdropFilter":9,"fontKerning":9,"scrollSnapType":9,"scrollSnapPointsX":9,"scrollSnapPointsY":9,"scrollSnapDestination":9,"scrollSnapCoordinate":9,"textEmphasisPosition":7,"textEmphasis":7,"textEmphasisStyle":7,"textEmphasisColor":7,"boxDecorationBreak":9,"clipPath":9,"maskImage":9,"maskMode":9,"maskRepeat":9,"maskPosition":9,"maskClip":9,"maskOrigin":9,"maskSize":9,"maskComposite":9,"mask":9,"maskBorderSource":9,"maskBorderMode":9,"maskBorderSlice":9,"maskBorderWidth":9,"maskBorderOutset":9,"maskBorderRepeat":9,"maskBorder":9,"maskType":9,"textDecorationStyle":9,"textDecorationSkip":9,"textDecorationLine":9,"textDecorationColor":9,"shapeImageThreshold":9,"shapeImageMargin":9,"shapeImageOutside":9,"filter":9,"hyphens":9,"flowInto":9,"flowFrom":9,"breakBefore":8,"breakAfter":8,"breakInside":8,"regionFragment":9,"columnCount":8,"columnFill":8,"columnGap":8,"columnRule":8,"columnRuleColor":8,"columnRuleStyle":8,"columnRuleWidth":8,"columns":8,"columnSpan":8,"columnWidth":8},"firefox":{"appearance":45,"userSelect":45,"boxSizing":28,"textAlignLast":45,"textDecorationStyle":35,"textDecorationSkip":35,"textDecorationLine":35,"textDecorationColor":35,"tabSize":45,"hyphens":42,"fontFeatureSettings":33,"breakAfter":45,"breakBefore":45,"breakInside":45,"columnCount":45,"columnFill":45,"columnGap":45,"columnRule":45,"columnRuleColor":45,"columnRuleStyle":45,"columnRuleWidth":45,"columns":45,"columnSpan":45,"columnWidth":45},"opera":{"flex":16,"flexBasis":16,"flexDirection":16,"flexGrow":16,"flexFlow":16,"flexShrink":16,"flexWrap":16,"alignContent":16,"alignItems":16,"alignSelf":16,"justifyContent":16,"order":16,"transform":22,"transformOrigin":22,"transformOriginX":22,"transformOriginY":22,"backfaceVisibility":22,"perspective":22,"perspectiveOrigin":22,"transformStyle":22,"transformOriginZ":22,"animation":29,"animationDelay":29,"animationDirection":29,"animationFillMode":29,"animationDuration":29,"animationIterationCount":29,"animationName":29,"animationPlayState":29,"animationTimingFunction":29,"appearance":35,"userSelect":35,"fontKerning":19,"textEmphasisPosition":35,"textEmphasis":35,"textEmphasisStyle":35,"textEmphasisColor":35,"boxDecorationBreak":35,"clipPath":35,"maskImage":35,"maskMode":35,"maskRepeat":35,"maskPosition":35,"maskClip":35,"maskOrigin":35,"maskSize":35,"maskComposite":35,"mask":35,"maskBorderSource":35,"maskBorderMode":35,"maskBorderSlice":35,"maskBorderWidth":35,"maskBorderOutset":35,"maskBorderRepeat":35,"maskBorder":35,"maskType":35,"filter":35,"fontFeatureSettings":35,"breakAfter":35,"breakBefore":35,"breakInside":35,"columnCount":35,"columnFill":35,"columnGap":35,"columnRule":35,"columnRuleColor":35,"columnRuleStyle":35,"columnRuleWidth":35,"columns":35,"columnSpan":35,"columnWidth":35},"ie":{"gridTemplateRows":11,"grid":11,"flowInto":11,"flexDirection":10,"touchAction":10,"gridRow":11,"scrollSnapPointsX":11,"wrapMargin":11,"breakBefore":11,"gridRowEnd":11,"gridRowStart":11,"breakInside":11,"transformOrigin":9,"scrollSnapType":11,"scrollSnapDestination":11,"gridTemplate":11,"flexWrap":10,"transformOriginX":9,"flowFrom":11,"gridColumnStart":11,"userSelect":11,"wrapFlow":11,"scrollSnapCoordinate":11,"gridGap":11,"gridAutoRows":11,"hyphens":11,"regionFragment":11,"flex":10,"columnGap":11,"wrapThrough":11,"transformOriginY":9,"breakAfter":11,"rowGap":11,"gridTemplateColumns":11,"gridArea":11,"transform":9,"gridAutoFlow":11,"flexFlow":10,"gridTemplateAreas":11,"gridColumn":11,"gridAutoColumns":11,"scrollSnapPointsY":11,"textSizeAdjust":11},"ios_saf":{"flex":8.1,"flexBasis":8.1,"flexDirection":8.1,"flexGrow":8.1,"flexFlow":8.1,"flexShrink":8.1,"flexWrap":8.1,"alignContent":8.1,"alignItems":8.1,"alignSelf":8.1,"justifyContent":8.1,"order":8.1,"transition":6,"transitionDelay":6,"transitionDuration":6,"transitionProperty":6,"transitionTimingFunction":6,"transform":8.1,"transformOrigin":8.1,"transformOriginX":8.1,"transformOriginY":8.1,"backfaceVisibility":8.1,"perspective":8.1,"perspectiveOrigin":8.1,"transformStyle":8.1,"transformOriginZ":8.1,"animation":8.1,"animationDelay":8.1,"animationDirection":8.1,"animationFillMode":8.1,"animationDuration":8.1,"animationIterationCount":8.1,"animationName":8.1,"animationPlayState":8.1,"animationTimingFunction":8.1,"appearance":9,"userSelect":9,"backdropFilter":9,"fontKerning":9,"scrollSnapType":9,"scrollSnapPointsX":9,"scrollSnapPointsY":9,"scrollSnapDestination":9,"scrollSnapCoordinate":9,"boxDecorationBreak":9,"clipPath":9,"maskImage":9,"maskMode":9,"maskRepeat":9,"maskPosition":9,"maskClip":9,"maskOrigin":9,"maskSize":9,"maskComposite":9,"mask":9,"maskBorderSource":9,"maskBorderMode":9,"maskBorderSlice":9,"maskBorderWidth":9,"maskBorderOutset":9,"maskBorderRepeat":9,"maskBorder":9,"maskType":9,"textSizeAdjust":9,"textDecorationStyle":9,"textDecorationSkip":9,"textDecorationLine":9,"textDecorationColor":9,"shapeImageThreshold":9,"shapeImageMargin":9,"shapeImageOutside":9,"filter":9,"hyphens":9,"flowInto":9,"flowFrom":9,"breakBefore":8.1,"breakAfter":8.1,"breakInside":8.1,"regionFragment":9,"columnCount":8.1,"columnFill":8.1,"columnGap":8.1,"columnRule":8.1,"columnRuleColor":8.1,"columnRuleStyle":8.1,"columnRuleWidth":8.1,"columns":8.1,"columnSpan":8.1,"columnWidth":8.1},"android":{"borderImage":4.2,"borderImageOutset":4.2,"borderImageRepeat":4.2,"borderImageSlice":4.2,"borderImageSource":4.2,"borderImageWidth":4.2,"flex":4.2,"flexBasis":4.2,"flexDirection":4.2,"flexGrow":4.2,"flexFlow":4.2,"flexShrink":4.2,"flexWrap":4.2,"alignContent":4.2,"alignItems":4.2,"alignSelf":4.2,"justifyContent":4.2,"order":4.2,"transition":4.2,"transitionDelay":4.2,"transitionDuration":4.2,"transitionProperty":4.2,"transitionTimingFunction":4.2,"transform":4.4,"transformOrigin":4.4,"transformOriginX":4.4,"transformOriginY":4.4,"backfaceVisibility":4.4,"perspective":4.4,"perspectiveOrigin":4.4,"transformStyle":4.4,"transformOriginZ":4.4,"animation":4.4,"animationDelay":4.4,"animationDirection":4.4,"animationFillMode":4.4,"animationDuration":4.4,"animationIterationCount":4.4,"animationName":4.4,"animationPlayState":4.4,"animationTimingFunction":4.4,"appearance":44,"userSelect":44,"fontKerning":4.4,"textEmphasisPosition":44,"textEmphasis":44,"textEmphasisStyle":44,"textEmphasisColor":44,"boxDecorationBreak":44,"clipPath":44,"maskImage":44,"maskMode":44,"maskRepeat":44,"maskPosition":44,"maskClip":44,"maskOrigin":44,"maskSize":44,"maskComposite":44,"mask":44,"maskBorderSource":44,"maskBorderMode":44,"maskBorderSlice":44,"maskBorderWidth":44,"maskBorderOutset":44,"maskBorderRepeat":44,"maskBorder":44,"maskType":44,"filter":44,"fontFeatureSettings":44,"breakAfter":44,"breakBefore":44,"breakInside":44,"columnCount":44,"columnFill":44,"columnGap":44,"columnRule":44,"columnRuleColor":44,"columnRuleStyle":44,"columnRuleWidth":44,"columns":44,"columnSpan":44,"columnWidth":44},"and_chr":{"appearance":46,"userSelect":46,"textEmphasisPosition":46,"textEmphasis":46,"textEmphasisStyle":46,"textEmphasisColor":46,"boxDecorationBreak":46,"clipPath":46,"maskImage":46,"maskMode":46,"maskRepeat":46,"maskPosition":46,"maskClip":46,"maskOrigin":46,"maskSize":46,"maskComposite":46,"mask":46,"maskBorderSource":46,"maskBorderMode":46,"maskBorderSlice":46,"maskBorderWidth":46,"maskBorderOutset":46,"maskBorderRepeat":46,"maskBorder":46,"maskType":46,"textDecorationStyle":46,"textDecorationSkip":46,"textDecorationLine":46,"textDecorationColor":46,"filter":46,"fontFeatureSettings":46,"breakAfter":46,"breakBefore":46,"breakInside":46,"columnCount":46,"columnFill":46,"columnGap":46,"columnRule":46,"columnRuleColor":46,"columnRuleStyle":46,"columnRuleWidth":46,"columns":46,"columnSpan":46,"columnWidth":46},"and_uc":{"flex":9.9,"flexBasis":9.9,"flexDirection":9.9,"flexGrow":9.9,"flexFlow":9.9,"flexShrink":9.9,"flexWrap":9.9,"alignContent":9.9,"alignItems":9.9,"alignSelf":9.9,"justifyContent":9.9,"order":9.9,"transition":9.9,"transitionDelay":9.9,"transitionDuration":9.9,"transitionProperty":9.9,"transitionTimingFunction":9.9,"transform":9.9,"transformOrigin":9.9,"transformOriginX":9.9,"transformOriginY":9.9,"backfaceVisibility":9.9,"perspective":9.9,"perspectiveOrigin":9.9,"transformStyle":9.9,"transformOriginZ":9.9,"animation":9.9,"animationDelay":9.9,"animationDirection":9.9,"animationFillMode":9.9,"animationDuration":9.9,"animationIterationCount":9.9,"animationName":9.9,"animationPlayState":9.9,"animationTimingFunction":9.9,"appearance":9.9,"userSelect":9.9,"fontKerning":9.9,"textEmphasisPosition":9.9,"textEmphasis":9.9,"textEmphasisStyle":9.9,"textEmphasisColor":9.9,"maskImage":9.9,"maskMode":9.9,"maskRepeat":9.9,"maskPosition":9.9,"maskClip":9.9,"maskOrigin":9.9,"maskSize":9.9,"maskComposite":9.9,"mask":9.9,"maskBorderSource":9.9,"maskBorderMode":9.9,"maskBorderSlice":9.9,"maskBorderWidth":9.9,"maskBorderOutset":9.9,"maskBorderRepeat":9.9,"maskBorder":9.9,"maskType":9.9,"textSizeAdjust":9.9,"filter":9.9,"hyphens":9.9,"flowInto":9.9,"flowFrom":9.9,"breakBefore":9.9,"breakAfter":9.9,"breakInside":9.9,"regionFragment":9.9,"fontFeatureSettings":9.9,"columnCount":9.9,"columnFill":9.9,"columnGap":9.9,"columnRule":9.9,"columnRuleColor":9.9,"columnRuleStyle":9.9,"columnRuleWidth":9.9,"columns":9.9,"columnSpan":9.9,"columnWidth":9.9},"op_mini":{"borderImage":5,"borderImageOutset":5,"borderImageRepeat":5,"borderImageSlice":5,"borderImageSource":5,"borderImageWidth":5,"tabSize":5,"objectFit":5,"objectPosition":5}}; module.exports = caniuseData
-
-/***/ },
-/* 221 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _pluginsCursor = __webpack_require__(222);
-	
-	var _pluginsCursor2 = _interopRequireDefault(_pluginsCursor);
-	
-	var _pluginsFlex = __webpack_require__(223);
-	
-	var _pluginsFlex2 = _interopRequireDefault(_pluginsFlex);
-	
-	var _pluginsSizing = __webpack_require__(224);
-	
-	var _pluginsSizing2 = _interopRequireDefault(_pluginsSizing);
-	
-	var _pluginsGradient = __webpack_require__(225);
-	
-	var _pluginsGradient2 = _interopRequireDefault(_pluginsGradient);
-	
-	// special flexbox specifications
-	
-	var _pluginsFlexboxIE = __webpack_require__(226);
-	
-	var _pluginsFlexboxIE2 = _interopRequireDefault(_pluginsFlexboxIE);
-	
-	var _pluginsFlexboxOld = __webpack_require__(227);
-	
-	var _pluginsFlexboxOld2 = _interopRequireDefault(_pluginsFlexboxOld);
-	
-	exports['default'] = [_pluginsCursor2['default'], _pluginsFlex2['default'], _pluginsSizing2['default'], _pluginsGradient2['default'], _pluginsFlexboxIE2['default'], _pluginsFlexboxOld2['default']];
-	module.exports = exports['default'];
-
-/***/ },
-/* 222 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-	
-	var values = ['zoom-in', 'zoom-out', 'grab', 'grabbing'];
-	
-	exports['default'] = function (property, value, _ref2) {
-	  var browser = _ref2.browser;
-	  var version = _ref2.version;
-	  var prefix = _ref2.prefix;
-	
-	  if (property === 'cursor' && values.indexOf(value) > -1 && (browser === 'firefox' && version < 24 || browser === 'chrome' && version < 37 || browser === 'safari' && version < 9 || browser === 'opera' && version < 24)) {
-	    return _defineProperty({}, property, prefix.CSS + value);
-	  }
-	};
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 223 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-	
-	var values = ['flex', 'inline-flex'];
-	
-	exports['default'] = function (property, value, _ref2) {
-	  var browser = _ref2.browser;
-	  var version = _ref2.version;
-	  var prefix = _ref2.prefix;
-	
-	  if (property === 'display' && values.indexOf(value) > -1 && (browser === 'chrome' && (version < 29 || version > 20) || (browser === 'safari' || browser === 'ios_saf') && (version < 9 || version > 6) || browser === 'opera' && (version == 15 || version == 16))) {
-	    return _defineProperty({}, property, prefix.CSS + value);
-	  }
-	};
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 224 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-	
-	var properties = ['maxHeight', 'maxWidth', 'width', 'height', 'columnWidth', 'minWidth', 'minHeight'];
-	var values = ['min-content', 'max-content', 'fill-available', 'fit-content', 'contain-floats'];
-	
-	exports['default'] = function (property, value, _ref2) {
-	  var prefix = _ref2.prefix;
-	
-	  /**
-	   * This actually is only available with prefixes
-	   * NOTE: This might change in the feature
-	   */
-	  if (properties.indexOf(property) > -1 && values.indexOf(value) > -1) {
-	    return _defineProperty({}, property, prefix.CSS + value);
-	  }
-	};
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 225 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-	
-	var properties = ['background', 'backgroundImage'];
-	var values = ['linear-gradient', 'radial-gradient', 'repeating-linear-gradient', 'repeating-radial-gradient'];
-	
-	exports['default'] = function (property, value, _ref2) {
-	  var browser = _ref2.browser;
-	  var version = _ref2.version;
-	  var prefix = _ref2.prefix;
-	
-	  if (properties.indexOf(property) > -1 && values.indexOf(value) > -1 && (browser === 'firefox' && version < 16 || browser === 'chrome' && version < 26 || (browser === 'safari' || browser === 'ios_saf') && version < 7 || (browser === 'opera' || browser === 'op_mini') && version < 12.1 || browser === 'android' && version < 4.4 || browser === 'and_uc')) {
-	    return _defineProperty({}, property, prefix.CSS + value);
-	  }
-	};
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 226 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-	
-	var alternativeValues = {
-	  'space-around': 'distribute',
-	  'space-between': 'justify',
-	  'flex-start': 'start',
-	  'flex-end': 'end',
-	  flex: '-ms-flexbox',
-	  'inline-flex': '-ms-inline-flexbox'
-	};
-	
-	var alternativeProps = {
-	  alignContent: 'msFlexLinePack',
-	  alignSelf: 'msFlexItemAlign',
-	  alignItems: 'msFlexAlign',
-	  justifyContent: 'msFlexPack',
-	  order: 'msFlexOrder',
-	  flexGrow: 'msFlexPositive',
-	  flexShrink: 'msFlexNegative',
-	  flexBasis: 'msPreferredSize'
-	};
-	
-	var properties = Object.keys(alternativeProps).concat('display');
-	
-	exports['default'] = function (property, value, _ref2, styles) {
-	  var browser = _ref2.browser;
-	  var version = _ref2.version;
-	
-	  if (properties.indexOf(property) > -1 && (browser === 'ie_mob' || browser === 'ie') && version == 10) {
-	    delete styles[property];
-	    return _defineProperty({}, alternativeProps[property] || property, alternativeValues[value] || value);
-	  }
-	};
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 227 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-	
-	var alternativeValues = {
-	  'space-around': 'justify',
-	  'space-between': 'justify',
-	  'flex-start': 'start',
-	  'flex-end': 'end',
-	  'wrap-reverse': 'multiple',
-	  wrap: 'multiple',
-	  flex: 'box',
-	  'inline-flex': 'inline-box'
-	};
-	
-	var alternativeProps = {
-	  alignItems: 'WebkitBoxAlign',
-	  justifyContent: 'WebkitBoxPack',
-	  flexWrap: 'WebkitBoxLines'
-	};
-	
-	var properties = Object.keys(alternativeProps).concat(['alignContent', 'alignSelf', 'display', 'order', 'flexGrow', 'flexShrink', 'flexBasis', 'flexDirection']);
-	
-	exports['default'] = function (property, value, _ref2) {
-	  var browser = _ref2.browser;
-	  var version = _ref2.version;
-	  var prefix = _ref2.prefix;
-	
-	  if (properties.indexOf(property) > -1 && (browser === 'firefox' && version < 22 || browser === 'chrome' && version < 21 || (browser === 'safari' || browser === 'ios_saf') && version <= 6.1 || browser === 'android' && version < 4.4 || browser === 'and_uc')) {
-	    if (property === 'flexDirection') {
-	      return {
-	        WebkitBoxOrient: value.indexOf('column') > -1 ? 'vertical' : 'horizontal',
-	        WebkitBoxDirection: value.indexOf('reverse') > -1 ? 'reverse' : 'normal'
-	      };
-	    }
-	    if (property === 'display' && alternativeValues[value]) {
-	      return { display: prefix.CSS + alternativeValues[value] };
-	    }
-	    return _defineProperty({}, alternativeProps[property] || property, alternativeValues[value] || value);
-	  }
-	};
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 228 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _mouseUpListener = __webpack_require__(229);
-	
-	var _mouseUpListener2 = _interopRequireDefault(_mouseUpListener);
-	
-	/*:: import type {PluginConfig, PluginResult} from '.';*/
-	
-	var _isInteractiveStyleField = function _isInteractiveStyleField(styleFieldName) {
-	  return styleFieldName === ':hover' || styleFieldName === ':active' || styleFieldName === ':focus';
-	};
-	
-	var resolveInteractionStyles = function resolveInteractionStyles(config /*: PluginConfig*/) /*: PluginResult*/ {
-	  var ExecutionEnvironment = config.ExecutionEnvironment;
-	  var getComponentField = config.getComponentField;
-	  var getState = config.getState;
-	  var mergeStyles = config.mergeStyles;
-	  var props = config.props;
-	  var setState = config.setState;
-	  var style = config.style;
-	
-	  var newComponentFields = {};
-	  var newProps = {};
-	
-	  // Only add handlers if necessary
-	  if (style[':hover']) {
-	    (function () {
-	      // Always call the existing handler if one is already defined.
-	      // This code, and the very similar ones below, could be abstracted a bit
-	      // more, but it hurts readability IMO.
-	      var existingOnMouseEnter = props.onMouseEnter;
-	      newProps.onMouseEnter = function (e) {
-	        existingOnMouseEnter && existingOnMouseEnter(e);
-	        setState(':hover', true);
-	      };
-	
-	      var existingOnMouseLeave = props.onMouseLeave;
-	      newProps.onMouseLeave = function (e) {
-	        existingOnMouseLeave && existingOnMouseLeave(e);
-	        setState(':hover', false);
-	      };
-	    })();
-	  }
-	
-	  if (style[':active']) {
-	    (function () {
-	      var existingOnMouseDown = props.onMouseDown;
-	      newProps.onMouseDown = function (e) {
-	        existingOnMouseDown && existingOnMouseDown(e);
-	        newComponentFields._lastMouseDown = Date.now();
-	        setState(':active', 'viamousedown');
-	      };
-	
-	      var existingOnKeyDown = props.onKeyDown;
-	      newProps.onKeyDown = function (e) {
-	        existingOnKeyDown && existingOnKeyDown(e);
-	        if (e.key === ' ' || e.key === 'Enter') {
-	          setState(':active', 'viakeydown');
-	        }
-	      };
-	
-	      var existingOnKeyUp = props.onKeyUp;
-	      newProps.onKeyUp = function (e) {
-	        existingOnKeyUp && existingOnKeyUp(e);
-	        if (e.key === ' ' || e.key === 'Enter') {
-	          setState(':active', false);
-	        }
-	      };
-	    })();
-	  }
-	
-	  if (style[':focus']) {
-	    (function () {
-	      var existingOnFocus = props.onFocus;
-	      newProps.onFocus = function (e) {
-	        existingOnFocus && existingOnFocus(e);
-	        setState(':focus', true);
-	      };
-	
-	      var existingOnBlur = props.onBlur;
-	      newProps.onBlur = function (e) {
-	        existingOnBlur && existingOnBlur(e);
-	        setState(':focus', false);
-	      };
-	    })();
-	  }
-	
-	  if (style[':active'] && !getComponentField('_radiumMouseUpListener') && ExecutionEnvironment.canUseEventListeners) {
-	    newComponentFields._radiumMouseUpListener = _mouseUpListener2['default'].subscribe(function () {
-	      Object.keys(getComponentField('state')._radiumStyleState).forEach(function (key) {
-	        if (getState(':active', key) === 'viamousedown') {
-	          setState(':active', false, key);
-	        }
-	      });
-	    });
-	  }
-	
-	  // Merge the styles in the order they were defined
-	  var interactionStyles = Object.keys(style).filter(function (name) {
-	    return _isInteractiveStyleField(name) && getState(name);
-	  }).map(function (name) {
-	    return style[name];
-	  });
-	
-	  var newStyle = mergeStyles([style].concat(interactionStyles));
-	
-	  // Remove interactive styles
-	  newStyle = Object.keys(newStyle).reduce(function (styleWithoutInteractions, name) {
-	    if (!_isInteractiveStyleField(name)) {
-	      styleWithoutInteractions[name] = newStyle[name];
-	    }
-	    return styleWithoutInteractions;
-	  }, {});
-	
-	  return {
-	    componentFields: newComponentFields,
-	    props: newProps,
-	    style: newStyle
-	  };
-	};
-	
-	exports['default'] = resolveInteractionStyles;
-	module.exports = exports['default'];
-
-/***/ },
-/* 229 */
-/***/ function(module, exports) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	var _callbacks = [];
-	var _mouseUpListenerIsActive = false;
-	
-	function _handleMouseUp() {
-	  _callbacks.forEach(function (callback) {
-	    callback();
-	  });
-	}
-	
-	var subscribe = function subscribe(callback /*: () => void*/) /*: {remove: () => void}*/ {
-	  if (_callbacks.indexOf(callback) === -1) {
-	    _callbacks.push(callback);
-	  }
-	
-	  if (!_mouseUpListenerIsActive) {
-	    window.addEventListener('mouseup', _handleMouseUp);
-	    _mouseUpListenerIsActive = true;
-	  }
-	
-	  return {
-	    remove: function remove() {
-	      var index = _callbacks.indexOf(callback);
-	      _callbacks.splice(index, 1);
-	
-	      if (_callbacks.length === 0 && _mouseUpListenerIsActive) {
-	        window.removeEventListener('mouseup', _handleMouseUp);
-	        _mouseUpListenerIsActive = false;
-	      }
-	    }
-	  };
-	};
-	
-	exports['default'] = {
-	  subscribe: subscribe,
-	  __triggerForTests: _handleMouseUp
-	};
-	module.exports = exports['default'];
-
-/***/ },
-/* 230 */
-/***/ function(module, exports) {
-
-	/** @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	exports['default'] = resolveMediaQueries;
-	
-	/*:: import type {MatchMediaType} from '../config';*/
-	/*:: import type {PluginConfig, PluginResult} from '.';*/
-	
-	var _windowMatchMedia = undefined;
-	var _getWindowMatchMedia = function _getWindowMatchMedia(ExecutionEnvironment) {
-	  if (_windowMatchMedia === undefined) {
-	    _windowMatchMedia = !!ExecutionEnvironment.canUseDOM && !!window && !!window.matchMedia && function (mediaQueryString) {
-	      return window.matchMedia(mediaQueryString);
-	    } || null;
-	  }
-	  return _windowMatchMedia;
-	};
-	
-	function resolveMediaQueries(_ref /*: PluginConfig*/) /*: PluginResult*/ {
-	  var ExecutionEnvironment = _ref.ExecutionEnvironment;
-	  var getComponentField = _ref.getComponentField;
-	  var getGlobalState = _ref.getGlobalState;
-	  var config = _ref.config;
-	  var mergeStyles = _ref.mergeStyles;
-	  var setState = _ref.setState;
-	  var style = _ref.style;
-	
-	  var newComponentFields = {};
-	  var newStyle = style;
-	  var matchMedia /*: ?MatchMediaType*/ = config.matchMedia || _getWindowMatchMedia(ExecutionEnvironment);
-	  if (!matchMedia) {
-	    return newStyle;
-	  }
-	
-	  var mediaQueryListByQueryString = getGlobalState('mediaQueryListByQueryString') || {};
-	
-	  Object.keys(style).filter(function (name) {
-	    return name.indexOf('@media') === 0;
-	  }).map(function (query) {
-	    var mediaQueryStyles = style[query];
-	    query = query.replace('@media ', '');
-	
-	    // Create a global MediaQueryList if one doesn't already exist
-	    var mql = mediaQueryListByQueryString[query];
-	    if (!mql && matchMedia) {
-	      mediaQueryListByQueryString[query] = mql = matchMedia(query);
-	    }
-	
-	    var listenersByQuery = getComponentField('_radiumMediaQueryListenersByQuery');
-	
-	    if (!listenersByQuery || !listenersByQuery[query]) {
-	      (function () {
-	        var listener = function listener() {
-	          return setState(query, mql.matches, '_all');
-	        };
-	        mql.addListener(listener);
-	        newComponentFields._radiumMediaQueryListenersByQuery = _extends({}, listenersByQuery);
-	        newComponentFields._radiumMediaQueryListenersByQuery[query] = {
-	          remove: function remove() {
-	            mql.removeListener(listener);
-	          }
-	        };
-	      })();
-	    }
-	
-	    // Apply media query states
-	    if (mql.matches) {
-	      newStyle = mergeStyles([newStyle, mediaQueryStyles]);
-	    }
-	  });
-	
-	  // Remove media queries
-	  newStyle = Object.keys(newStyle).reduce(function (styleWithoutMedia, key) {
-	    if (key.indexOf('@media') !== 0) {
-	      styleWithoutMedia[key] = newStyle[key];
-	    }
-	    return styleWithoutMedia;
-	  }, {});
-	
-	  return {
-	    componentFields: newComponentFields,
-	    globalState: { mediaQueryListByQueryString: mediaQueryListByQueryString },
-	    style: newStyle
-	  };
-	}
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 231 */
-/***/ function(module, exports) {
-
-	/* @flow */
-	
-	"use strict";
-	
-	exports.__esModule = true;
-	var allPrintStyles = {};
-	var listeners = [];
-	
-	function subscribe(listener /*: () => void*/) /*: {remove: () => void}*/ {
-	  if (listeners.indexOf(listener) === -1) {
-	    listeners.push(listener);
-	  }
-	
-	  return {
-	    remove: function remove() {
-	      var listenerIndex = listeners.indexOf(listener);
-	
-	      if (listenerIndex > -1) {
-	        listeners.splice(listenerIndex, 1);
-	      }
-	    }
-	  };
-	}
-	
-	function _emitChange() {
-	  listeners.forEach(function (listener) {
-	    return listener();
-	  });
-	}
-	
-	function _appendImportantToEachValue(styleObj) {
-	  var importantStyleObj = {};
-	
-	  Object.keys(styleObj).forEach(function (key) {
-	    var value = styleObj[key];
-	
-	    // This breaks unitless values but they'll be deprecated soon anyway
-	    // https://github.com/facebook/react/issues/1873
-	    value = value + " !important";
-	    importantStyleObj[key] = value;
-	  });
-	
-	  return importantStyleObj;
-	}
-	
-	function addPrintStyles(Component /*: constructor*/) {
-	  if (!Component.printStyles) {
-	    return;
-	  }
-	
-	  var printStyleClass = {};
-	
-	  Object.keys(Component.printStyles).forEach(function (key) {
-	    var styles = Component.printStyles[key];
-	    var className = "Radium-" + Component.displayName + "-" + key;
-	    allPrintStyles["." + className] = _appendImportantToEachValue(styles);
-	    printStyleClass[key] = className;
-	  });
-	
-	  // Allows for lazy loading of JS that then calls Radium to update the
-	  // print styles
-	  _emitChange();
-	  return printStyleClass;
-	}
-	
-	function getPrintStyles() /*: Object*/ {
-	  return allPrintStyles;
-	}
-	
-	exports["default"] = {
-	  addPrintStyles: addPrintStyles,
-	  getPrintStyles: getPrintStyles,
-	  subscribe: subscribe
-	};
-	module.exports = exports["default"];
-
-/***/ },
-/* 232 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _react = __webpack_require__(27);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
-	var _styleJs = __webpack_require__(233);
-	
-	var _styleJs2 = _interopRequireDefault(_styleJs);
-	
-	var _printStylesJs = __webpack_require__(231);
-	
-	var _printStylesJs2 = _interopRequireDefault(_printStylesJs);
-	
-	var PrintStyle = _react2['default'].createClass({
-	  displayName: 'PrintStyle',
-	
-	  getInitialState: function getInitialState() {
-	    return this._getStylesState();
-	  },
-	
-	  componentDidMount: function componentDidMount() {
-	    this.subscription = _printStylesJs2['default'].subscribe(this._onChange);
-	  },
-	
-	  componentWillUnmount: function componentWillUnmount() {
-	    this.subscription.remove();
-	  },
-	
-	  _onChange: function _onChange() {
-	    this.setState(this._getStylesState());
-	  },
-	
-	  _getStylesState: function _getStylesState() {
-	    return {
-	      styles: _printStylesJs2['default'].getPrintStyles()
-	    };
-	  },
-	
-	  render: function render() {
-	    return _react2['default'].createElement(_styleJs2['default'], { rules: {
-	        mediaQueries: {
-	          print: this.state.styles
-	        }
-	      } });
-	  }
-	});
-	
-	exports['default'] = PrintStyle;
-	module.exports = exports['default'];
-
-/***/ },
-/* 233 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _camelCasePropsToDashCase = __webpack_require__(234);
-	
-	var _camelCasePropsToDashCase2 = _interopRequireDefault(_camelCasePropsToDashCase);
-	
-	var _createMarkupForStyles = __webpack_require__(235);
-	
-	var _createMarkupForStyles2 = _interopRequireDefault(_createMarkupForStyles);
-	
-	var _prefixer = __webpack_require__(216);
-	
-	var _react = __webpack_require__(27);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
-	var buildCssString = function buildCssString(selector /*: string*/, rules /*: Object*/, userAgent /*: ?string*/) /*: string*/ {
-	  if (!selector || !rules) {
-	    return '';
-	  }
-	
-	  var prefixedRules = _prefixer.getPrefixedStyle(rules, 'Style', userAgent);
-	  var cssPrefixedRules = _camelCasePropsToDashCase2['default'](prefixedRules);
-	  var serializedRules = _createMarkupForStyles2['default'](cssPrefixedRules);
-	
-	  return selector + '{' + serializedRules + '}';
-	};
-	
-	var Style = _react2['default'].createClass({
-	  displayName: 'Style',
-	
-	  propTypes: {
-	    rules: _react2['default'].PropTypes.object,
-	    scopeSelector: _react2['default'].PropTypes.string
-	  },
-	
-	  contextTypes: {
-	    radiumConfig: _react2['default'].PropTypes.object
-	  },
-	
-	  getDefaultProps: function getDefaultProps() /*: {scopeSelector: string}*/ {
-	    return {
-	      prefix: _prefixer.getPrefixedStyle,
-	      scopeSelector: ''
-	    };
-	  },
-	
-	  _buildStyles: function _buildStyles(styles /*: Object*/) /*: string*/ {
-	    var _this = this;
-	
-	    return Object.keys(styles).reduce(function (accumulator, selector) {
-	      var rules = styles[selector];
-	
-	      if (selector === 'mediaQueries') {
-	        accumulator += _this._buildMediaQueryString(rules);
-	      } else {
-	        var completeSelector = (_this.props.scopeSelector ? _this.props.scopeSelector + ' ' : '') + selector;
-	        accumulator += buildCssString(completeSelector, rules, _this.context && _this.context.radiumConfig && _this.context.radiumConfig.userAgent);
-	      }
-	
-	      return accumulator;
-	    }, '');
-	  },
-	
-	  _buildMediaQueryString: function _buildMediaQueryString(stylesByMediaQuery /*: {[mediaQuery: string]: Object}*/) /*: string*/ {
-	    var _this2 = this;
-	
-	    var contextMediaQueries = this._getContextMediaQueries();
-	    var mediaQueryString = '';
-	
-	    Object.keys(stylesByMediaQuery).forEach(function (query) {
-	      var completeQuery = contextMediaQueries[query] ? contextMediaQueries[query] : query;
-	      mediaQueryString += '@media ' + completeQuery + '{' + _this2._buildStyles(stylesByMediaQuery[query]) + '}';
-	    });
-	
-	    return mediaQueryString;
-	  },
-	
-	  _getContextMediaQueries: function _getContextMediaQueries() /*: {[mediaQuery: string]: Object}*/ {
-	    var _this3 = this;
-	
-	    var contextMediaQueries = {};
-	    if (this.context && this.context.mediaQueries) {
-	      Object.keys(this.context.mediaQueries).forEach(function (query) {
-	        contextMediaQueries[query] = _this3.context.mediaQueries[query].media;
-	      });
-	    }
-	
-	    return contextMediaQueries;
-	  },
-	
-	  render: function render() /*: ?ReactElement*/ {
-	    if (!this.props.rules) {
-	      return null;
-	    }
-	
-	    var styles = this._buildStyles(this.props.rules);
-	
-	    return _react2['default'].createElement('style', { dangerouslySetInnerHTML: { __html: styles } });
-	  }
-	});
-	
-	exports['default'] = Style;
-	module.exports = exports['default'];
-
-/***/ },
-/* 234 */
-/***/ function(module, exports) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	var _camelCaseRegex = /([a-z])?([A-Z])/g;
-	
-	var _camelCaseReplacer = function _camelCaseReplacer(match, p1, p2) {
-	  return (p1 || '') + '-' + p2.toLowerCase();
-	};
-	
-	var _camelCaseToDashCase = function _camelCaseToDashCase(s) {
-	  return s.replace(_camelCaseRegex, _camelCaseReplacer);
-	};
-	
-	var camelCasePropsToDashCase = function camelCasePropsToDashCase(prefixedStyle /*: Object*/) /*: Object*/ {
-	  // Since prefix is expected to work on inline style objects, we must
-	  // translate the keys to dash case for rendering to CSS.
-	  return Object.keys(prefixedStyle).reduce(function (result, key) {
-	    var dashCaseKey = _camelCaseToDashCase(key);
-	
-	    // Fix IE vendor prefix
-	    if (/^ms-/.test(dashCaseKey)) {
-	      dashCaseKey = '-' + dashCaseKey;
-	    }
-	
-	    result[dashCaseKey] = prefixedStyle[key];
-	    return result;
-	  }, {});
-	};
-	
-	exports['default'] = camelCasePropsToDashCase;
-	module.exports = exports['default'];
-
-/***/ },
-/* 235 */
-/***/ function(module, exports) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	var createMarkupForStyles = function createMarkupForStyles(style /*: Object*/) /*: string*/ {
-	  var spaces /*: string*/ = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
-	
-	  return Object.keys(style).map(function (property) {
-	    return spaces + property + ': ' + style[property] + ';';
-	  }).join('\n');
-	};
-	
-	exports['default'] = createMarkupForStyles;
-	module.exports = exports['default'];
-
-/***/ },
-/* 236 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* @flow */
-	
-	'use strict';
-	
-	exports.__esModule = true;
-	exports['default'] = keyframes;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _camelCasePropsToDashCase = __webpack_require__(234);
-	
-	var _camelCasePropsToDashCase2 = _interopRequireDefault(_camelCasePropsToDashCase);
-	
-	var _createMarkupForStyles = __webpack_require__(235);
-	
-	var _createMarkupForStyles2 = _interopRequireDefault(_createMarkupForStyles);
-	
-	var _prefixer = __webpack_require__(216);
-	
-	var _exenv = __webpack_require__(73);
-	
-	var _exenv2 = _interopRequireDefault(_exenv);
-	
-	var isAnimationSupported = false;
-	var keyframesPrefixed = 'keyframes';
-	
-	if (_exenv2['default'].canUseDOM) {
-	  (function () {
-	    // Animation feature detection and keyframes prefixing from MDN:
-	    // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Detecting_CSS_animation_support
-	    var domPrefixes = ['Webkit', 'Moz', 'O', 'ms'];
-	    var element = (document.createElement('div') /*: any*/);
-	
-	    if (element.style.animationName !== undefined) {
-	      isAnimationSupported = true;
-	    } else {
-	      domPrefixes.some(function (prefix) {
-	        if (element.style[prefix + 'AnimationName'] !== undefined) {
-	          keyframesPrefixed = '-' + prefix.toLowerCase() + '-keyframes';
-	          isAnimationSupported = true;
-	          return true;
-	        }
-	        return false;
-	      });
-	    }
-	  })();
-	}
-	
-	var animationIndex = 1;
-	var animationStyleSheet = null;
-	
-	if (isAnimationSupported) {
-	  animationStyleSheet = (document.createElement('style') /*: any*/);
-	  document.head.appendChild(animationStyleSheet);
-	}
-	
-	// Simple animation helper that injects CSS into a style object containing the
-	// keyframes, and returns a string with the generated animation name.
-	
-	function keyframes(keyframeRules /*: {[percentage: string]: {[key: string]: string|number}}*/, componentName /*:: ?: string*/) /*: string*/ {
-	  var prefix /*: (style: Object, componentName: ?string) => Object*/ = arguments.length <= 2 || arguments[2] === undefined ? _prefixer.getPrefixedStyle : arguments[2];
-	
-	  var name = 'Animation' + animationIndex;
-	  animationIndex += 1;
-	
-	  if (!isAnimationSupported) {
-	    return name;
-	  }
-	
-	  var rule = '@' + keyframesPrefixed + ' ' + name + ' {\n' + Object.keys(keyframeRules).map(function (percentage) {
-	    var props = keyframeRules[percentage];
-	    var prefixedProps = prefix(props, componentName);
-	    var cssPrefixedProps = _camelCasePropsToDashCase2['default'](prefixedProps);
-	    var serializedProps = _createMarkupForStyles2['default'](cssPrefixedProps, '  ');
-	    return '  ' + percentage + ' {\n  ' + serializedProps + '\n  }';
-	  }).join('\n') + '\n}\n';
-	
-	  // for flow
-	  /* istanbul ignore next */
-	  if (!animationStyleSheet) {
-	    throw new Error('keyframes not initialized properly');
-	  }
-	
-	  animationStyleSheet.sheet.insertRule(rule, animationStyleSheet.sheet.cssRules.length);
-	  return name;
-	}
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 237 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -30167,15 +27922,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _lodashArrayFlatten2 = _interopRequireDefault(_lodashArrayFlatten);
 	
-	var _lodashCollectionIncludes = __webpack_require__(156);
+	var _lodashCollectionIncludes = __webpack_require__(157);
 	
 	var _lodashCollectionIncludes2 = _interopRequireDefault(_lodashCollectionIncludes);
 	
-	var _lodashLangIsEmpty = __webpack_require__(140);
+	var _lodashLangIsEmpty = __webpack_require__(139);
 	
 	var _lodashLangIsEmpty2 = _interopRequireDefault(_lodashLangIsEmpty);
 	
-	var _lodashArrayZipObject = __webpack_require__(145);
+	var _lodashLangIsUndefined = __webpack_require__(141);
+	
+	var _lodashLangIsUndefined2 = _interopRequireDefault(_lodashLangIsUndefined);
+	
+	var _lodashArrayZipObject = __webpack_require__(150);
 	
 	var _lodashArrayZipObject2 = _interopRequireDefault(_lodashArrayZipObject);
 	
@@ -30221,8 +27980,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return this.getDomainFromCategories(props, axis);
 	    }
 	    // find the global min and max
-	    var allData = _victoryUtil.Data.consolidateData(props);
-	    var datasets = allData.map(function (dataset) {
+	    var rawDatasets = props.stacked || this.shouldGroup(props) ? props.data : [props.data];
+	    var datasets = _victoryUtil.Data.formatDatasets(rawDatasets, props).map(function (dataset) {
 	      return dataset.data;
 	    });
 	    var globalDomain = this.getDomainFromData(datasets, axis);
@@ -30253,6 +28012,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return [0, adjustedMax];
 	    }
 	    return [domainMin, domainMax];
+	  },
+	
+	  shouldGroup: function shouldGroup(props) {
+	    // automatically create grouped bars if data is array of arrays
+	    // and x/y accessors are the default "x" and "y" keys,
+	    return !props.stacked && (props.grouped || (0, _lodashLangIsUndefined2["default"])(props.grouped) && _victoryUtil.Collection.isArrayOfArrays(props.data) && props.x === "x" && props.y === "y");
 	  },
 	
 	  isStacked: function isStacked(props, axis) {
@@ -30301,7 +28066,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 238 */
+/* 208 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -30314,11 +28079,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _lodashArrayFlatten2 = _interopRequireDefault(_lodashArrayFlatten);
 	
-	var _lodashArrayTake = __webpack_require__(131);
+	var _lodashArrayTake = __webpack_require__(209);
 	
 	var _lodashArrayTake2 = _interopRequireDefault(_lodashArrayTake);
 	
-	var _lodashArrayUniq = __webpack_require__(143);
+	var _lodashArrayUniq = __webpack_require__(148);
 	
 	var _lodashArrayUniq2 = _interopRequireDefault(_lodashArrayUniq);
 	
@@ -30330,63 +28095,65 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _lodashObjectMerge2 = _interopRequireDefault(_lodashObjectMerge);
 	
-	var _lodashObjectOmit = __webpack_require__(239);
+	var _lodashObjectOmit = __webpack_require__(210);
 	
 	var _lodashObjectOmit2 = _interopRequireDefault(_lodashObjectOmit);
 	
 	module.exports = {
 	  // Layout Helpers
-	  getBarPosition: function getBarPosition(data, index, calculatedProps) {
+	  getBarPosition: function getBarPosition(datum, index, calculatedProps) {
 	    var scale = calculatedProps.scale;
 	    var stacked = calculatedProps.stacked;
 	    var categories = calculatedProps.categories;
-	    var datasets = calculatedProps.datasets;
 	
-	    var yOffset = stacked ? this.getYOffset(data, index, datasets) : 0;
+	    var yOffset = stacked ? this.getYOffset(datum, index, calculatedProps) : 0;
 	    var y0 = yOffset;
-	    var y1 = yOffset + data.y;
-	    var x = stacked && !categories ? data.x : this.adjustX(data, index.seriesIndex, calculatedProps);
+	    var y1 = yOffset + datum.y;
+	    var x = stacked && !categories ? datum.x : this.adjustX(datum, index.seriesIndex, calculatedProps);
 	    var formatValue = function formatValue(value, axis) {
-	      return (0, _lodashLangIsDate2["default"])(data[axis]) ? new Date(value) : value;
+	      return (0, _lodashLangIsDate2["default"])(datum[axis]) ? new Date(value) : value;
 	    };
 	    return {
-	      independent: scale.x.call(null, formatValue(x, "x")),
-	      dependent0: scale.y.call(null, formatValue(y0, "y")),
-	      dependent1: scale.y.call(null, formatValue(y1, "y"))
+	      independent: scale.x(formatValue(x, "x")),
+	      dependent0: scale.y(formatValue(y0, "y")),
+	      dependent1: scale.y(formatValue(y1, "y"))
 	    };
 	  },
 	
-	  getYOffset: function getYOffset(data, index, datasets) {
+	  getYOffset: function getYOffset(datum, index, calculatedProps) {
+	    var datasets = calculatedProps.datasets;
+	
 	    if (index.seriesIndex === 0) {
 	      return 0;
 	    }
-	    var y = data.y;
+	    var y = datum.y;
 	    var previousDataSets = (0, _lodashArrayTake2["default"])(datasets, index.seriesIndex);
-	    var previousBars = previousDataSets.map(function (dataset) {
-	      return dataset.data.map(function (datum) {
-	        return datum.y;
+	    var previousBars = (0, _lodashArrayFlatten2["default"])(previousDataSets.map(function (dataset) {
+	      return dataset.data.filter(function (previousDatum) {
+	        return previousDatum.x === datum.x;
+	      }).map(function (previousDatum) {
+	        return previousDatum.y || 0;
 	      });
-	    });
-	    return previousBars.reduce(function (memo, bar) {
-	      var barValue = bar[index.barIndex];
+	    }));
+	    return previousBars.reduce(function (memo, barValue) {
 	      var sameSign = y < 0 && barValue < 0 || y >= 0 && barValue >= 0;
 	      return sameSign ? memo + barValue : memo;
 	    }, 0);
 	  },
 	
-	  adjustX: function adjustX(data, index, calculatedProps) {
-	    var style = calculatedProps.style.data;
+	  adjustX: function adjustX(datum, index, calculatedProps) {
 	    var stacked = calculatedProps.stacked;
 	    var categories = calculatedProps.categories;
 	
-	    var x = data.x;
+	    var style = calculatedProps.style.data;
+	    var x = datum.x;
 	    var datasets = calculatedProps.datasets;
 	    var center = datasets.length % 2 === 0 ? datasets.length / 2 : (datasets.length - 1) / 2;
 	    var centerOffset = index - center;
 	    var totalWidth = this.pixelsToValue(style.padding, "x", calculatedProps) + this.pixelsToValue(style.width, "x", calculatedProps);
-	    if (data.category !== undefined) {
+	    if (datum.category !== undefined) {
 	      // if this is category data, shift x to the center of its category
-	      var rangeBand = categories[data.category];
+	      var rangeBand = categories[datum.category];
 	      var bandCenter = (Math.max.apply(Math, _toConsumableArray(rangeBand)) + Math.min.apply(Math, _toConsumableArray(rangeBand))) / 2;
 	      return stacked ? bandCenter : bandCenter + centerOffset * totalWidth;
 	    }
@@ -30414,39 +28181,84 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return plotGroupLabel && labelExists;
 	  },
 	
-	  getLabelIndex: function getLabelIndex(data, calculatedProps) {
+	  getLabelIndex: function getLabelIndex(datum, calculatedProps) {
 	    var datasets = calculatedProps.datasets;
 	    var stringMap = calculatedProps.stringMap;
 	
-	    if (data.category !== undefined) {
-	      return data.category;
+	    if (datum.category !== undefined) {
+	      return datum.category;
 	    } else if (stringMap.x) {
-	      return data.x - 1;
+	      return datum.x - 1;
 	    } else {
 	      var allX = datasets.map(function (dataset) {
-	        return dataset.data.map(function (datum) {
-	          return datum.x;
+	        return dataset.data.map(function (d) {
+	          return d.x;
 	        });
 	      });
 	      var uniqueX = (0, _lodashArrayUniq2["default"])((0, _lodashArrayFlatten2["default"])(allX));
-	      return uniqueX.sort().findIndex(function (n) {
-	        return n === data.x;
+	      return uniqueX.sort().findIndex(function (x) {
+	        return x === datum.x;
 	      });
 	    }
 	  },
 	
-	  getBarStyle: function getBarStyle(data, dataset, baseStyle) {
-	    var styleData = (0, _lodashObjectOmit2["default"])(data, ["xName", "yName", "x", "y", "label", "category"]);
+	  getBarStyle: function getBarStyle(datum, dataset, baseStyle) {
+	    var styleData = (0, _lodashObjectOmit2["default"])(datum, ["xName", "yName", "x", "y", "label", "category"]);
 	    return (0, _lodashObjectMerge2["default"])({}, baseStyle.data, (0, _lodashObjectOmit2["default"])(dataset.attrs, "name"), styleData);
 	  }
 	};
 
 /***/ },
-/* 239 */
+/* 209 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var arrayMap = __webpack_require__(149),
-	    baseDifference = __webpack_require__(240),
+	var baseSlice = __webpack_require__(98),
+	    isIterateeCall = __webpack_require__(115);
+	
+	/**
+	 * Creates a slice of `array` with `n` elements taken from the beginning.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Array
+	 * @param {Array} array The array to query.
+	 * @param {number} [n=1] The number of elements to take.
+	 * @param- {Object} [guard] Enables use as a callback for functions like `_.map`.
+	 * @returns {Array} Returns the slice of `array`.
+	 * @example
+	 *
+	 * _.take([1, 2, 3]);
+	 * // => [1]
+	 *
+	 * _.take([1, 2, 3], 2);
+	 * // => [1, 2]
+	 *
+	 * _.take([1, 2, 3], 5);
+	 * // => [1, 2, 3]
+	 *
+	 * _.take([1, 2, 3], 0);
+	 * // => []
+	 */
+	function take(array, n, guard) {
+	  var length = array ? array.length : 0;
+	  if (!length) {
+	    return [];
+	  }
+	  if (guard ? isIterateeCall(array, n, guard) : n == null) {
+	    n = 1;
+	  }
+	  return baseSlice(array, 0, n < 0 ? 0 : n);
+	}
+	
+	module.exports = take;
+
+
+/***/ },
+/* 210 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayMap = __webpack_require__(211),
+	    baseDifference = __webpack_require__(212),
 	    baseFlatten = __webpack_require__(3),
 	    bindCallback = __webpack_require__(16),
 	    keysIn = __webpack_require__(24),
@@ -30495,12 +28307,39 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 240 */
+/* 211 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.map` for arrays without support for callback
+	 * shorthands and `this` binding.
+	 *
+	 * @private
+	 * @param {Array} array The array to iterate over.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @returns {Array} Returns the new mapped array.
+	 */
+	function arrayMap(array, iteratee) {
+	  var index = -1,
+	      length = array.length,
+	      result = Array(length);
+	
+	  while (++index < length) {
+	    result[index] = iteratee(array[index], index, array);
+	  }
+	  return result;
+	}
+	
+	module.exports = arrayMap;
+
+
+/***/ },
+/* 212 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseIndexOf = __webpack_require__(134),
-	    cacheIndexOf = __webpack_require__(136),
-	    createCache = __webpack_require__(137);
+	var baseIndexOf = __webpack_require__(133),
+	    cacheIndexOf = __webpack_require__(135),
+	    createCache = __webpack_require__(136);
 	
 	/** Used as the size to enable large array optimizations. */
 	var LARGE_ARRAY_SIZE = 200;
