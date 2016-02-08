@@ -4,6 +4,22 @@ import React from "react";
 import {VictoryBar} from "../src/index";
 import {VictoryChart} from "victory-chart";
 
+import Bar from "../src/components/bar";
+
+class MyBar extends React.Component {
+
+  handleClick() {
+  }
+
+  render() {
+    return (
+      <g onClick={this.handleClick.bind(this)}>
+        <Bar {...this.props} />
+      </g>
+    );
+  }
+}
+
 export default class App extends React.Component {
   constructor() {
     super();
@@ -154,6 +170,26 @@ export default class App extends React.Component {
               ]
             ]}
             colorScale="warm"
+          />
+        </ChartWrap>
+
+        <ChartWrap>
+          <VictoryBar
+            stacked
+            Bar={MyBar}
+            data={[
+              [
+                {x: "a", y: 2},
+                {x: "b", y: 3},
+                {x: "c", y: 4}
+              ],
+              [
+                {x: "c", y: 2},
+                {x: "d", y: 3},
+                {x: "e", y: 4}
+              ]
+            ]}
+            colorScale="cool"
           />
         </ChartWrap>
       </div>

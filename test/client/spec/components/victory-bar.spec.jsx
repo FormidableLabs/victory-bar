@@ -8,6 +8,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import _ from "lodash";
 import VictoryBar from "src/components/victory-bar";
+import Bar from "src/components/bar";
 import DomainHelpers from "src/domain-helpers";
 // Use `TestUtils` to inject into DOM, simulate events, etc.
 // See: https://facebook.github.io/react/docs/test-utils.html
@@ -25,6 +26,34 @@ describe("components/victory-bar", () => {
   describe("default component rendering", () => {
     before(() => {
       renderedComponent = TestUtils.renderIntoDocument(<VictoryBar/>);
+    });
+
+    it("renders an svg with the correct width and height", () => {
+      const svg = getElement(renderedComponent, "svg");
+      // default width and height
+      expect(svg.style.width).to.equal(`${VictoryBar.defaultProps.width}px`);
+      expect(svg.style.height).to.equal(`${VictoryBar.defaultProps.height}px`);
+    });
+  });
+
+  describe("rendering with an injected Stateless Function Component", () => {
+    before(() => {
+      const MyBar = (props) => <Bar {...props} />;
+      renderedComponent = TestUtils.renderIntoDocument(<VictoryBar Bar={MyBar} />);
+    });
+
+    it("renders an svg with the correct width and height", () => {
+      const svg = getElement(renderedComponent, "svg");
+      // default width and height
+      expect(svg.style.width).to.equal(`${VictoryBar.defaultProps.width}px`);
+      expect(svg.style.height).to.equal(`${VictoryBar.defaultProps.height}px`);
+    });
+  });
+
+  describe("rendering with a injected factories", () => {
+    before(() => {
+      const myFactory = React.createFactory(Bar);
+      renderedComponent = TestUtils.renderIntoDocument(<VictoryBar Bar={myFactory} />);
     });
 
     it("renders an svg with the correct width and height", () => {
