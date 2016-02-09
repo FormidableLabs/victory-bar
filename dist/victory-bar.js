@@ -28196,7 +28196,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	      });
 	      var uniqueX = (0, _lodashArrayUniq2["default"])((0, _lodashArrayFlatten2["default"])(allX));
-	      return uniqueX.sort().findIndex(function (x) {
+	      return uniqueX.findIndex(function (x) {
 	        return x === datum.x;
 	      });
 	    }
