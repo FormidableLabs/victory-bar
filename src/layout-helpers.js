@@ -74,12 +74,18 @@ module.exports = {
 
   // Label Helpers
   shouldPlotLabel(index, props, datasets) {
-    const isCenter = Math.floor(datasets.length / 2) === index;
-    const isLast = datasets.length === index + 1;
-    const stacked = props.stacked;
-    const plotGroupLabel = (stacked && isLast) || (!stacked && isCenter);
-    const labelExists = (props.labels || props.labelComponents) ? true : false;
-    return (plotGroupLabel && labelExists);
+    const plotAllLabels = props.labels && Array.isArray(props.labels[0]) ||
+        props.labelComponents && Array.isArray(props.labelComponents[0]);
+    if (plotAllLabels) {
+      return true;
+    } else {
+      const isCenter = Math.floor(datasets.length / 2) === index;
+      const isLast = datasets.length === index + 1;
+      const stacked = props.stacked;
+      const plotGroupLabel = (stacked && isLast) || (!stacked && isCenter);
+      const labelExists = (props.labels || props.labelComponents) ? true : false;
+      return (plotGroupLabel && labelExists);
+    }
   },
 
   getLabelIndex(datum, calculatedProps) {

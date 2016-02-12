@@ -268,10 +268,14 @@ export default class VictoryBar extends React.Component {
       );
       if (datum.label || shouldPlotLabel) {
         const labelIndex = LayoutHelpers.getLabelIndex(datum, calculatedProps);
-        const labelText = this.props.labels ?
-          this.props.labels[labelIndex] || this.props.labels[0] : "";
-        const labelComponent = this.props.labelComponents ?
-          this.props.labelComponents[labelIndex] || this.props.labelComponents[0] : undefined;
+        const labels = this.props.labels && Array.isArray(this.props.labels[seriesIndex]) ?
+          this.props.labels[seriesIndex] : this.props.labels;
+        const labelText = labels ? labels[labelIndex] || labels[0] : "";
+        const labelComponents = this.props.labelComponents &&
+          Array.isArray(this.props.labelComponents[seriesIndex]) ?
+            this.props.labelComponents[seriesIndex] : this.props.labelComponents;
+        const labelComponent = labelComponents ?
+          labelComponents[labelIndex] || labelComponents[0] : undefined;
         return (
           <g key={`series-${index}-bar-${barIndex}`}>
             {barComponent}
