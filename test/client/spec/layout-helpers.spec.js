@@ -73,6 +73,17 @@ describe("layout-helpers", () => {
       expect(LayoutHelpers.shouldPlotLabel(1, props, datasets)).to.be.false;
       expect(LayoutHelpers.shouldPlotLabel(2, props, datasets)).to.be.true;
     });
+    const individualLabels = [
+      ["one 1", "two 1", "three 1"],
+      ["one 2", "two 2", "three 2"],
+      ["one 3", "two 3", "three 3"]
+    ];
+    it("plots a label above every bar in series when individual labels are provided", () => {
+      const props = {labels: individualLabels};
+      expect(LayoutHelpers.shouldPlotLabel(0, props, datasets)).to.be.true;
+      expect(LayoutHelpers.shouldPlotLabel(1, props, datasets)).to.be.true;
+      expect(LayoutHelpers.shouldPlotLabel(2, props, datasets)).to.be.true;
+    });
   });
 
   describe("getLabelIndex", () => {
