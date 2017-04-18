@@ -231,7 +231,22 @@ export default class VictoryBar extends React.Component {
       CustomPropTypes.allOfType([CustomPropTypes.integer, CustomPropTypes.nonNegative]),
       PropTypes.string,
       PropTypes.arrayOf(PropTypes.string)
-    ])
+    ]),
+    /**
+     * The BarComponent prop specifies a React component to use in building each bar in your chart.
+     * The value will be used in JSX.
+     * But, by default, Victory's standard Bar component will be used.
+     * @examples 'Bar', 'props => <Bar {...props} />'
+     */
+    BarComponent: PropTypes.func,
+    /**
+     * The BarLabelComponent prop specifies a React component to use in building each label in your
+     * chart.
+     * The value will be used in JSX.
+     * But, by default, Victory's standard BarLabel component will be used.
+     * @examples 'BarLabel', 'props => <BarLabel {...props} />
+     */
+    BarLabelComponent: PropTypes.func
   };
 
   static defaultProps = {
@@ -244,7 +259,9 @@ export default class VictoryBar extends React.Component {
     standalone: true,
     width: 450,
     x: "x",
-    y: "y"
+    y: "y",
+    BarComponent: Bar,
+    BarLabelComponent: BarLabel
   };
 
   static getDomain = DomainHelpers.getDomain.bind(DomainHelpers);
@@ -256,7 +273,7 @@ export default class VictoryBar extends React.Component {
       const baseStyle = calculatedProps.style;
       const style = LayoutHelpers.getBarStyle(datum, dataset, baseStyle);
       const barComponent = (
-        <Bar key={`series-${index}-bar-${barIndex}`}
+        <this.props.BarComponent key={`series-${index}-bar-${barIndex}`}
           horizontal={this.props.horizontal}
           style={style}
           position={position}
@@ -279,7 +296,7 @@ export default class VictoryBar extends React.Component {
         return (
           <g key={`series-${index}-bar-${barIndex}`}>
             {barComponent}
-            <BarLabel key={`label-series-${index}-bar-${barIndex}`}
+            <this.props.BarLabelComponent key={`label-series-${index}-bar-${barIndex}`}
               horizontal={this.props.horizontal}
               style={baseStyle.labels}
               position={position}
